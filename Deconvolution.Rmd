@@ -1,9 +1,10 @@
 ---
-title: "Iterative Bayesian Approaches to the Deconvolution of Discrete S in Experimental Particle Physics"
+title: "Inverse Problems in Experimental Particle Physics"
 author: "Sean Gilligan"
 output: 
   pdf_document:
     citation_package: biblatex
+    number_sections: TRUE
 keep_tex: TRUE
 bibliography: citations.bib
 header-includes:
@@ -12,7 +13,7 @@ header-includes:
   - \usepackage{amsmath}
   - \usepackage{hyperref}
   - \usepackage{csquotes}
-  - \hypersetup{colorlinks=true,linkcolor=red,citecolor=blue,filecolor=magenta,urlcolor=blue}
+  - \hypersetup{colorlinks=TRUE,linkcolor=red,citecolor=blue,filecolor=magenta,urlcolor=blue}
   - \newcommand{\comment}[1]{}
 ---
 
@@ -25,24 +26,39 @@ library(gtools)
 ```
 
 \begin{abstract}
-This report discusses the use of iterative Bayesian approaches to
+This report presents a survey of the common methods of solving ill-posed inverse problem in experimental high energy physics.
 \end{abstract}
 
 \section{Introduction}
-A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during data collection processes. While the possible sources from which these errors might be derived are as varied as the possible events which the data might describe, statistical methods afford would-be analysts who wish to learn from their data the tools to recognize the sort of generalized structures that allow for the effective implementation of informative statistical models to this end.
+A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during the data collection process. While the possible sources of these errors are as varied as the possible events which the data might describe, significant work has been done to develop methods the can help would-be analysts reconcile them. The requisite understanding of a scenario's underlying systematic and stochastic processes might not allow researchers to truly reverse entropy, but it can approximate it with a quantifiable degree of certainty. The applied mathematics that this involves falls within the general category of \textit{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. Within the applications described here there is the colloquially vague \textit{unsmearing}, but there are also names that reference specific applications and methods, such as those characterized in this report.
 
-One way to characterize a basic example with continuous variables would be the following. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(x_a<X_i<x_b)=\int_{x_a}^{x_b}f(x)dx$$ and $$\int_\mathcal{X}f(x)dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, \begin{align}Y_i=X_i+\varepsilon_i.\label{eq:meas}\end{align} In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ in the realm of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textit{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by [@Meister2009] \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\left\vert\frac{\partial\varepsilon}{\partial x}\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)dx.\label{eq:conv2}\end{align}
-For the purposes of integration $\varepsilon$ is treated as a function of $x$ and $y$ by the relation $\varepsilon=\varepsilon(x,y)=y-x$, as generated using the relation in Equation \eqref{eq:meas}. For a constant $y$, the term $\left\vert\frac{\partial\varepsilon}{\partial x}\right\vert$ then represents the Jacobian of the change of basis performed on $f_\varepsilon$, which happens to be $1$ here.
+\subsection{The Deconvolution}
 
-\comment{
-As an aside, it is worth noting that the integrand $f_X(x)g_\varepsilon(y-x)$ in the final form of Equation \eqref{eq:conv2} can be collectively thought of as the joint probability distribution of $x$ and $y$, $f_{X,Y}(x,y)$, with $f_\varepsilon(y-x)$ serving as the conditional probability distribution of $y$ for a given $x$, $f_{\varepsilon}(y\vert x)$. The relationship between the marginal probability distribution and the joint probability distribution [@Gelman:2013bda] can be mapped to Equation \eqref{eq:conv2} as follows:\begin{align}P(y)&=\int_\mathcal{X}P(x,y)dx\nonumber\\&=\int_\mathcal{X}P(x)P(y\vert x)dx\nonumber\\h(y)&=\int_\mathcal{X}f(x)g(y-x)dx\nonumber\end{align}
-}
+One way to characterize a basic example would be the following. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f(x)\,dx$$ and $$\int_\mathcal{X}f(x)\,dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, \begin{align}Y_i&=g(X_i,\varepsilon_i)\nonumber\\&=X_i+\varepsilon_i.\label{eq:meas}\end{align} In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ using the mathematics of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textit{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by [@Panaretos:2011svu] \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
+where $J$ represents the Jacobian of the transformation involved in performing the change of basis on $f_\varepsilon$ from $\varepsilon$ to $x$, which is necessary for the evaluation of the integral for a given $y$. The magnitude of the Jacobian for transformation of $\varepsilon$ to $y-x$ through the manipulation of Equation \eqref{eq:meas} happens to be $1$.
 
-As the collection of measured values $\bm{Y}$ accumulates an estimate of empirical density $\hat{f}_Y$ can readily be formed. However, a major goal in an analysis of data like this is typically to develop an accurate estimate of the true density $\hat{f}_X$. Using the information contained in $\hat{f}_Y$ to accomplish this necessarily requires some attempt at finding an inverse process to the \textit{convolution}, i.e. the \textit{deconvolution}. What this might look like depends heavily on the relevant assumptions and knowledge held by the analysts, such as information about the processes that introduce error.
+As the collection of measured values $\bm{Y}$ accumulates an estimate of empirical density $\hat{f}_Y$ can readily be formed. However, a major goal in an analysis of data like this is typically to develop an accurate estimate of the true density $\hat{f}_X$. Using the information contained in $\hat{f}_Y$ to accomplish this necessarily requires some attempt at finding an inverse process to the \textit{convolution}, i.e. the \textit{deconvolution}.
 
-The remainder of this paper is dedicated to characterizing the major methods adopted by the High Energy Physics (HEP) community in this endeavor. While most literature on the subject does use the word \textit{convolution}, this operation is also referred to by the German word \textit{faltung} [@weisstein], and its English translation, \textit{folding}, is featured prominently in the particle physics community [@DAgostini:1994fjx][@DAgostini:2010hil][@Adye:2011gm][@Blobel:2013]. For the purposes of this paper instances of \textit{folding} and \textit{unfolding} will refer to \textit{convolution} and \textit{deconvolution}, and vice-versa.
+For cases in the form of this particular example there are a variety approaches, but they commonly involve the Fourier transform of the density functions $\left\{f_X,f_\varepsilon,f_Y\right\}$ into their corresponding characteristic functions $\left\{\phi_X,\phi_\varepsilon,\phi_Y\right\}$ [@Meister2009][@Panaretos:2011svu]. The definition of the Fourier transform is subject to a number of conventions based on its application, but here it can be defined for some random variable $U$ with density function $f_U(u)$ as \begin{align}\phi_U(t)=\int f_U(u)\,e^{itu}\,du,\;\;\;\;\forall\,u\in\mathbb{R}.\label{eq:ft}\end{align} When conditions permit the inverse Fourier transform can be found via \begin{align}f_U(u)=\int \phi_U(t)\,e^{-itu}\,dt,\;\;\;\;\forall\,t\in\mathbb{R}.\label{eq:ift}\end{align} The Fourier transform is important in deconvolution methods because when you apply it to the convolution of two density functions the link between their respective characteristic functions becomes purely multiplicative, i.e. $$f_Y=f_X*f_\varepsilon\implies\phi_Y=\phi_X\phi_\varepsilon.$$
+
+\subsection{Generalizing}
+
+The remainder of this paper is dedicated to characterizing the major methods adopted by the High Energy Physics (HEP) community toward solving their inverse problems. While most literature on deconvolution methods do use the word \textit{convolution}, this operation is also referred to by the German word \textit{faltung} [@weisstein]. The latter's English translation, \textit{folding}, is featured prominently in the particle physics community, but refers to a more generalized process than what is described by Equation \eqref{eq:conv2} [@DAgostini:1994fjx][@Adye:2011gm][@Blobel:2013]. In general, the terms \textit{folding} and \textit{unfolding} are used to describe two supersets of processes that respectively include \textit{convolution} and \textit{deconvolution}.
+
+One way to arrive at the intended generalization is by considering conditional probability. The mechanisms governing the migration of $f_X$ to $f_Y$ can be understood as the conditional probability $f_{Y\vert X}(y\vert x)$.
+\begin{align}f_Y(y)&=\int_\mathcal{X}f_{Y\vert X}(y\vert x)f_X(x)\,dx\nonumber\\&=\int_\mathcal{X}K(x,y)f_X(x)\,dx\label{eq:fred}\end{align}
+With that said, when considering the inverse process it cannot be assumed that all contributions to the measured values are coming from the same source as the signal described by $f_X$. A background source background density function $b_Y$ becomes a contributing 
+
+\section{Unfolding methods in particle physics}
+
+\subsection{Bin-by-bin}
 
 
+\begin{align}\hat{x}_i &= C_i(n_i-\beta_i) \nonumber\\ &= C_iy_i\label{eq:bin1}\end{align}
+
+\begin{align}C_i = \frac{x_i^{\text{MC}}}{y_i^{\text{MC}}}\label{eq:bin2}\end{align}
+
+\begin{align}E_i[\hat{x}_i] &= C_iE[n_i-\beta_i] \nonumber\\ &= \frac{x_i^{\text{MC}}}{y_i^{\text{MC}}}y_i \nonumber &=  \label{eq:bin3}\end{align}
 
 \begin{figure}[ht]
     \centering
