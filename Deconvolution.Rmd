@@ -8,6 +8,7 @@ output:
 keep_tex: TRUE
 bibliography: citations.bib
 header-includes:
+  - \usepackage{setspace}\onehalfspacing
   - \usepackage{xcolor}
   - \usepackage{bm}
   - \usepackage{amsmath}
@@ -15,6 +16,8 @@ header-includes:
   - \usepackage{csquotes}
   - \hypersetup{colorlinks=TRUE,linkcolor=red,citecolor=blue,filecolor=magenta,urlcolor=blue}
   - \newcommand{\comment}[1]{}
+abstract: \singlespacing This report presents a survey of the common methods of solving ill-posed inverse problem in experimental high energy physics.
+fontsize: 12pt
 ---
 
 ```{r, message = F, echo=F}
@@ -25,41 +28,42 @@ library(RColorBrewer)
 library(gtools)
 ```
 
-\begin{abstract}
-This report presents a survey of the common methods of solving ill-posed inverse problem in experimental high energy physics.
-\end{abstract}
 
 \section{Introduction}
 A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during the data collection process. While the possible sources of these errors are as varied as the possible events which the data might describe, significant work has been done to develop methods the can help would-be analysts reconcile them. The requisite understanding of a scenario's underlying systematic and stochastic processes might not allow researchers to truly reverse entropy, but it can approximate it with a quantifiable degree of certainty. The applied mathematics that this involves falls within the general category of \textit{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. Within the applications described here there is the colloquially vague \textit{unsmearing}, but there are also names that reference specific applications and methods, such as those characterized in this report.
 
 \subsection{The Deconvolution}
 
-One way to characterize a basic example would be the following. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f(x)\,dx$$ and $$\int_\mathcal{X}f(x)\,dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, \begin{align}Y_i&=g(X_i,\varepsilon_i)\nonumber\\&=X_i+\varepsilon_i.\label{eq:meas}\end{align} In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ using the mathematics of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textit{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by [@Panaretos:2011svu] \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
+One way to characterize a basic example would be the following. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f(x)\,dx$$ and $$\int_\mathcal{X}f(x)\,dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, 
+\begin{align}Y_i&=g(X_i,\varepsilon_i)\nonumber\\&=X_i+\varepsilon_i.\label{eq:meas}\end{align} 
+In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ using the mathematics of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textit{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by [@Panaretos2011] \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
 where $J$ represents the Jacobian of the transformation involved in performing the change of basis on $f_\varepsilon$ from $\varepsilon$ to $x$, which is necessary for the evaluation of the integral for a given $y$. The magnitude of the Jacobian for transformation of $\varepsilon$ to $y-x$ through the manipulation of Equation \eqref{eq:meas} happens to be $1$.
 
 As the collection of measured values $\bm{Y}$ accumulates an estimate of empirical density $\hat{f}_Y$ can readily be formed. However, a major goal in an analysis of data like this is typically to develop an accurate estimate of the true density $\hat{f}_X$. Using the information contained in $\hat{f}_Y$ to accomplish this necessarily requires some attempt at finding an inverse process to the \textit{convolution}, i.e. the \textit{deconvolution}.
 
-For cases in the form of this particular example there are a variety approaches, but they commonly involve the Fourier transform of the density functions $\left\{f_X,f_\varepsilon,f_Y\right\}$ into their corresponding characteristic functions $\left\{\phi_X,\phi_\varepsilon,\phi_Y\right\}$ [@Meister2009][@Panaretos:2011svu]. The definition of the Fourier transform is subject to a number of conventions based on its application, but here it can be defined for some random variable $U$ with density function $f_U(u)$ as \begin{align}\phi_U(t)=\int f_U(u)\,e^{itu}\,du,\;\;\;\;\forall\,u\in\mathbb{R}.\label{eq:ft}\end{align} When conditions permit the inverse Fourier transform can be found via \begin{align}f_U(u)=\int \phi_U(t)\,e^{-itu}\,dt,\;\;\;\;\forall\,t\in\mathbb{R}.\label{eq:ift}\end{align} The Fourier transform is important in deconvolution methods because when you apply it to the convolution of two density functions the link between their respective characteristic functions becomes purely multiplicative, i.e. $$f_Y=f_X*f_\varepsilon\implies\phi_Y=\phi_X\phi_\varepsilon.$$
+For cases in the form of this particular example there are a variety approaches, but they commonly involve the Fourier transform of the density functions $\left\{f_X,f_\varepsilon,f_Y\right\}$ into their corresponding characteristic functions $\left\{\phi_X,\phi_\varepsilon,\phi_Y\right\}$ [@Meister2009][@Panaretos2011]. The definition of the Fourier transform is subject to a number of conventions based on its application, but here it can be defined for some random variable $U$ with density function $f_U(u)$ as \begin{align}\phi_U(t)=\int f_U(u)\,e^{itu}\,du,\;\;\;\;\forall\,u\in\mathbb{R}.\label{eq:ft}\end{align} When conditions permit the inverse Fourier transform can be found via \begin{align}f_U(u)=\int \phi_U(t)\,e^{-itu}\,dt,\;\;\;\;\forall\,t\in\mathbb{R}.\label{eq:ift}\end{align} The Fourier transform is important in deconvolution methods because when you apply it to the convolution of two density functions the link between their respective characteristic functions becomes purely multiplicative, i.e.
+$$f_Y=f_X*f_\varepsilon\implies\phi_Y=\phi_X\phi_\varepsilon.$$
+An instructional proof of this result is provided on page 447 of [@Boas2005].
 
 \subsection{Generalizing}
 
-The remainder of this paper is dedicated to characterizing the major methods adopted by the High Energy Physics (HEP) community toward solving their inverse problems. While most literature on deconvolution methods do use the word \textit{convolution}, this operation is also referred to by the German word \textit{faltung} [@weisstein]. The latter's English translation, \textit{folding}, is featured prominently in the particle physics community, but refers to a more generalized process than what is described by Equation \eqref{eq:conv2} [@DAgostini:1994fjx][@Adye:2011gm][@Blobel:2013]. In general, the terms \textit{folding} and \textit{unfolding} are used to describe two supersets of processes that respectively include \textit{convolution} and \textit{deconvolution}.
+The remainder of this paper is dedicated to characterizing the major methods adopted by the High Energy Physics (HEP) community toward solving their inverse problems. While most literature on deconvolution methods do use the word \textit{convolution}, this operation is also referred to by the German word \textit{faltung} [@Weisstein]. The latter's English translation, \textit{folding}, is featured prominently in the particle physics community, but refers to a more generalized process than what is described by Equation \eqref{eq:conv2} [@DAgostini1994][@Adye2011][@Blobel2013]. In general, the terms \textit{folding} and \textit{unfolding} are used to describe two supersets of processes that respectively include \textit{convolution} and \textit{deconvolution}.
 
-One way to arrive at the intended generalization is by considering conditional probability. The mechanisms governing the migration of $f_X$ to $f_Y$ can be understood as the conditional probability $f_{Y\vert X}(y\vert x)$.
-\begin{align}f_Y(y)&=\int_\mathcal{X}f_{Y\vert X}(y\vert x)f_X(x)\,dx\nonumber\\&=\int_\mathcal{X}K(x,y)f_X(x)\,dx\label{eq:fred}\end{align}
-With that said, when considering the inverse process it cannot be assumed that all contributions to the measured values are coming from the same source as the signal described by $f_X$. A background source background density function $b_Y$ becomes a contributing 
+One way to arrive at the intended generalization is by considering conditional probability. Thinking of $\{X,Y\}$ as a continuous bivariate random vector with joint PDF $f(x,y)$ and marginal PDFs $f_X(x)$ and $f_Y(y)$, we can define the \textit{conditional PDF of} $Y$ \textit{given that} $X=x$ as function of $y$, denoted here as $f(y\,\vert x)$ [@Casella2001]. The relationship between these PDFs is sufficient to define any one in terms of operations involving one or more of the others. As such, for $f_Y(y)$ it can be shown
+\begin{align}f_Y(y)&=\int_\mathcal{X}f(x,y)\,dx\nonumber\\&=\int_\mathcal{X}f(y\,\vert x)f_X(x)\,dx\nonumber\\&=\int_\mathcal{X}K(x,y)f_X(x)\,dx.\label{eq:fred}\end{align}
+While integrating over $x$, $f(y\,\vert x)$ is implicitly treated a function of both $x$ and $y$. Acknowledging this allows for understanding Equation \eqref{eq:fred} as a Fredholm integral of the first kind with a Kernel function $K(x,y)$ reflecting the physical measurement process [@Blobel2011]. The relationship between $x$ and $y$ in $K(x,y)$ is not defined, but when the kernel is a function of the difference of its arguments, such that $K(x,y)=K(y-x)$, Equation \eqref{eq:fred} becomes the convolution described in Equation \eqref{eq:conv2}.
 
-\section{Unfolding methods in particle physics}
+In particle physics experiments, analysts make use of Monte-Carlo (MC) simulations to estimate detector response for a known true distribution $f_X(x)^{\text{MC}}$, which is itself estimated by way of MC simulations using models that typically contain theory being tested by the experiment in question. The resulting measured distribution $f_Y(y)^{\text{MC}}$ grants implicit knowledge of $K(x,y)$ by way of Equation \eqref{eq:fred} [@Blobel2013]. Finding the inverse of this Kernel is then the goal, as it should in theory allow for the mapping of experimental observations $\bm Y$, as randomly sampled from $f_Y(y)$, back to their true values $\bm X$.
 
-\subsection{Bin-by-bin}
+\subsection{Discretization}
 
-
-\begin{align}\hat{x}_i &= C_i(n_i-\beta_i) \nonumber\\ &= C_iy_i\label{eq:bin1}\end{align}
-
-\begin{align}C_i = \frac{x_i^{\text{MC}}}{y_i^{\text{MC}}}\label{eq:bin2}\end{align}
-
-\begin{align}E_i[\hat{x}_i] &= C_iE[n_i-\beta_i] \nonumber\\ &= \frac{x_i^{\text{MC}}}{y_i^{\text{MC}}}y_i \nonumber &=  \label{eq:bin3}\end{align}
-
+In practice researchers are only ever dealing with estimates $\hat f_X$, $\hat f_Y$, $\hat f_X^{\text{MC}}$, and $\hat f_Y^{\text{MC}}$. The sets of data that contribute to these estimates are organized by bin into histograms that form an unnormalized granular approximation of the true distributions. Consider an example of the form described by Equation \eqref{eq:meas}, i.e. $Y_i=X_i+\varepsilon_i$. Let the error be i.i.d random variables generated by Gaussian noise, $\varepsilon_i\sim N(0,1)$, and let $X_i$ be a i.i.d. random variable from a composite distribution of the form $X_i=Z_iX_{1,i}+(1-Z_i)X_{2,i}$, where
+\begin{align}
+  X_{1,i}&\sim N(10,1),\nonumber\\
+  X_{2,i}&\sim N(14,1),\nonumber\\
+  \text{and }Z_i&\sim\text{Bernoulli}(1/3).\nonumber
+\end{align}
+Figure \ref{BasicExample} provides a visualization of the densities $f_X(x)$ and $f_Y(y)$, and their unnormalized approximations as histograms resulting from $10,000$ distributions.
 \begin{figure}[ht]
     \centering
 ```{r, fig.height=3.2, fig.width=4, fig.align='center', echo = F}
@@ -67,63 +71,65 @@ With that said, when considering the inverse process it cannot be assumed that a
 nsim <- 10000
 
 # Two possible types of processes with different means but equal variances
-mu1 <- 10
-mu2 <- 14
-sd <- 1
+loc1 <- 12
+loc2 <- 19
+sc <- 2
 
 # Event 1 is 1/3 as likely to occur as event 2
 p <- 1/3
 
-y1 <- rnorm(nsim, mean = mu1, sd = sd)
-y2 <- rnorm(nsim, mean = mu2, sd = sd)
+x1 <- rcauchy(nsim, location = loc1, scale = sc)
+x2 <- rcauchy(nsim, location = loc2, scale = sc)
 z <- rbernoulli(nsim, p)
-x <- z*y1 + (1-z)*y2
+x <- z*x1 + (1-z)*x2
 
 # Add additional noise
-xf <- x + rnorm(nsim, mean = 0, sd = sd)
+ermu <- -3
+ersd <- 1
+y <- x + rnorm(nsim, mean = ermu, sd = ersd)
+y <- y[y>0 & y<30]
+y <- y[rbinom(length(y),1,sqrt(0.2*log(y+1)))==1]
+xymin <- 0
+xymax <- 30
+xyaxisstep <- 3
 
-xmin <- (floor(min(c(x,xf))) %/% 2)*2
-xmax <- ceiling(max(c(x,xf)))
-xmax <- (xmax/2 - xmax %/% 2)*2 + xmax
+step_hist_notfolded <- hist(x[which(x > xymin & x < xymax)], breaks = seq(xymin,xymax,1), plot = F)
+step_hist_folded <- hist(y[which(y > xymin & y < xymax)], breaks = seq(xymin,xymax,1), plot = F)
 
-step_hist_unfolded <- hist(x, breaks = seq(xmin,xmax,1), plot = F)
-step_hist_folded <- hist(xf, breaks = seq(xmin,xmax,1), plot = F)
-
-ymax <- 1.075*max(c(step_hist_folded$density,step_hist_unfolded$density))
-ymax_count <- 1.1*max(c(step_hist_folded$count,step_hist_unfolded$count))
+fmax <- 1.075*max(c(step_hist_folded$density,step_hist_notfolded$density))
+fmax_count <- 1.1*max(c(step_hist_folded$count,step_hist_notfolded$count))
 
 step_hist <- 
   tibble(binLow = c(step_hist_folded$breaks[-length(step_hist_folded$breaks)],
-                    step_hist_unfolded$breaks[-length(step_hist_unfolded$breaks)]),
-         binHigh = c(step_hist_folded$breaks[-1],step_hist_unfolded$breaks[-1]),
+                    step_hist_notfolded$breaks[-length(step_hist_notfolded$breaks)]),
+         binHigh = c(step_hist_folded$breaks[-1],step_hist_notfolded$breaks[-1]),
          CountsL = c(c(0,step_hist_folded$counts[-length(step_hist_folded$counts)]),
-                     c(0,step_hist_unfolded$counts[-length(step_hist_unfolded$counts)])),
-         Counts = c(step_hist_folded$counts,step_hist_unfolded$counts),
+                     c(0,step_hist_notfolded$counts[-length(step_hist_notfolded$counts)])),
+         Counts = c(step_hist_folded$counts,step_hist_notfolded$counts),
          DensityL = c(c(0,step_hist_folded$density[-length(step_hist_folded$density)]),
-                      c(0,step_hist_unfolded$density[-length(step_hist_unfolded$density)])),
-         Density = c(step_hist_folded$density,step_hist_unfolded$density),
+                      c(0,step_hist_notfolded$density[-length(step_hist_notfolded$density)])),
+         Density = c(step_hist_folded$density,step_hist_notfolded$density),
          Treatment = c(rep("folded", length(step_hist_folded$density)),
-                       rep("unfolded", length(step_hist_unfolded$density))))
+                       rep("not folded", length(step_hist_notfolded$density))))
 
 
 # Continuous representation
-X <- seq(xmin,xmax,0.01)
-nx <- length(X)
+XY <- seq(xymin,xymax,0.01)
+nxy <- length(XY)
 
-unfold_fig_data <- tibble(x = X,
-                          y_unfolded = (1/3)*dnorm(X, mean=mu1, sd=sd) + 
-                            (2/3)*dnorm(X, mean=mu2, sd=sd),
-                          y_folded = (1/3)*dnorm(X, mean=mu1, sd=sqrt(sd+sd)) + 
-                            (2/3)*dnorm(X, mean=mu2, sd=sqrt(sd+sd)))
+fig_data <- tibble(x = (1/3)*dcauchy(XY, location=loc1, scale=sc) + 
+                     (2/3)*dcauchy(XY, location=loc2, scale=sc),
+                   y = (1/3)*dcauchy(XY, location=loc1+ermu, scale=sqrt(sc+ersd)) + 
+                     (2/3)*dcauchy(XY, location=loc2+ermu, scale=sqrt(sc+ersd)))
 
-unfold_fig_data <- tibble(X = rep(seq(xmin,xmax,0.01),2),
-                          Density = c(unfold_fig_data$y_unfolded,unfold_fig_data$y_folded),
-                          Treatment = rep(c("unfolded","folded"), each = nx))
+fig_data <- tibble(XY = rep(seq(xymin,xymax,0.01),2),
+                           Density = c(fig_data$x,fig_data$y),
+                           Treatment = rep(c("not folded","folded"), each = nxy))
 
-ymax = max(ymax,ceiling(105*max(unfold_fig_data$Density))/100)
+fmax = max(fmax,ceiling(105*max(fig_data$Density))/100)
 
 # Plot binned
-p_step_unfolded <- ggplot(data = filter(step_hist,Treatment=="unfolded")) + 
+p_step_notfolded <- ggplot(data = filter(step_hist,Treatment=="not folded")) + 
   theme_bw() +
   geom_segment(mapping = aes(x = binLow,
                              y = Counts,
@@ -135,11 +141,12 @@ p_step_unfolded <- ggplot(data = filter(step_hist,Treatment=="unfolded")) +
                           xend = binLow,
                           yend = Counts), 
                color="red", alpha=0.6) +
-  scale_x_continuous(breaks = seq(xmin,xmax,2), 
-                     limits = c(xmin,xmax), 
+  scale_x_continuous(breaks = seq(xymin,xymax,xyaxisstep), 
+                     limits = c(xymin,xymax), 
                      expand = c(0,0)) +
-  scale_y_continuous("Simulated Counts", limits = c(0,ymax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(ymax_count), floor(ymax_count/1000)*200)) +
+  scale_y_continuous("Simulated Counts",
+                     limits = c(0,fmax_count), expand = c(0,0),
+                     breaks = seq(0,ceiling(fmax_count),floor(fmax_count/1000)*200)) +
   labs(x="X", y="", title=element_blank()) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         plot.margin = margin(0, 0.16, 0.12, 0, "cm"))
@@ -156,50 +163,140 @@ p_step_folded <- ggplot(data = filter(step_hist,Treatment=="folded")) +
                           xend = binLow,
                           yend = Counts), 
                color="blue", alpha=0.6) +
-  scale_x_continuous(breaks = seq(xmin,xmax,2), 
-                     limits = c(xmin,xmax), 
+  scale_x_continuous(breaks = seq(xymin,xymax,xyaxisstep), 
+                     limits = c(xymin,xymax), 
                      expand = c(0,0)) +
   scale_y_continuous("Simulated Counts", 
-                     limits = c(0,ymax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(ymax_count), floor(ymax_count/1000)*200)) +
-  labs(x="X", y="", title=element_blank()) +
+                     limits = c(0,fmax_count), expand = c(0,0),
+                     breaks = seq(0,ceiling(fmax_count),floor(fmax_count/1000)*200)) +
+  labs(x="Y", y="", title=element_blank()) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         axis.text.y = element_blank(), axis.ticks.y = element_blank(),
         axis.title.y = element_blank(), plot.margin = margin(0, 0.16, 0.12, 0.08, "cm"))
 
 # Plot continuous
-p_smooth_unfolded <- ggplot(filter(unfold_fig_data,Treatment=="unfolded"), aes(X, Density)) +
-  geom_line(alpha=0.6, color="red") + theme_bw() + ggtitle("unfolded") +
-  scale_x_continuous(limits = c(xmin,xmax), expand = c(0, 0)) +
-  scale_y_continuous("Theoretical Density", 
-                     seq(0,ymax,0.05), limits = c(0,ymax), expand = c(0, 0)) +
+p_smooth_notfolded <- ggplot(filter(fig_data,Treatment=="not folded"), aes(XY, Density)) +
+  geom_line(alpha=0.6, color="red") + theme_bw() + ggtitle("not folded") +
+  scale_x_continuous(limits = c(xymin,xymax), expand = c(0, 0)) +
+  scale_y_continuous("Density", 
+                     seq(0,fmax,0.05), limits = c(0,fmax), expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         axis.text.x = element_blank(), axis.ticks.x = element_blank(),
         axis.title.x = element_blank(), plot.margin = margin(0.08, 0.16, 0.04, 0.08, "cm"))
 
-p_smooth_folded <- ggplot(filter(unfold_fig_data,Treatment=="folded"), aes(X, Density)) +
+p_smooth_folded <- ggplot(filter(fig_data,Treatment=="folded"), aes(XY, Density)) +
   geom_line(alpha=0.6, color="blue") + theme_bw() + ggtitle("folded") +
-  scale_x_continuous(limits = c(xmin,xmax), expand = c(0, 0)) +
-  scale_y_continuous("Theoretical Density", 
-                     seq(0,ymax,0.05), limits = c(0,ymax), expand = c(0, 0)) +
+  scale_x_continuous(limits = c(xymin,xymax), expand = c(0, 0)) +
+  scale_y_continuous("Density", 
+                     seq(0,fmax,0.05), limits = c(0,fmax), expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         axis.text.x = element_blank(), axis.ticks.x = element_blank(),
         axis.title.x = element_blank(),
         axis.text.y = element_blank(), axis.ticks.y = element_blank(),
         axis.title.y = element_blank(), plot.margin = margin(0.08, 0.16, 0.04, 0.08, "cm"))
 
-grid.arrange(p_smooth_unfolded,p_smooth_folded,
-             p_step_unfolded,p_step_folded,
+grid.arrange(p_smooth_notfolded,p_smooth_folded,
+             p_step_notfolded,p_step_folded,
              ncol=2, widths=c(12,10), heights=c(9,10))
 
+
 ```
-\caption{\emph{The unfolded continuous distribution is of the form $X^{\text{unfolded}}_i= Z_i Y_{2,i}+(1-Z_i)Y_{1,i}$ where $Y_{1,i}\sim N(10,1)$, $Y_{2,i}\sim N(14,1)$, and $Z_i\sim\text{Bernoulli}(1/3)$. The folded continuous distribution is attained with the addition of simple Gaussian noise, such that $X^{\text{folded}}_i=X^{\text{unfolded}}_i+e_i$, where $e_i\sim N(0,1)$. The binned distributions consist of 10,000 simulated events from these distributions.}}
+\caption{\emph{A comparison of the true (not folded) distribution to the noisy (folded) distribution and the binned distributions of 10,000 corresponding simulated events.}}
 \label{BasicExample}
 \end{figure}
 
+```{r, fig.height=2.4, fig.width=4, fig.align='center'}
+ggplot(data = step_hist) + 
+  theme_bw() +
+  geom_segment(data = filter(step_hist, Treatment == "not folded"),
+               mapping = aes(x = binLow,
+                             y = Counts,
+                          xend = binHigh,
+                          yend = Counts,
+                          color = "Truth"), 
+               alpha = 0.8) +
+  geom_segment(data = filter(step_hist, Treatment == "not folded"),
+               mapping = aes(x = binLow,
+                             y = CountsL,
+                          xend = binLow,
+                          yend = Counts,
+                          color = "Truth"), 
+               alpha = 0.8) +
+  geom_line(data = filter(fig_data, Treatment == "not folded"),
+            mapping = aes(x = XY, 
+                          y = nsim*Density,
+                          color = "Scaled True Density"), 
+            alpha = 0.8) +
+  geom_segment(data = filter(step_hist, Treatment == "folded"),
+               mapping = aes(x = binLow,
+                             y = Counts,
+                          xend = binHigh,
+                          yend = Counts,
+                          color = "Measured"), 
+               alpha = 0.8) +
+  geom_segment(data = filter(step_hist, Treatment == "folded"),
+               mapping = aes(x = binLow,
+                             y = CountsL,
+                          xend = binLow,
+                          yend = Counts,
+                          color = "Measured"), 
+               alpha = 0.8) +
+  scale_x_continuous(breaks = seq(xymin,xymax,xyaxisstep), 
+                     limits = c(xymin,xymax), 
+                     expand = c(0,0)) +
+  scale_y_continuous("Counts",
+                     limits = c(0,fmax_count), expand = c(0,0),
+                     breaks = seq(0,ceiling(fmax_count),
+                                  floor(fmax_count/1000)*200)) +
+  labs(x="X,Y", y="", title=element_blank()) +
+  scale_color_manual(name = NA,
+                     breaks = c("Scaled True Density",
+                                "Truth",
+                                "Measured"),
+                     values = c("Scaled True Density" = "green",
+                                "Truth" = "blue",
+                                "Measured" = "red")) +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        plot.margin = margin(0, 0.16, 0.12, 0, "cm"),
+        legend.text = element_text(size = 8),
+        legend.title = element_blank(),
+        legend.position = c(.45, 0.99),
+        legend.justification = c("right", "top"),
+        legend.box.just = "left",
+        legend.key.height = unit(10,"points"))
+```
+
+\begin{align}\bm\nu = \bm{R}\bm\mu\label{eq:mat}\end{align}
+For bin $i$ you would have
+\begin{align}\nu_i = \sum_{j=1}^mR_{ij}\mu_j\label{eq:bini}\end{align}
+\begin{align}R_{ij}&=P(\text{measured value in bin }i\vert\text{true value in bin }j)\nonumber\\&=P(\nu_i\vert\mu_j)\label{eq:Rij}\end{align}
+\begin{align}
+  \bm{R}=\begin{pmatrix}
+    P(\nu_1\vert\mu_1)     & P(\nu_1\vert\mu_2)     & \dots  & P(\nu_1\vert\mu_{n})   \\
+    P(\nu_2\vert\mu_1)     & P(\nu_2\vert\mu_2)     & \cdots & P(\nu_2\vert\mu_{n})   \\
+    \vdots                 & \vdots                 & \ddots & \vdots                 \\
+    P(\nu_{n}\vert\mu_1)   & P(\nu_{n}\vert\mu_2)   & \dots  & P(\nu_{n}\vert\mu_{n}) \\
+    P(\nu_{n+1}\vert\mu_1) & P(\nu_{n+1}\vert\mu_2) & \dots  & P(\nu_{n+1}\vert\mu_{n})
+  \end{pmatrix},\label{eq:Rmat}
+\end{align}
+such that
+\begin{align}\sum_{i=1}^{n+1}P(\nu_i\vert\mu_j)=1\label{eq:norm}\end{align}
+
+\section{Unfolding methods in particle physics}
+
+\subsection{Bin-by-bin}
+
+
+\begin{align}\hat{x}_i &= C_i(n_i-\beta_i) \nonumber\\ &= C_iy_i\label{eq:bin1}\end{align}
+
+\begin{align}C_i = \frac{x_i^{\text{MC}}}{y_i^{\text{MC}}}\label{eq:bin2}\end{align}
+
+\begin{align}E_i[\hat{x}_i] &= C_iE[n_i-\beta_i] \nonumber\\ &= \frac{x_i^{\text{MC}}}{y_i^{\text{MC}}}y_i \nonumber &=  \label{eq:bin3}\end{align}
+
 While many data collection methods record or reconstruct variables of interest regarding the events they observe that have continuous values, discretization of this data into bins is routinely used to form estimates of these variables' distributions, with bin widths being chosen based on the needs of the researchers as well as the needs of the statistics. When combined with folding processes, binning can readily obscure otherwise prominent features in an underlying true distribution. An example of this coarse-grained look at reality afforded to us by the imperfect nature of our data collection methods can be seen in Figure [\ref{BasicExample}], in which 10,000 random samples are drawn from a simple theoretical distribution and experience folding via a comparably variant Gaussian noise process.
 
-The Bayesian methods described here were first proposed in the context of high energy physics in 1994 [@DAgostini:1994fjx] by Giulio D'Agostini, an Italian physicist and strong proponent of Bayesian reasoning in statistics. Later improvements to this method by him in 2010 [@DAgostini:2010hil] have lead to this iterative Bayesian approach becoming, along with methods based off Tikhonov regularization [@Hocker:1995kb][@Schmitt:2012kp], one of the major unfolding methods used in high energy physics today. To ease any potential reviewing of the reference material I will be adopting much of D'Agostini's notation and conventions, while also attempting to provide a more concise and clear description of his described methods.
+The Bayesian methods described here were first proposed in the context of high energy physics in 1994 [@DAgostini1994] by Giulio D'Agostini, an Italian physicist and strong proponent of Bayesian reasoning in statistics. Later improvements to this method by him in 2010 [@DAgostini2010] have lead to this iterative Bayesian approach becoming, along with methods based off Tikhonov regularization [@Hocker1995][@Schmitt2012], one of the major unfolding methods used in high energy physics today. To ease any potential reviewing of the reference material I will be adopting much of D'Agostini's notation and conventions, while also attempting to provide a more concise and clear description of his described methods.
 
 \section{Algorithm Construction}
 
@@ -282,27 +379,27 @@ true <- rcauchy(nsim, 0.5, 1)
 eff <-  runif(nsim) > 0.2 + (1.0-0.5)/20*(true+10.0)
 
 predicted <- (true + rnorm(nsim, -2.5, 0.2))[eff]
-step_hist_unfolded <- hist(true[which(true>-10 & true<10)], 
+step_hist_notfolded <- hist(true[which(true>-10 & true<10)], 
                            breaks = seq(-10,10,0.5), plot = F)
 step_hist_folded <- hist(predicted[which(predicted>-10 & predicted<10)], 
                          breaks = seq(-10,10,0.5), plot = F)
 
 
-ymax <- 1.075*max(c(step_hist_folded$density,step_hist_unfolded$density))
-ymax_count <- 1.1*max(c(step_hist_folded$count,step_hist_unfolded$count))
+ymax <- 1.075*max(c(step_hist_folded$density,step_hist_notfolded$density))
+ymax_count <- 1.1*max(c(step_hist_folded$count,step_hist_notfolded$count))
 
 step_hist <- 
   tibble(binLow = c(step_hist_folded$breaks[-length(step_hist_folded$breaks)],
-                    step_hist_unfolded$breaks[-length(step_hist_unfolded$breaks)]),
-         binHigh = c(step_hist_folded$breaks[-1],step_hist_unfolded$breaks[-1]),
+                    step_hist_notfolded$breaks[-length(step_hist_notfolded$breaks)]),
+         binHigh = c(step_hist_folded$breaks[-1],step_hist_notfolded$breaks[-1]),
          CountsL = c(c(0,step_hist_folded$counts[-length(step_hist_folded$counts)]),
-                     c(0,step_hist_unfolded$counts[-length(step_hist_unfolded$counts)])),
-         Counts = c(step_hist_folded$counts,step_hist_unfolded$counts),
+                     c(0,step_hist_notfolded$counts[-length(step_hist_notfolded$counts)])),
+         Counts = c(step_hist_folded$counts,step_hist_notfolded$counts),
          DensityL = c(c(0,step_hist_folded$density[-length(step_hist_folded$density)]),
-                      c(0,step_hist_unfolded$density[-length(step_hist_unfolded$density)])),
-         Density = c(step_hist_folded$density,step_hist_unfolded$density),
+                      c(0,step_hist_notfolded$density[-length(step_hist_notfolded$density)])),
+         Density = c(step_hist_folded$density,step_hist_notfolded$density),
          Treatment = c(rep("smeared", length(step_hist_folded$density)),
-                       rep("truth", length(step_hist_unfolded$density))))
+                       rep("truth", length(step_hist_notfolded$density))))
 
 dists <- ggplot(data = step_hist) + 
   theme_bw() +
@@ -661,24 +758,24 @@ xmin <- (floor(min(c(x,xf))) %/% 2)*2
 xmax <- ceiling(max(c(x,xf)))
 xmax <- (xmax/2 - xmax %/% 2)*2 + xmax
 
-step_hist_unfolded <- hist(x, breaks = seq(xmin,xmax,1), plot = F)
+step_hist_notfolded <- hist(x, breaks = seq(xmin,xmax,1), plot = F)
 step_hist_folded <- hist(xf, breaks = seq(xmin,xmax,1), plot = F)
 
-ymax <- 1.075*max(c(step_hist_folded$density,step_hist_unfolded$density))
-ymax_count <- 1.1*max(c(step_hist_folded$count,step_hist_unfolded$count))
+ymax <- 1.075*max(c(step_hist_folded$density,step_hist_notfolded$density))
+ymax_count <- 1.1*max(c(step_hist_folded$count,step_hist_notfolded$count))
 
 step_hist <- 
   tibble(binLow = c(step_hist_folded$breaks[-length(step_hist_folded$breaks)],
-                    step_hist_unfolded$breaks[-length(step_hist_unfolded$breaks)]),
-         binHigh = c(step_hist_folded$breaks[-1],step_hist_unfolded$breaks[-1]),
+                    step_hist_notfolded$breaks[-length(step_hist_notfolded$breaks)]),
+         binHigh = c(step_hist_folded$breaks[-1],step_hist_notfolded$breaks[-1]),
          CountsL = c(c(0,step_hist_folded$counts[-length(step_hist_folded$counts)]),
-                     c(0,step_hist_unfolded$counts[-length(step_hist_unfolded$counts)])),
-         Counts = c(step_hist_folded$counts,step_hist_unfolded$counts),
+                     c(0,step_hist_notfolded$counts[-length(step_hist_notfolded$counts)])),
+         Counts = c(step_hist_folded$counts,step_hist_notfolded$counts),
          DensityL = c(c(0,step_hist_folded$density[-length(step_hist_folded$density)]),
-                      c(0,step_hist_unfolded$density[-length(step_hist_unfolded$density)])),
-         Density = c(step_hist_folded$density,step_hist_unfolded$density),
+                      c(0,step_hist_notfolded$density[-length(step_hist_notfolded$density)])),
+         Density = c(step_hist_folded$density,step_hist_notfolded$density),
          Treatment = c(rep("folded", length(step_hist_folded$density)),
-                       rep("unfolded", length(step_hist_unfolded$density))))
+                       rep("unfolded", length(step_hist_notfolded$density))))
 
 
 # Continuous representation
@@ -778,27 +875,27 @@ true <- rcauchy(nsim, 0.5, 1)
 eff <-  runif(nsim) > 0.2 + (1.0-0.5)/20*(true+10.0)
 
 predicted <- (true + rnorm(nsim, -2.5, 0.2))[eff]
-step_hist_unfolded <- hist(true[which(true>-10 & true<10)], 
+step_hist_notfolded <- hist(true[which(true>-10 & true<10)], 
                            breaks = seq(-10,10,0.5), plot = F)
 step_hist_folded <- hist(predicted[which(predicted>-10 & predicted<10)], 
                          breaks = seq(-10,10,0.5), plot = F)
 
 
-ymax <- 1.075*max(c(step_hist_folded$density,step_hist_unfolded$density))
-ymax_count <- 1.1*max(c(step_hist_folded$count,step_hist_unfolded$count))
+ymax <- 1.075*max(c(step_hist_folded$density,step_hist_notfolded$density))
+ymax_count <- 1.1*max(c(step_hist_folded$count,step_hist_notfolded$count))
 
 step_hist <- 
   tibble(binLow = c(step_hist_folded$breaks[-length(step_hist_folded$breaks)],
-                    step_hist_unfolded$breaks[-length(step_hist_unfolded$breaks)]),
-         binHigh = c(step_hist_folded$breaks[-1],step_hist_unfolded$breaks[-1]),
+                    step_hist_notfolded$breaks[-length(step_hist_notfolded$breaks)]),
+         binHigh = c(step_hist_folded$breaks[-1],step_hist_notfolded$breaks[-1]),
          CountsL = c(c(0,step_hist_folded$counts[-length(step_hist_folded$counts)]),
-                     c(0,step_hist_unfolded$counts[-length(step_hist_unfolded$counts)])),
-         Counts = c(step_hist_folded$counts,step_hist_unfolded$counts),
+                     c(0,step_hist_notfolded$counts[-length(step_hist_notfolded$counts)])),
+         Counts = c(step_hist_folded$counts,step_hist_notfolded$counts),
          DensityL = c(c(0,step_hist_folded$density[-length(step_hist_folded$density)]),
-                      c(0,step_hist_unfolded$density[-length(step_hist_unfolded$density)])),
-         Density = c(step_hist_folded$density,step_hist_unfolded$density),
+                      c(0,step_hist_notfolded$density[-length(step_hist_notfolded$density)])),
+         Density = c(step_hist_folded$density,step_hist_notfolded$density),
          Treatment = c(rep("smeared", length(step_hist_folded$density)),
-                       rep("truth", length(step_hist_unfolded$density))))
+                       rep("truth", length(step_hist_notfolded$density))))
 
 dists <- ggplot(data = step_hist) + 
   theme_bw() +
