@@ -30,47 +30,47 @@ library(gtools)
 
 
 \section{Introduction}
-A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during the data collection process. While the possible sources of these errors are as varied as the possible events which the data might describe, significant work has been done to develop methods the can help would-be analysts reconcile them. The requisite understanding of a scenario's underlying systematic and stochastic processes might not allow researchers to truly reverse entropy, but it can approximate it with a quantifiable degree of certainty. The applied mathematics that this involves falls within the general category of \textit{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. Within the applications described here there is the colloquially vague \textit{unsmearing}, but there are also names that reference specific applications and methods, such as those characterized in this report.
+A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during the data collection process. While the possible sources of these errors are as varied as the possible events which the data might describe, significant work has been done to develop methods the can help would-be analysts reconcile them. The requisite understanding of a scenario's underlying systematic and stochastic processes might not allow researchers to truly reverse entropy, but it can approximate it with a quantifiable degree of certainty. The applied mathematics that this involves falls within the general category of \textbf{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. Within the applications described here there is the colloquially vague \textbf{unsmearing}, but there are also names that reference specific applications and methods, such as those characterized in this report.
 
 \subsection{The Deconvolution}
 
 One way to characterize a basic example would be the following. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f(x)\,dx$$ and $$\int_\mathcal{X}f(x)\,dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, 
 \begin{align}Y_i&=g(X_i,\varepsilon_i)\nonumber\\&=X_i+\varepsilon_i.\label{eq:meas}\end{align} 
-In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ using the mathematics of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textit{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by [@Panaretos2011] \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
+In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ using the mathematics of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textbf{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by [@Panaretos2011] \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
 where $J$ represents the Jacobian of the transformation involved in performing the change of basis on $f_\varepsilon$ from $\varepsilon$ to $x$, which is necessary for the evaluation of the integral for a given $y$. The magnitude of the Jacobian for transformation of $\varepsilon$ to $y-x$ through the manipulation of Equation \eqref{eq:meas} happens to be $1$.
 
-As the collection of measured values $\bm{Y}$ accumulates an estimate of empirical density $\hat{f}_Y$ can readily be formed. However, a major goal in an analysis of data like this is typically to develop an accurate estimate of the true density $\hat{f}_X$. Using the information contained in $\hat{f}_Y$ to accomplish this necessarily requires some attempt at finding an inverse process to the \textit{convolution}, i.e. the \textit{deconvolution}.
+As the collection of measured values $\bm{Y}$ accumulates an estimate of empirical density $\hat{f}_Y$ can readily be formed. However, a major goal in an analysis of data like this is typically to develop an accurate estimate of the true density $\hat{f}_X$. Using the information contained in $\hat{f}_Y$ to accomplish this necessarily requires some attempt at finding an inverse process to the convolution, i.e. the \textbf{deconvolution}.
 
-For cases in the form of this particular example there are a variety approaches, but they commonly involve the Fourier transform of the density functions $\left\{f_X,f_\varepsilon,f_Y\right\}$ into their corresponding characteristic functions $\left\{\phi_X,\phi_\varepsilon,\phi_Y\right\}$ [@Meister2009][@Panaretos2011]. The definition of the Fourier transform is subject to a number of conventions based on its application, but here it can be defined for some random variable $U$ with density function $f_U(u)$ as \begin{align}\phi_U(t)=\int f_U(u)\,e^{itu}\,du,\;\;\;\;\forall\,u\in\mathbb{R}.\label{eq:ft}\end{align} When conditions permit the inverse Fourier transform can be found via \begin{align}f_U(u)=\int \phi_U(t)\,e^{-itu}\,dt,\;\;\;\;\forall\,t\in\mathbb{R}.\label{eq:ift}\end{align} The Fourier transform is important in deconvolution methods because when you apply it to the convolution of two density functions the link between their respective characteristic functions becomes purely multiplicative, i.e.
+For cases in the form of this particular example there are a variety approaches, but they commonly involve the Fourier transform of the density functions $\left\{f_X,f_\varepsilon,f_Y\right\}$ into their corresponding characteristic functions $\left\{\phi_X,\phi_\varepsilon,\phi_Y\right\}$ [@Meister2009][@Panaretos2011]. Minor aspects of the definition for the Fourier transform can vary slightly between applications, resulting primarily from the use of different scale factors and sign conventions. Here it will be defined for some random variable $U\in\mathbb{R}$ with density function $f_U(u)$ and random variable $T\in\mathbb{R}$ as \begin{align}\phi_T(t)=\int_{-\infty}^\infty f_U(u)\,e^{itu}\,du.\label{eq:ft}\end{align} When conditions permit the inverse Fourier transform can be found via \begin{align}f_U(u)=\int_{-\infty}^\infty \phi_T(t)\,e^{-itu}\,dt.\label{eq:ift}\end{align} The Fourier transform is important in deconvolution methods because when you apply it to the convolution of two density functions the link between their respective characteristic functions becomes purely multiplicative, i.e.
 $$f_Y=f_X*f_\varepsilon\implies\phi_Y=\phi_X\phi_\varepsilon.$$
 An instructional proof of this result is provided on page 447 of [@Boas2005].
 
 \subsection{Generalizing}
 
-The remainder of this paper is dedicated to characterizing the major methods adopted by the High Energy Physics (HEP) community toward solving their inverse problems. While most literature on deconvolution methods do use the word \textit{convolution}, this operation is also referred to by the German word \textit{faltung} [@Weisstein]. The latter's English translation, \textit{folding}, is featured prominently in the particle physics community, but refers to a more generalized process than what is described by Equation \eqref{eq:conv2} [@DAgostini1994][@Adye2011][@Blobel2013]. In general, the terms \textit{folding} and \textit{unfolding} are used to describe two supersets of processes that respectively include \textit{convolution} and \textit{deconvolution}.
+The remainder of this paper is dedicated to characterizing the major methods adopted by the High Energy Physics (HEP) community toward solving their inverse problems. While most literature on deconvolution methods do use the word "convolution", this operation is also referred to by the German word \textit{faltung} [@Weisstein]. The latter's English translation, \textbf{folding}, is featured prominently in the particle physics community, but refers to a more generalized process than what is described by Equation \eqref{eq:conv2} [@DAgostini1994][@Adye2011][@Blobel2013]. In general, the terms folding and \textbf{unfolding} are used to describe two supersets of processes that respectively include convolution and deconvolution.
 
-One way to arrive at the intended generalization is by considering conditional probability. Thinking of $\{X,Y\}$ as a continuous bivariate random vector with joint PDF $f(x,y)$ and marginal PDFs $f_X(x)$ and $f_Y(y)$, we can define the \textit{conditional PDF of} $Y$ \textit{given that} $X=x$ as function of $y$, denoted here as $f(y\,\vert x)$ [@Casella2001]. The relationship between these PDFs is sufficient to define any one in terms of operations involving one or more of the others. As such, for $f_Y(y)$ it can be shown
+One way to arrive at the intended generalization is with the help of conditional probability. Thinking of $\{X,Y\}$ as a continuous bivariate random vector with joint PDF $f(x,y)$ and marginal PDFs $f_X(x)$ and $f_Y(y)$, we can define the conditional PDF of $Y$ given that $X=x$ as function of $y$, $f(y\,\vert x)$ [@Casella2001]. The relationship between these PDFs is sufficient to define any one of them in terms of operations involving one or more of the others. As such, for $f_Y(y)$ it can be shown
 \begin{align}f_Y(y)&=\int_\mathcal{X}f(x,y)\,dx\nonumber\\&=\int_\mathcal{X}f(y\,\vert x)f_X(x)\,dx\nonumber\\&=\int_\mathcal{X}K(x,y)f_X(x)\,dx.\label{eq:fred}\end{align}
 While integrating over $x$, $f(y\,\vert x)$ is implicitly treated a function of both $x$ and $y$. Acknowledging this allows for understanding Equation \eqref{eq:fred} as a Fredholm integral of the first kind with a Kernel function $K(x,y)$ reflecting the physical measurement process [@Blobel2011]. The relationship between $x$ and $y$ in $K(x,y)$ is not defined, but when the kernel is a function of the difference of its arguments, such that $K(x,y)=K(y-x)$, Equation \eqref{eq:fred} becomes the convolution described in Equation \eqref{eq:conv2}.
 
-In particle physics experiments, analysts make use of Monte-Carlo (MC) simulations to estimate detector response for a known true distribution $f_X(x)^{\text{MC}}$, which is itself estimated by way of MC simulations using models that typically contain theory being tested by the experiment in question. The resulting measured distribution $f_Y(y)^{\text{MC}}$ grants implicit knowledge of $K(x,y)$ by way of Equation \eqref{eq:fred} [@Blobel2013]. Finding the inverse of this Kernel is then the goal, as it should in theory allow for the mapping of experimental observations $\bm Y$, as randomly sampled from $f_Y(y)$, back to their true values $\bm X$.
+In particle physics experiments, analysts make use of Monte-Carlo (MC) simulations to estimate detector response to randoms samples from some true distribution $f_X(x)^{\text{MC}}$, which is itself estimated by way of MC simulations using models that typically contain theory being tested by the experiment in question. The resulting measured distribution $f_Y(y)^{\text{MC}}$ grants implicit knowledge of $K(x,y)$ by way of Equation \eqref{eq:fred} [@Blobel2013]. Finding the inverse of this Kernel is then the goal, as it should in theory allow for the mapping of experimental observations $\bm Y$, as randomly sampled from $f_Y(y)$, back to their true values $\bm X$.
 
 \subsection{Discretization}
 
-In practice researchers are only ever dealing with estimates $\hat f_X$, $\hat f_Y$, $\hat f_X^{\text{MC}}$, and $\hat f_Y^{\text{MC}}$. The sets of data that contribute to these estimates are organized by bin into histograms that form unnormalized granular approximations of the true distributions. Thinking in terms of these histograms allows for the reformulation of Equation \eqref{eq:fred} into the linear matrix equation:
+In practice researchers are only ever dealing with estimates $\hat f_X$, $\hat f_Y$, $\hat f_X^{\text{MC}}$, and $\hat f_Y^{\text{MC}}$, and the sets of data that contribute to these estimates are organized by bin into histograms that form unnormalized granular approximations of the true distributions. Thinking in terms of these histograms allows for the reformulation of Equation \eqref{eq:fred} into the linear matrix equation:
 \begin{align}\bm\nu = \bm{R}\bm\mu.\label{eq:mat}\end{align}
 The vectors $\bm\nu$, $\bm\mu$ and matrix $\bm{K}$ are mapped from their continuous counterparts by [@Blobel2013]:
 \begin{align}
-  \text{true distribution }f_X(x)&\longrightarrow\bm\mu\;\;n\text{-vector of unknowns,}\nonumber\\
-  \text{measured distribution }f_Y(y)&\longrightarrow\bm\nu\;\;m\text{-vector of measured data,}\nonumber\\
-  \text{Kernel }K(x,y)&\longrightarrow\bm{R}\;\;\text{rectangular }m\text{-by-}n\text{ response matrix.}\nonumber
+  \text{true distribution }f_X(x)&\longrightarrow\bm\mu\;\;N\text{-vector of unknowns,}\nonumber\\
+  \text{measured distribution }f_Y(y)&\longrightarrow\bm\nu\;\;M\text{-vector of measured data,}\nonumber\\
+  \text{Kernel }K(x,y)&\longrightarrow\bm{R}\;\;\text{rectangular }M\text{-by-}N\text{ \bf response matrix}\text{.}\nonumber
 \end{align}
-The components of vectors $\bm\nu$ and $\bm\mu$ represent the number of events that have occurred within the regions of $x$ and $y$ that define the components' corresponding bins. For $i=1,\dots,m$ and $j=1,\dots,n$ the components of matrix $\bm R$ are defined by the conditional probability
+The components of vectors $\bm\nu$ and $\bm\mu$ represent the number of events that have occurred within the regions of $x$ and $y$ that define the components' corresponding bins. For $i=1,\dots,M$ and $j=1,\dots,N$ the components of matrix $\bm R$ are defined by the conditional probability
 \begin{align}
   R_{ij}&=P(\text{measured value in bin }i\vert\text{true value in bin }j)\nonumber\\
         &=P(\nu_i\vert\mu_j),\label{eq:Rij}
 \end{align}
-and so
+and so the full response matrix has the form
 \begin{align}
   \bm{R}=\begin{pmatrix}
     P(\nu_1\vert\mu_1)     & P(\nu_1\vert\mu_2)     & \dots  & P(\nu_1\vert\mu_{N})   \\
@@ -81,8 +81,10 @@ and so
 \end{align}
 With these definitions Equation \eqref{eq:mat} tells us that an event produced in bin $\mu_j$ has some probability $\geq 0$ of being measured in each of the $M$ bins of $\bm\nu$, and that each bin $\nu_i$ receives potential contributions from each of the $N$ bins in $\bm\mu$, i.e. 
 \begin{align}\nu_i = \sum_{j=1}^NR_{ij}\mu_j.\label{eq:bini}\end{align}
-The number of bins are defined such that $N\leq M$, and analyst conventions typically lead to $M=N+1$. The higher number of bins in the measured distribution reflect that the measuring process is expected to map some events in $\bm X$ to values of $\bm Y$ that are outside the region of values that define the initial $N$ bins. The one or more extra bins are intended to account for all the possible values that a particular event could be mapped to, such that for a given starting bin $\mu_j$ one would have
-\begin{align}\sum_{i=1}^{M}P(\nu_i\vert\mu_j)=\sum_{i=1}^{M}R_{ij}=1.\label{eq:norm}\end{align}
+The number of bins are typically set such that $N\leq M$, with the convention $M=N+1$ being common. A higher number of bins in the measured distribution reflects that the measuring process is expected to map some events in $\bm X$ to values of $\bm Y$ that are outside the region of values that define the initial $N$ bins. These one or more extra bins are intended to account for all the possible values that a particular event could be mapped to, such that for a given event starting in bin $\mu_j$ one might expect the probabilities of it being measured in each of the $M$ final bins to sum to $1$. 
+
+However, in practice there are a variety of constraints on events that can either result in them not being included for analysis or even prevent them from being detected at all. For example, an analyst might cut events observed in regions of a detector that result in insufficient data collection, or maybe some event information carriers miss the detector entirely, resulting in such events going unseen. In either case the effect of these missing events is described using the detector \textbf{efficiency}, and represented mathematically by the $M$-vector $\bm\epsilon$, where component $\epsilon_j$ is the efficiency of the true bin $\mu_j$ defined\footnote{In the continuous case it is typically written as $\epsilon(x)$, and understood to be the conditional probability of an event producing any measured value given it has a true value of $x$ [@Cowan1998].} by [@Cowan1998]:
+\begin{align}\sum_{i=1}^{M}P(\nu_i\vert\mu_j)=\sum_{i=1}^{M}R_{ij}=\epsilon_j\leq 1.\label{eq:eff}\end{align}
 Meanwhile, 
 
 Consider an example of the form described by Equation \eqref{eq:meas}, i.e. $Y_i=X_i+\varepsilon_i$. Let the error be i.i.d random variables generated by biasing Gaussian process, $\varepsilon_i\sim N\big(\mu\small{(}x\small{)},\sigma\small{(}x\small{)}^2\big)$ whose mean and variance are functions of $x$ defined by
@@ -261,7 +263,7 @@ grid.arrange(comp, migration, ncol = 2)
 
 \begin{align}\hat{\mu}_i &= C_i(n_i-\beta_i) \nonumber\\ &= C_i\mu_i.\label{eq:bin1}\end{align}
 
-Here, for bin $i$, $\beta_i$ represents counted events contributed from background processes and $C_i$ is the \textit{correction factor}. The correction factors are determined by taking the respective ratios of MC simulated truth signal event counts $\big\{\mu_i^{\text{MC}}\big\}$ to the MC simulated reconstructed signal event counts $\big\{\nu_i^{\text{MC}}\big\}$.
+Here, for bin $i$, $\beta_i$ represents counted events contributed from background processes and $C_i$ is the \textbf{correction factor}. The correction factors are determined by taking the respective ratios of MC simulated truth signal event counts $\big\{\mu_i^{\text{MC}}\big\}$ to the MC simulated reconstructed signal event counts $\big\{\nu_i^{\text{MC}}\big\}$.
 \begin{align}C_i = \frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}\label{eq:bin2}\end{align}
 The expectation value of the estimate $\hat{\mu}_i$ can be calculated to in
 \begin{align}
@@ -270,9 +272,7 @@ The expectation value of the estimate $\hat{\mu}_i$ can be calculated to in
   &= \left(\frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}-\frac{\mu_i}{\nu_i^{\text{sig}}}\right)\nu_i^{\text{sig}}+\mu_i\label{eq:bin3}
 \end{align}
 
-While many data collection methods record or reconstruct variables of interest regarding the events they observe that have continuous values, discretization of this data into bins is routinely used to form estimates of these variables' distributions, with bin widths being chosen based on the needs of the researchers as well as the needs of the statistics. When combined with folding processes, binning can readily obscure otherwise prominent features in an underlying true distribution. An example of this coarse-grained look at reality afforded to us by the imperfect nature of our data collection methods can be seen in Figure [\ref{BasicExample}], in which 10,000 random samples are drawn from a simple theoretical distribution and experience folding via a comparably variant Gaussian noise process.
 
-The Bayesian methods described here were first proposed in the context of high energy physics in 1994 [@DAgostini1994] by Giulio D'Agostini, an Italian physicist and strong proponent of Bayesian reasoning in statistics. Later improvements to this method by him in 2010 [@DAgostini2010] have lead to this iterative Bayesian approach becoming, along with methods based off Tikhonov regularization [@Hocker1995][@Schmitt2012], one of the major unfolding methods used in high energy physics today. To ease any potential reviewing of the reference material I will be adopting much of D'Agostini's notation and conventions, while also attempting to provide a more concise and clear description of his described methods.
 
 \section{Algorithm Construction}
 
@@ -697,7 +697,14 @@ grid.arrange(it1,it2,it3, nrow=3)
 ```
 
 \newpage
-\section{Code}
+
+\appendix
+
+\section{Derivations}
+
+\subsection{Bin-by-bin}\label{bin}
+
+\section{R Code}
 
 The libraries I used are shown here
 ```{r, message = F, eval=F}
