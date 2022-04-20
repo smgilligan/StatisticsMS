@@ -23,6 +23,8 @@ fontsize: 12pt
 ```{r, message = F, echo=F}
 library(tidyverse)
 library(gridExtra)
+library(grid)
+library(gridtext)
 library(knitr)
 library(RColorBrewer)
 library(gtools)
@@ -203,33 +205,39 @@ comp1 <- ggplot(data = step_hist) +
                              y = Counts,
                           xend = binHigh,
                           yend = Counts,
-                         color = "E[Binned Truth]")) +
+                         color = "E[Binned Truth]",
+                      linetype = "E[Binned Truth]")) +
   geom_segment(data = filter(exp_hist, Treatment == "not folded"),
                mapping = aes(x = binLow,
                              y = CountsL,
                           xend = binLow,
                           yend = Counts,
-                         color = "E[Binned Truth]")) +
+                         color = "E[Binned Truth]",
+                      linetype = "E[Binned Truth]")) +
   geom_segment(data = filter(exp_hist, Treatment == "folded"),
                mapping = aes(x = binLow,
                              y = Counts,
                           xend = binHigh,
                           yend = Counts,
-                         color = "E[Binned Measured]")) +
+                         color = "E[Binned Measured]",
+                      linetype = "E[Binned Measured]")) +
   geom_segment(data = filter(exp_hist, Treatment == "folded"),
                mapping = aes(x = binLow,
                              y = CountsL,
                           xend = binLow,
                           yend = Counts,
-                         color = "E[Binned Measured]")) +
+                         color = "E[Binned Measured]",
+                      linetype = "E[Binned Measured]")) +
   geom_line(data = fx_data,
             mapping = aes(x = X, 
                           y = nsim*Density,
-                      color = "PDF Truth")) +
+                      color = "Scaled PDF Truth",
+                   linetype = "Scaled PDF Truth")) +
   geom_line(data = fy_data,
             mapping = aes(x = Y, 
                           y = nsim*Density,
-                      color = "PDF Measured")) +
+                      color = "Scaled PDF Measured",
+                   linetype = "Scaled PDF Measured")) +
   scale_x_continuous(breaks = seq(xymin,xymax,xyaxisstep), 
                      limits = c(xymin,xymax), 
                      expand = c(0,0)) +
@@ -237,25 +245,43 @@ comp1 <- ggplot(data = step_hist) +
                      limits = c(0,fmax_count), expand = c(0,0),
                      breaks = seq(0,ceiling(fmax_count),
                                   floor(fmax_count/1000)*200)) +
-  labs(x = "X (Truth), Y (Measured)", y = "", title = element_blank()) +
   scale_color_manual(name = NA,
-                     breaks = c("E[Binned Truth]",
-                                "PDF Truth",
+                     labels = c("E[Binned Truth]",
+                                "Scaled PDF Truth",
                                 "E[Binned Measured]",
-                                "PDF Measured"),
-                     values = c("E[Binned Truth]" = "#4C8C2B",
-                                "PDF Truth" = "#78BE20",
-                                "E[Binned Measured]" = "#004C97",
-                                "PDF Measured" = "#00B5E2")) +
+                                "Scaled PDF Measured"),
+                     breaks = c("E[Binned Truth]",
+                                "Scaled PDF Truth",
+                                "E[Binned Measured]",
+                                "Scaled PDF Measured"),
+                     values = c("E[Binned Truth]" = alpha("#4C8C2B",0.7),
+                                "Scaled PDF Truth" = alpha("#4C8C2B",1),
+                                "E[Binned Measured]" = alpha("#004C97",0.7),
+                                "Scaled PDF Measured" = alpha("#004C97",1))) +
+  scale_linetype_manual(name = NA,
+                        labels = c("E[Binned Truth]",
+                                   "Scaled PDF Truth",
+                                   "E[Binned Measured]",
+                                   "Scaled PDF Measured"),
+                        breaks = c("E[Binned Truth]",
+                                   "Scaled PDF Truth",
+                                   "E[Binned Measured]",
+                                   "Scaled PDF Measured"),
+                        values = c("E[Binned Truth]" = "solid",
+                                   "Scaled PDF Truth" = "solid",
+                                   "E[Binned Measured]" = "solid",
+                                   "Scaled PDF Measured" = "solid")) +
   theme(panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(), 
-        plot.margin = margin(0, 0.16, 0.12, 0, "cm"),
+        plot.margin = margin(0.01, 0.16, 0.12, 0.01, "cm"),
         legend.text = element_text(size = 8),
         legend.title = element_blank(),
         legend.position = c(.45, 0.99),
         legend.justification = c("right", "top"),
         legend.box.just = "left",
-        legend.key.height = unit(10,"points"))
+        legend.key.height = unit(10,"points"),
+        axis.title.x = element_blank()) +
+  guides(color = guide_legend(override.aes = list(alpha = c(0.15,1,0.15,1))))
 
 comp2 <- ggplot(data = step_hist) + 
   theme_bw() +
@@ -314,72 +340,57 @@ comp2 <- ggplot(data = step_hist) +
                      limits = c(0,fmax_count), expand = c(0,0),
                      breaks = seq(0,ceiling(fmax_count),
                                   floor(fmax_count/1000)*200)) +
-  labs(x = "X (Truth), Y (Measured)", y = "", title = element_blank()) +
   scale_color_manual(name = NA,
                      breaks = c("E[Binned Truth]",
                                 "Binned Truth",
                                 "E[Binned Measured]",
                                 "Binned Measured"),
-                     values = c("E[Binned Truth]" = "#4C8C2B",
-                                "Binned Truth" = "#CB6015",
-                                "E[Binned Measured]" = "#004C97",
-                                "Binned Measured" = "#8A2A2B")) +
-  theme(panel.grid.major = element_blank(), 
+                     values = c("E[Binned Truth]" = alpha("#4C8C2B",0.7),
+                                "Binned Truth" = alpha("#CB6015",0.7),
+                                "E[Binned Measured]" = alpha("#004C97",0.7),
+                                "Binned Measured" = alpha("#8A2A2B",0.7))) +
+  theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        plot.margin = margin(0, 0.16, 0.12, 0, "cm"),
+        plot.margin = margin(0.01, 0.16, 0.12, 0.01, "cm"),
         legend.text = element_text(size = 8),
         legend.title = element_blank(),
         legend.position = c(.45, 0.99),
         legend.justification = c("right", "top"),
         legend.box.just = "left",
-        legend.key.height = unit(10,"points"))
+        legend.key.height = unit(10,"points"),
+        axis.title.x = element_blank()) +
+  guides(color = guide_legend(override.aes = list(alpha = 0.15)))
 
 rf <- colorRampPalette(rev(brewer.pal(11,'Spectral')))
 r <- rf(32)
 
-migration1 <- ggplot(filter(sims, Truth <= 30 & Truth >= 0 &
-                              Measured <= 30 & Measured >= 0 &
-                              Detected == TRUE)) +
-  scale_x_continuous(breaks = seq(xymin,xymax,xyaxisstep), 
-                     limits = c(xymin,xymax), 
-                     expand = c(0,0)) +
-  scale_y_continuous(breaks = seq(xymin,xymax,xyaxisstep), 
-                     limits = c(xymin,xymax), 
-                     expand = c(0,0)) +
-  theme_bw() + theme(panel.grid.major = element_blank(), 
-                     panel.grid.minor = element_blank()) +
-  scale_fill_gradientn(colours = r, 
-                       breaks = seq(0,300,50)) +
-  stat_bin2d(mapping = aes(x = Truth, 
-                           y = Measured), 
-             breaks = list(x = seq(0,30,1),
-                           y = seq(0,30,1))) +
-  labs(x = "X (Truth)", y = "Y (Measured)",
-       title = "Events Detected")
+migration <- sims %>%
+  mutate(across(Detected, factor, levels = c("TRUE","FALSE"))) %>%
+  filter(Truth <= 30 & Truth >= 0 &
+           Measured <= 30 & Measured >= 0) %>%
+  ggplot() +
+    scale_x_continuous(breaks = seq(xymin,xymax,xyaxisstep),
+                       limits = c(xymin,xymax), 
+                       expand = c(0,0)) +
+    scale_y_continuous(breaks = seq(xymin,xymax,xyaxisstep), 
+                       limits = c(xymin,xymax), 
+                       expand = c(0,0)) +
+    theme_bw() + theme(panel.grid.major = element_blank(), 
+                       panel.grid.minor = element_blank()) +
+    scale_fill_gradientn(colours = r) +
+    stat_bin2d(mapping = aes(x = Truth, 
+                             y = Measured), 
+               breaks = list(x = seq(0,30,1),
+                             y = seq(0,30,1))) +
+    labs(x = "X (Truth)", y = "Y (Measured)",
+         title = "Event Detected") +
+    facet_wrap(Detected~., nrow = 2, scales = "free")
 
-migration2 <- ggplot(filter(sims, Truth <= 30 & Truth >= 0 &
-                              Measured <= 30 & Measured >= 0 &
-                              Detected == FALSE)) +
-  scale_x_continuous(breaks = seq(xymin,xymax,xyaxisstep), 
-                     limits = c(xymin,xymax), 
-                     expand = c(0,0)) +
-  scale_y_continuous(breaks = seq(xymin,xymax,xyaxisstep), 
-                     limits = c(xymin,xymax), 
-                     expand = c(0,0)) +
-  theme_bw() + theme(panel.grid.major = element_blank(), 
-                     panel.grid.minor = element_blank()) +
-  scale_fill_gradientn(colours = r, 
-                       breaks = seq(0,120,20)) +
-  stat_bin2d(mapping = aes(x = Truth, 
-                           y = Measured), 
-             breaks = list(x = seq(0,30,1),
-                           y = seq(0,30,1))) +
-  labs(x = "X (Truth)", y = "Y (Measured)",
-       title = "Events Not Detected")
-
-grid.arrange(comp1, migration1, comp2, migration2, ncol = 2, widths = c(6,5))
+grid.arrange(arrangeGrob(comp1, comp2, richtext_grob("X (Truth), Y (Measured)"),
+                         heights = c(10,10,1)), 
+             migration, ncol = 2, widths = c(6,5))
 ```
-\caption{\emph{A plot featuring a histogram resulting from 100,000 random samples from the true density $f_X(x)$ (Truth), the same histogram after its data has experienced a biased Gaussian process and the effects of measurement efficiency (Measured), and the said true distribution scaled by the number of simulated events (Scaled True Density).}}
+\caption{\emph{The above plots feature two bimodal cauchy distributions depicting events before before and after after detector effects. (Top Left) The two continuous distributions correspond to the theoretical PDFs of the two distributions rescaled to correspond with the counts from 10,000 events, and the histograms correspond to the derived expected counts for their respective histograms. (Bottom Left) These four histograms consist of the expected counts as well as possible simulated counts. (Right) These heat maps compare observed and unobserved events as a result of detector efficiency in addition to the detector's smearing effect.}}
 \label{BasicExample}
 \end{figure}
 
@@ -414,7 +425,7 @@ At the analysis level we care less about individual events and more about mappin
 $$0\leq\sum_{j=1}^{n_E}P(E_j\vert C_i,I)=\sum_{j=1}^{n_E}\lambda_{ji}\equiv\epsilon_i\leq 1,$$ 
 the exact value of which provides for us a definition for $\epsilon_i$, the \textit{efficiency} at which we detect cause $C_i$ from all accounted for observed effects, being also defined and useable as the ratio of observed events resulting from cause $C_i$ to the true number of events resulting from $C_i$, $x^{obs}(C_i)/x(C_i)$.
 
-```{r, echo = FALSE, fig.align='center', fig.cap="\\label{c2elinks}\\emph{Thinking of causes and effects as distinct subsets within one or more dimensional cause and effect phase spaces, this figure shows how events are probabilistically mapped from the subsets used to define our causes to the subsets used to define our effects. The node indicated by $T$ (`trash') represents the event selection inefficiency, and can be thought of as an additional effect $E_{n_E+1}$ that contains an unobserved number of events. Unlike the possibility of alloting independent sources of background to different causes, $E_{n_E+1}$ ($\\:T$) can consist of any number of potentially distinguishable effects depending on how the lost events are distributed across the complement of $\\cup(E_1,E_2,\\dots,E_{n_E})$ in our effect phase space. Figure source:} \\cite{DAgostini:2010hil}\\emph{.}"}
+```{r, echo = FALSE, fig.align='center', fig.cap="\\label{c2elinks}\\emph{Thinking of causes and effects as distinct subsets within one or more dimensional cause and effect phase spaces, this figure shows how events are probabilistically mapped from the subsets used to define our causes to the subsets used to define our effects. The node indicated by $T$ (`trash') represents the event selection inefficiency, and can be thought of as an additional effect $E_{n_E+1}$ that contains an unobserved number of events. Unlike the possibility of alloting independent sources of background to different causes, $E_{n_E+1}$ ($\\:T$) can consist of any number of potentially distinguishable effects depending on how the lost events are distributed across the complement of $\\cup(E_1,E_2,\\dots,E_{n_E})$ in our effect phase space.}"}
 include_graphics("problinks.png", dpi=275)
 ```
 
