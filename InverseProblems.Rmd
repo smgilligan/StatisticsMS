@@ -41,41 +41,43 @@ A common problem faced in the quantitative sciences and their associated technol
 
 One way to characterize a basic example would be the following. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f(x)\,dx$$ and $$\int_\mathcal{X}f(x)\,dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, 
 \begin{align}Y_i&=g(X_i,\varepsilon_i)\nonumber\\&=X_i+\varepsilon_i.\label{eq:meas}\end{align} 
-In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ using the mathematics of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textbf{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by [@Panaretos2011] \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
+In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ using the mathematics of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textbf{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by \cite{Panaretos2011} \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
 where $J$ represents the Jacobian of the transformation involved in performing the change of basis on $f_\varepsilon$ from $\varepsilon$ to $x$, which is necessary for the evaluation of the integral for a given $y$. The magnitude of the Jacobian for transformation of $\varepsilon$ to $y-x$ through the manipulation of Equation \eqref{eq:meas} happens to be $1$.
 
 As the collection of measured values $\bm{Y}$ accumulates an estimate of empirical density $\hat{f}_Y$ can readily be formed. However, a major goal in an analysis of data like this is typically to develop an accurate estimate of the true density $\hat{f}_X$. Using the information contained in $\hat{f}_Y$ to accomplish this necessarily requires some attempt at finding an inverse process to the convolution, i.e. the \textbf{deconvolution}.
 
-For cases in the form of this particular example there are a variety approaches, but they commonly involve the Fourier transform of the density functions $\left\{f_X,f_\varepsilon,f_Y\right\}$ into their corresponding characteristic functions $\left\{\phi_X,\phi_\varepsilon,\phi_Y\right\}$ [@Meister2009][@Panaretos2011]. Minor aspects of the definition for the Fourier transform can vary slightly between applications, resulting primarily from the use of different scale factors and sign conventions. Here it will be defined for some random variable $U\in\mathbb{R}$ with density function $f_U(u)$ and random variable $T\in\mathbb{R}$ as \begin{align}\phi_T(t)=\int_{-\infty}^\infty f_U(u)\,e^{itu}\,du.\label{eq:ft}\end{align} When conditions permit the inverse Fourier transform can be found via \begin{align}f_U(u)=\int_{-\infty}^\infty \phi_T(t)\,e^{-itu}\,dt.\label{eq:ift}\end{align} The Fourier transform is important in deconvolution methods because when you apply it to the convolution of two density functions the link between their respective characteristic functions becomes purely multiplicative, i.e.
+For cases in the form of this particular example there are a variety approaches, but they commonly involve the Fourier transform of the density functions $\left\{f_X,f_\varepsilon,f_Y\right\}$ into their corresponding characteristic functions $\left\{\phi_X,\phi_\varepsilon,\phi_Y\right\}$ \cite{Meister2009}\cite{Panaretos2011}. Minor aspects of the definition for the Fourier transform can vary slightly between applications, resulting primarily from the use of different scale factors and sign conventions. Here it will be defined for some random variable $U\in\mathbb{R}$ with density function $f_U(u)$ and random variable $T\in\mathbb{R}$ as \begin{align}\phi_T(t)=\int_{-\infty}^\infty f_U(u)\,e^{itu}\,du.\label{eq:ft}\end{align} When conditions permit the inverse Fourier transform can be found via \begin{align}f_U(u)=\int_{-\infty}^\infty \phi_T(t)\,e^{-itu}\,dt.\label{eq:ift}\end{align} The Fourier transform is important in deconvolution methods because when you apply it to the convolution of two density functions the link between their respective characteristic functions becomes purely multiplicative, i.e.
 $$f_Y=f_X*f_\varepsilon\implies\phi_Y=\phi_X\phi_\varepsilon.$$
-An instructional proof of this result is provided on page 447 of [@Boas2005].
+An instructional proof of this result is provided on page 447 of \cite{Boas2005}.
 
 \subsection{Generalizing}
 
-The remainder of this paper is dedicated to characterizing the major methods adopted by the High Energy Physics (HEP) community toward solving their inverse problems. While most literature on deconvolution methods do use the word "convolution", this operation is also referred to by the German word \textit{faltung} [@Weisstein]. The latter's English translation, \textbf{folding}, is featured prominently in the particle physics community, but refers to a more generalized process than what is described by Equation \eqref{eq:conv2} [@DAgostini1994][@Adye2011][@Blobel2013]. In general, the terms folding and \textbf{unfolding} are used to describe two supersets of processes that respectively include convolution and deconvolution.
+The remainder of this paper is dedicated to characterizing the major methods adopted by the High Energy Physics (HEP) community toward solving their inverse problems. While most literature on deconvolution methods do use the word "convolution", this operation is also referred to by the German word \textit{faltung} \cite{Weisstein}. The latter's English translation, \textbf{folding}, is featured prominently in the particle physics community, but refers to a more generalized process than what is described by Equation \eqref{eq:conv2} \cite{DAgostini1994}\cite{Adye2011}\cite{Blobel2013}. In general, the terms folding and \textbf{unfolding} are used to describe two supersets of processes that respectively include convolution and deconvolution.
 
-One way to arrive at the intended generalization is with the help of conditional probability. Thinking of $\{X,Y\}$ as a continuous bivariate random vector with joint PDF $f(x,y)$ and marginal PDFs $f_X(x)$ and $f_Y(y)$, we can define the conditional PDF of $Y$ given that $X=x$ as function of $y$, $f(y\,\vert x)$ [@Casella2001]. The relationship between these PDFs is sufficient to define any one of them in terms of operations involving one or more of the others. As such, for $f_Y(y)$ it can be shown
+One way to arrive at the intended generalization is with the help of conditional probability. Thinking of $\{X,Y\}$ as a continuous bivariate random vector with joint PDF $f(x,y)$ and marginal PDFs $f_X(x)$ and $f_Y(y)$, we can define the conditional PDF of $Y$ given that $X=x$ as function of $y$, $f(y\,\vert x)$ \cite{Casella2001}. The relationship between these PDFs is sufficient to define any one of them in terms of operations involving one or more of the others. As such, for $f_Y(y)$ it can be shown
 \begin{align}f_Y(y)&=\int_\mathcal{X}f(x,y)\,dx\nonumber\\&=\int_\mathcal{X}f(y\,\vert x)f_X(x)\,dx\nonumber\\&=\int_\mathcal{X}K(x,y)f_X(x)\,dx.\label{eq:fred}\end{align}
-While integrating over $x$, $f(y\,\vert x)$ is implicitly treated a function of both $x$ and $y$. Acknowledging this allows for understanding Equation \eqref{eq:fred} as a Fredholm integral of the first kind with a Kernel function $K(x,y)$ reflecting the physical measurement process [@Blobel2011]. The relationship between $x$ and $y$ in $K(x,y)$ is not defined, but when the kernel is a function of the difference of its arguments, such that $K(x,y)=K(y-x)$, Equation \eqref{eq:fred} becomes the convolution described in Equation \eqref{eq:conv2}.
+While integrating over $x$, $f(y\,\vert x)$ is implicitly treated a function of both $x$ and $y$. Acknowledging this allows for understanding Equation \eqref{eq:fred} as a Fredholm integral of the first kind with a Kernel function $K(x,y)$ reflecting the physical measurement process \cite{Blobel2011}. The relationship between $x$ and $y$ in $K(x,y)$ is not defined, but when the kernel is a function of the difference of its arguments, such that $K(x,y)=K(y-x)$, Equation \eqref{eq:fred} becomes the convolution described in Equation \eqref{eq:conv2}.
 
-In particle physics experiments, analysts make use of Monte-Carlo (MC) simulations to estimate detector response to randoms samples from some true distribution $f_X(x)^{\text{MC}}$, which is itself estimated by way of MC simulations using models that typically contain theory being tested by the experiment in question. The resulting measured distribution $f_Y(y)^{\text{MC}}$ grants implicit knowledge of $K(x,y)$ by way of Equation \eqref{eq:fred} [@Blobel2013]. Finding the inverse of this Kernel is then the goal, as it should in theory allow for the mapping of experimental observations $\bm Y$, as randomly sampled from $f_Y(y)$, back to their true values $\bm X$.
+In particle physics experiments, analysts make use of Monte-Carlo (MC) simulations to estimate detector response to randoms samples from some true distribution $f_X(x)^{\text{MC}}$, which is itself estimated by way of MC simulations using models that typically contain theory being tested by the experiment in question. The resulting measured distribution $f_Y(y)^{\text{MC}}$ grants implicit knowledge of $K(x,y)$ by way of Equation \eqref{eq:fred} \cite{Blobel2013}. Finding the inverse of this Kernel is then the goal, as it should in theory allow for the mapping of experimental observations $\bm Y$, as randomly sampled from $f_Y(y)$, back to their true values $\bm X$.
 
 \subsection{Discretization}
 
 In practice researchers are only ever dealing with estimates $\hat f_X$, $\hat f_Y$, $\hat f_X^{\text{MC}}$, and $\hat f_Y^{\text{MC}}$, and the sets of data that contribute to these estimates are organized by bin into histograms that form unnormalized granular approximations of the true distributions. Thinking in terms of these histograms allows for the reformulation of Equation \eqref{eq:fred} into the linear matrix equation:
 \begin{align}\bm\nu = \bm{R}\bm\mu.\label{eq:mat}\end{align}
-The vectors $\bm\nu$, $\bm\mu$ and matrix $\bm{K}$ are mapped from their continuous counterparts by [@Blobel2013]:
+The vectors $\bm\nu$, $\bm\mu$ and matrix $\bm{K}$ are mapped from their continuous counterparts by \cite{Blobel2013}:
 \begin{align}
-  \text{true distribution }f_X(x)&\longrightarrow\bm\mu\;\;N\text{-vector of unknowns,}\nonumber\\
-  \text{measured distribution }f_Y(y)&\longrightarrow\bm\nu\;\;M\text{-vector of measured data,}\nonumber\\
+  \text{true distribution }f_X(x)&\longrightarrow\bm\mu\,\in\,\mathbb{R}^N_{+}\cup\bm{0}\text{ the unknown true bin counts,}\nonumber\\
+  \text{measured distribution }f_Y(y)&\longrightarrow\bm\nu\,\in\,\mathbb{R}^M_{+}\cup\bm{0}\text{ the measured bin bounts,}\nonumber\\
   \text{Kernel }K(x,y)&\longrightarrow\bm{R}\;\;\text{rectangular }M\text{-by-}N\text{ \bf response matrix}\text{.}\nonumber
 \end{align}
-The components of vectors $\bm\nu$ and $\bm\mu$ represent the number of events that have occurred within the regions of $x$ and $y$ that define the components' corresponding bins. For $i=1,\dots,M$ and $j=1,\dots,N$ the components of matrix $\bm R$ are defined by the conditional probability
+The components of vectors $\bm\nu$ and $\bm\mu$ represent the number of events that have occurred within the regions of $x$ and $y$ that define the components' corresponding bins. For $i=1,\dots,M$ and $j=1,\dots,N$ the components of matrix $\bm R$ are defined by the conditional probability \cite{Cowan1998}
 \begin{align}
   R_{ij}&=P(\text{measured value in bin }i\vert\text{true value in bin }j)\nonumber\\
-        &=P(\nu_i\vert\mu_j),\label{eq:Rij}
+        &=\frac{P(\text{measured value in bin }i\text{ and true value in bin }j)}{P(\text{true value in bin }j)}\nonumber\\
+        &=\frac{\int_{\text{bin }i}\int_{\text{bin }j}K(x,y)f_X(x)dx\,dy}{\int_{\text{bin }j}dx\,f_X(x)}\nonumber\\
+        &\equiv P(\nu_i\vert\mu_j).\label{eq:Rij}
 \end{align}
-and so the full response matrix has the form
+In terms of $P(\nu_i\vert\mu_j)$ the full response matrix then has the form
 \begin{align}
   \bm{R}=\begin{pmatrix}
     P(\nu_1\vert\mu_1)     & P(\nu_1\vert\mu_2)     & \dots  & P(\nu_1\vert\mu_{N})   \\
@@ -88,7 +90,7 @@ With these definitions Equation \eqref{eq:mat} tells us that an event produced i
 \begin{align}\nu_i = \sum_{j=1}^NR_{ij}\mu_j.\label{eq:bini}\end{align}
 The number of bins are typically set such that $N\leq M$, with the convention $M=N+1$ being common. A higher number of bins in the measured distribution reflects that the measuring process is expected to map some events in $\bm X$ to values of $\bm Y$ that are outside the region of values that define the initial $N$ bins. These one or more extra bins are intended to account for all the possible values that a particular event could be mapped to, such that for a given event starting in bin $j$ one might expect the probabilities of it being measured in each of the $M$ final bins to sum to $1$. 
 
-However, in practice there are a variety of constraints on events that can either result in them not being included for analysis or even prevent them from being detected at all. For example, an analyst might cut events observed in regions of a detector that result in insufficient data collection, or maybe some event information carriers miss the detector entirely, resulting in such events going unseen. In either case the effect of these missing events is described using the detector \textbf{efficiency}, and represented mathematically by the $M$-vector $\bm\epsilon$, where component $\epsilon_j$ is the efficiency of the $j$th true bin defined\footnote{In the continuous case it is typically written as $\epsilon(x)$, and understood to be the conditional probability of an event producing any measured value given it has a true value of $x$. It is typically absorbed into $K(x,y)$ where it goes on to manifest within $\bm R$ in the manner shown in Equation \eqref{eq:eff} \cite{Blobel2013}.} by [@Cowan1998]:
+However, in practice there are a variety of constraints on events that can either result in them not being included for analysis or even prevent them from being detected at all. For example, an analyst might cut events observed in regions of a detector that result in insufficient data collection, or maybe some event information carriers miss the detector entirely, resulting in such events going unseen. In either case the effect of these missing events is described using the detector \textbf{efficiency}, and represented mathematically by the $M$-vector $\bm\epsilon$, where component $\epsilon_j$ is the efficiency of the $j$th true bin defined\footnote{In the continuous case it is typically written as $\epsilon(x)$, and understood to be the conditional probability of an event producing any measured value given it has a true value of $x$. It is typically absorbed into $K(x,y)$ where it goes on to manifest within $\bm R$ in the manner shown in Equation \eqref{eq:eff} \cite{Blobel2013}.} by \cite{Cowan1998}:
 \begin{align}\sum_{i=1}^{M}P(\nu_i\vert\mu_j)=\sum_{i=1}^{M}R_{ij}=\epsilon_j\leq 1.\label{eq:eff}\end{align}
 In contrast to this are contributions to measured counts from \textbf{background} processes, which are typically studied separately and not involved directly in the unfolding process. Ignoring it would be a major omission in any description of HEP data, so it is briefly included here for completion. Mathematically it is included by modifying Equation \eqref{eq:bini} to read
 \begin{align}\nu_i = \sum_{j=1}^NR_{ij}\mu_j+\beta_i,\end{align}
@@ -119,16 +121,15 @@ The efficiency is similarly conditional on $X_i$, and is modeled here as a Berno
 \begin{align}
   p(X_i=x)=1-e^{-\sqrt{x}/4}.\nonumber
 \end{align}
-\footnote{Here is some food for thought. In particle physics the two Cauchy processes contributing to $X_i$ would likely represent two very different physics processes with different numbers and types of information carriers. For some physics variable of interest the detection and measurement process to reconstruct a possible measured value of $Y_i$ from an event with a true value of $X_i$ would vary accordingly, suggesting the replacement of $\varepsilon_i$ and $\epsilon_i$ with pairs $\{\varepsilon_{1,i},\varepsilon_{2,i}\}$ and $\{\epsilon_{1,i},\epsilon_{2,i}\}$, and altering the form of the example to
-\begin{align}Y_i&=Z_iY_{1,i}+(1-Z_i)Y_{2,i}\nonumber\\&=Z_i\epsilon_{1,i}\left(X_{1,i}+\varepsilon_{1,i}\right)+(1-Z_i)\epsilon_{2,i}\left(X_{2,i}+\varepsilon_{2,i}\right).\nonumber\end{align}}
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
     \centering
     \hrulefill
 ```{r, echo = F}
 set.seed(1234)
 # Assume 10000 events
 nsim <- 10000
+mcsim <- 10*nsim
 
 # Two possible types of processes with different means but equal variances
 alpha1 <- 24
@@ -137,25 +138,33 @@ beta <- 0.4
 
 # Event 1 is 1/3 as likely to occur as event 2
 p <- 2/7
+
 x1 <- rgamma(nsim, shape = alpha1, scale = beta)
 x2 <- rgamma(nsim, shape = alpha2, scale = beta)
-#p <- 2/5
-#x1 <- rlnorm(nsim, meanlog = 2.25, sdlog = 0.25)
-#x2 <- rlnorm(nsim, meanlog = 2.8, sdlog = 0.15)
+x1mc <- rgamma(mcsim, shape = alpha1, scale = beta)
+x2mc <- rgamma(mcsim, shape = alpha2, scale = beta)
+
 z <- rbernoulli(nsim, p)
 x <- c(x1[z],x2[!z])
+zmc <- rbernoulli(mcsim, p)
+xmc <- c(x1mc[zmc],x2mc[!zmc])
 
 # Efficiency
 xdetected <- rbernoulli(length(x),1-exp(-sqrt(x)/4)) == 1
+xdetectedmc <- rbernoulli(length(xmc),1-exp(-sqrt(xmc)/4)) == 1
 
 # Add Smearing
 ermu <- -x^(1/4)
 ersd <- log((x+10)/4)
 y <- x + rnorm(nsim, mean = ermu, sd = ersd)
 
+ermumc <- -xmc^(1/4)
+ersdmc <- log((xmc+10)/4)
+ymc <- xmc + rnorm(mcsim, mean = ermumc, sd = ersdmc)
+
 # Binned representation
-xymin <- 5
-xymax <- 24
+xymin <- 4
+xymax <- 26
 xystep <- 3
 dxy <- 4
 xyaxes <- c(xymin-dxy,xymin,
@@ -165,6 +174,10 @@ xyaxes <- c(xymin-dxy,xymin,
 sims <- tibble("Truth" = x,
                "Measured" = y,
                "Detected" = xdetected)
+
+simsmc <- tibble("Truth" = xmc,
+                 "Measured" = ymc,
+                 "Detected" = xdetectedmc)
 
 step_hist_notfolded <- hist(x[which(x > xymin-dxy & x < xymax+dxy)], 
                             breaks = seq(xymin-dxy,xymax+dxy,1), plot = F)
@@ -187,6 +200,7 @@ step_hist <-
          Treatment = c(rep("folded", length(step_hist_folded$density)),
                        rep("not folded", length(step_hist_notfolded$density))))
 ```
+
 ```{r, echo = F}
 # Continuous representation
 X <- seq(xymin-dxy,xymax+dxy,0.01)
@@ -208,6 +222,7 @@ exp_hist[,3:4] <- nsim*exp_hist[,3:4]
 # Counts max
 fmax_count <- max(fmax_count, 1.05*max(nsim*fx_data$Density))
 ```
+
 ```{r, fig.height=4.8, fig.width=7.5, fig.align='center', echo = F}
 # Plotting
 comp1 <- ggplot(data = step_hist) + 
@@ -518,28 +533,50 @@ dp_hist <- sims %>%
 
 ```{r, echo=F}
 dp_hist <- sims %>%
-  filter(Truth <= 30 & Truth >= 0 &
-           Measured <= 30 & Measured >= 0) %>%
   pivot_longer(c(Measured,Truth), 
                names_to = "Treatment", 
-               values_to = "binLow") %>%
+               values_to = "binHigh") %>%
+  mutate(binHigh = ceiling(binHigh)) %>%
+  filter(binHigh <= 30 & binHigh >= 1) %>%
   filter((Treatment == "Measured" & Detected == TRUE) | Treatment == "Truth") %>%
-  mutate(binHigh = ceiling(binLow),
-         binLow = floor(binLow)) %>%
   count(binHigh, Treatment, name = "Counts") %>%
-  mutate(Density = Counts/nsim) %>%
-  complete(binHigh=1:30,Treatment,
-           fill = list(Counts=0,Density=0))
+  complete(binHigh=1:30, Treatment, fill = list(Counts=0)) %>%
+  mutate(binLow = binHigh-1,
+         LCounts = rbind(diag(rep(1,60))[1:2,],diag(rep(1,60))[1:58,]) %*% Counts) %>%
+  mutate(Density = Counts/mcsim,
+         LDensity = LCounts/mcsim) %>%
+  select(Treatment,binLow,binHigh,LCounts,Counts,LDensity,Density)
+
+mc_bins <- simsmc %>%
+  pivot_longer(c(Measured,Truth), 
+               names_to = "Treatment", 
+               values_to = "Bin") %>%
+  mutate(Bin = ceiling(Bin)) %>%
+  filter(Bin <= 30 & Bin >= 1) %>%
+  filter((Treatment == "Measured" & Detected == TRUE) | Treatment == "Truth") %>%
+  count(Bin, Treatment, name = "Counts") %>%
+  complete(Bin=1:30, Treatment, fill = list(Counts=0)) %>%
+  mutate(LBin = Bin-1,
+         LCounts = rbind(diag(rep(1,60))[1:2,],diag(rep(1,60))[1:58,]) %*% Counts) %>%
+  mutate(Density = Counts/mcsim,
+         LDensity = LCounts/mcsim) %>%
+  select(Treatment,LBin,Bin,LCounts,Counts,LDensity,Density)
 
 dnu <- dp_hist %>%
   filter(Treatment == "Measured") %>%
   select(binHigh,Counts) %>%
   mutate(Good = Counts>50)
-
 dmu <- dp_hist %>%
   filter(Treatment == "Truth") %>%
   select(binHigh,Counts) %>%
   mutate(Good = Counts>50)
+
+mcnu <- mc_bins %>%
+  filter(Treatment == "Measured") %>%
+  select(Bin, Counts)
+mcmu <- mc_bins %>%
+  filter(Treatment == "Truth") %>%
+  select(Bin, Counts)
 
 mR <- as.matrix(read.csv("migrationMatrix.csv", header = F))
 colnames(mR) <- NULL
@@ -547,7 +584,6 @@ mR <- mR[dnu$Good,dmu$Good]
 mR <- zapsmall(mR, digits = 6)
 
 mRsvd <- svd(mR, nu = dim(mR)[1], nv = dim(mR)[2])
-mRsvd$d
 
 Sig <- zapsmall(t(mRsvd$u) %*% mR %*% mRsvd$v, digits=6)
 invSig <- t(rbind(diag(1/mRsvd$d),matrix(rep(0,(dim(mR)[1]-dim(mR)[2])*dim(mR)[2]),ncol=dim(mR)[2])))
@@ -558,11 +594,11 @@ enu <- exp_hist %>%
 
 muSVD <- mRsvd$v %*% invSig %*% t(mRsvd$u) %*% (dnu$Counts[dnu$Good]/(enu[dnu$Good]))
 
-plot(x=c(-5,35),y=c(0,0), xlim = c(5,25), ylim = c(min(muSVD)-10,max(muSVD,dmu$Counts)+10), type = "l", xlab = "X", ylab = "Counts", main="SVD in progress, no regularization")
-points((1:30)[dmu$Good]-0.5, muSVD, col = 2)
-lines(rbind((1:30)[dmu$Good]-1,(1:30)[dmu$Good]), rep(muSVD,each=2), col = 2)
-points((1:30)[dmu$Good]-0.5, dmu$Counts[dmu$Good], col = 4)
-lines(rbind((1:30)[dmu$Good]-1,(1:30)[dmu$Good]), rep(dmu$Counts[dmu$Good],each=2), col = 4)
+#plot(x=c(-5,35),y=c(0,0), xlim = c(5,25), ylim = c(min(muSVD)-10,max(muSVD,dmu$Counts)+10), type = "l", xlab = "X", ylab = "Counts", main="SVD in progress, no regularization")
+#points((1:30)[dmu$Good]-0.5, muSVD, col = 2)
+#lines(rbind((1:30)[dmu$Good]-1,(1:30)[dmu$Good]), rep(muSVD,each=2), col = 2)
+#points((1:30)[dmu$Good]-0.5, dmu$Counts[dmu$Good], col = 4)
+#lines(rbind((1:30)[dmu$Good]-1,(1:30)[dmu$Good]), rep(dmu$Counts[dmu$Good],each=2), col = 4)
 
 
 #vals <- rep(0,15)
@@ -571,6 +607,38 @@ lines(rbind((1:30)[dmu$Good]-1,(1:30)[dmu$Good]), rep(dmu$Counts[dmu$Good],each=
 #}
 #plot(1:15, log10(vals))
 #cbind(1:15,vals)
+
+#mR %*% (step_hist %>% filter(Treatment == "not folded") %>% pull(Counts)) - step_hist %>% filter(Treatment == "folded") %>% pull(Counts)
+
+#length(step_hist %>% filter(Treatment == "not folded") %>% pull(Counts))
+
+#sum(mc_hist %>% filter(Treatment == "Truth") %>% pull(Counts))
+
+
+Rmc <- (simsmc %>%
+  filter(Detected == TRUE,
+         Measured >= 0 & Measured <= 30) %>%
+  mutate(Truth = ceiling(Truth),
+         Measured = ceiling(Measured)) %>%
+  count(Truth, Measured, name = "Counts") %>%
+  complete(Measured=30:1, Truth=1:30, fill = list(Counts=0)) %>%
+  pull(Counts) %>%
+  matrix(byrow = T, ncol = 30)) %*% (simsmc %>%
+  mutate(Truth = ceiling(Truth)) %>%
+  select(Truth) %>%
+  count(Truth, name = "Counts") %>%
+  mutate(Rscale = 1/Counts) %>%
+  complete(Truth = 1:30, 
+           fill = list(Counts=0,Rscale=0)) %>%
+  pull(Rscale) %>% diag)
+
+plot(1:30, Rmc %*% mcmu$Counts, pch = 15, col = "red")
+points(1:30, mcnu$Counts, pch = 5, col = "blue")
+```
+```{r}
+Rmc
+svd(Rmc, nu = dim(Rmc)[1], nv = dim(Rmc)[2])
+(svdRmc <- svd(Rmc[,4:30], nu = dim(Rmc[,4:30])[1], nv = dim(Rmc[,4:30])[2]))
 ```
 
 \section{Unfolding methods in particle physics}
@@ -1016,7 +1084,7 @@ it3 <- ggplot(data = step_hist_iter3) +
 \section{Discussion of Results and Conclusion}
 The results of my unfolding are shown below in Figure [\ref{iterations}]. The iterations get off to an okay start, but instead of converging they begin to behave erratically. The tails blowing up clearly comes from using random samples from a posterior distribution as basis for new priors, embedding events in places where there were zero before. I attempted to remedy this with a prior that disfavored events occurring far from the diagonal, as mentioned previously in the context of Figure [\ref{prior}]. It kept these tails from blowing up for at least the first iteration. In the future I will look more into options relating to this issue.
 
-There is almost certainly an error in the code governing the 3rd iteration, resulting in a vastly larger confidence band. Instead of trying to fix this issue I think it would be better use of my time to study some similar working examples [@Burgard2021].
+There is almost certainly an error in the code governing the 3rd iteration, resulting in a vastly larger confidence band. Instead of trying to fix this issue I think it would be better use of my time to study some similar working examples \cite{Burgard2021}.
 
 ```{r, fig.height=8, fig.align='center', warning=F, fig.width=4.5, echo=F, fig.cap="\\label{iterations}\\emph{The first iteration looks like itd heading the right direction. It is my belief that I have an error somehwere in my work.}"}
 grid.arrange(it1,it2,it3, nrow=3)
