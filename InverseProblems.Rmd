@@ -26,11 +26,14 @@ library(tidyverse)
 library(gridExtra)
 library(grid)
 library(gridtext)
+library(gtable)
 library(knitr)
 library(RColorBrewer)
 library(viridisLite)
 library(viridis)
 library(gtools)
+library(cowplot)
+library(egg)
 ```
 
 
@@ -39,7 +42,7 @@ A common problem faced in the quantitative sciences and their associated technol
 
 \subsection{The Deconvolution}
 
-One way to characterize a basic example would be the following. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f(x)\,dx$$ and $$\int_\mathcal{X}f(x)\,dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, 
+One way to characterize a basic example would be the following. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f(x)\,dx$$ and $$\int_\mathcal{X}f(x)\,dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured/reconstructed values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, 
 \begin{align}Y_i&=g(X_i,\varepsilon_i)\nonumber\\&=X_i+\varepsilon_i.\label{eq:meas}\end{align} 
 In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ using the mathematics of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textbf{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by \cite{Panaretos2011} \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
 where $J$ represents the Jacobian of the transformation involved in performing the change of basis on $f_\varepsilon$ from $\varepsilon$ to $x$, which is necessary for the evaluation of the integral for a given $y$. The magnitude of the Jacobian for transformation of $\varepsilon$ to $y-x$ through the manipulation of Equation \eqref{eq:meas} happens to be $1$.
@@ -67,7 +70,7 @@ In practice researchers are only ever dealing with estimates $\hat f_X$, $\hat f
 The vectors $\bm\nu$, $\bm\mu$ and matrix $\bm{K}$ are mapped from their continuous counterparts by \cite{Blobel2013}:
 \begin{align}
   \text{true distribution }f_X(x)&\longrightarrow\bm\mu\,\in\,\mathbb{R}^N_{+}\cup\bm{0}\text{ the unknown true bin counts,}\nonumber\\
-  \text{measured distribution }f_Y(y)&\longrightarrow\bm\nu\,\in\,\mathbb{R}^M_{+}\cup\bm{0}\text{ the measured bin bounts,}\nonumber\\
+  \text{measured distribution }f_Y(y)&\longrightarrow\bm\nu\,\in\,\mathbb{R}^M_{+}\cup\bm{0}\text{ the measured bin counts,}\nonumber\\
   \text{Kernel }K(x,y)&\longrightarrow\bm{R}\;\;\text{rectangular }M\text{-by-}N\text{ \bf response matrix}\text{.}\nonumber
 \end{align}
 The components of vectors $\bm\nu$ and $\bm\mu$ represent the number of events that have occurred within the regions of $x$ and $y$ that define the components' corresponding bins. For $i=1,\dots,M$ and $j=1,\dots,N$ the components of matrix $\bm R$ are defined by the conditional probability \cite{Cowan1998}
@@ -112,7 +115,7 @@ Consider an example of the form described by Equation \eqref{eq:meas}, i.e. $Y_i
   X_{2,i}&\sim \text{Gamma}(42,0.4),\nonumber\\
   \text{and }Z_i&\sim\text{Bernoulli}(2/7),\nonumber
 \end{align}
-and let the effects of detector smearing be represented by i.i.d random variables generated by the conditional Gaussian process $\varepsilon_i\sim N\left(\mu\small{(}X_i\small{)},\sigma\small{(}X_i\small{)}^2\right)$, the mean and variance of which are functions defined by
+and let the effects of detector smearing be represented by i.i.d random variables generated by the conditional Gaussian process $\varepsilon_i\sim N\left(\mu(X_i),\sigma(X_i)^2\right)$, the mean and variance of which are functions defined by
 \begin{align}
   \mu(X_i=x)&=-x^{1/4}\;\;\text{and}\nonumber\\
   \sigma(X_i=x)&=\log\left(\frac{x+10}{4}\right).\nonumber
@@ -122,292 +125,379 @@ The efficiency is similarly conditional on $X_i$, and is modeled here as a Berno
   p(X_i=x)=1-e^{-\sqrt{x}/4}.\nonumber
 \end{align}
 
-\begin{figure}[!ht]
-    \centering
-    \hrulefill
 ```{r, echo = F}
-set.seed(1234)
+set.seed(12321)
 # Assume 10000 events
-nsim <- 10000
-mcsim <- 10*nsim
+nsim_data <- 20000
+dmrat <- 20
+nsim_mc <- dmrat*nsim_data
 
 # Two possible types of processes with different means but equal variances
-alpha1 <- 24
-alpha2 <- 42
-beta <- 0.4
+loctn <- c(11,18,14)
+scale <- c(4,4,5)
+p <- 0.25
+p1 <- c(0.3,0.7)
+p2 <- c((1-p)*p1[1],(1-p)*p1[2],p)
+p3 <- p2 + c(-0.04,0.03,0.01)
 
-# Event 1 is 1/3 as likely to occur as event 2
-p <- 2/7
+events_data1 <- c(rmultinom(1, nsim_data, p1))
+events_data2 <- c(rmultinom(1, nsim_data, p2))
+events_data3 <- c(rmultinom(1, nsim_data, p3))
 
-x1 <- rgamma(nsim, shape = alpha1, scale = beta)
-x2 <- rgamma(nsim, shape = alpha2, scale = beta)
-x1mc <- rgamma(mcsim, shape = alpha1, scale = beta)
-x2mc <- rgamma(mcsim, shape = alpha2, scale = beta)
+events_mc1 <- c(rmultinom(1, nsim_mc, p1))
+events_mc2 <- c(rmultinom(1, nsim_mc, p2))
 
-z <- rbernoulli(nsim, p)
-x <- c(x1[z],x2[!z])
-zmc <- rbernoulli(mcsim, p)
-xmc <- c(x1mc[zmc],x2mc[!zmc])
+x1_data1 <- rcauchy(events_data1[1], location = loctn[1], scale = scale[1])
+x2_data1 <- rcauchy(events_data1[2], location = loctn[2], scale = scale[2])
+x1_data2 <- rcauchy(events_data2[1], location = loctn[1], scale = scale[1])
+x2_data2 <- rcauchy(events_data2[2], location = loctn[2], scale = scale[2])
+x3_data2 <- rcauchy(events_data2[3], location = loctn[3], scale = scale[3])
+x1_data3 <- rcauchy(events_data3[1], location = loctn[1], scale = scale[1])
+x2_data3 <- rcauchy(events_data3[2], location = loctn[2], scale = scale[2])
+x3_data3 <- rcauchy(events_data3[3], location = loctn[3], scale = scale[3])
+x1_mc1 <- rcauchy(events_mc1[1], location = loctn[1], scale = scale[1])
+x2_mc1 <- rcauchy(events_mc1[2], location = loctn[2], scale = scale[2])
+x1_mc2 <- rcauchy(events_mc2[1], location = loctn[1], scale = scale[1])
+x2_mc2 <- rcauchy(events_mc2[2], location = loctn[2], scale = scale[2])
+x3_mc2 <- rcauchy(events_mc2[3], location = loctn[3], scale = scale[3])
+
+x_data <- c(x1_data1,x2_data1,
+            x1_data2,x2_data2,x3_data2,
+            x1_data3,x2_data3,x3_data3)
+x_mc <- c(x1_mc1,x2_mc1,
+          x1_mc2,x2_mc2,x3_mc2)
 
 # Efficiency
-xdetected <- rbernoulli(length(x),1-exp(-sqrt(x)/4)) == 1
-xdetectedmc <- rbernoulli(length(xmc),1-exp(-sqrt(xmc)/4)) == 1
+xdetected_data <- rbernoulli(nsim_data,1-exp(-sqrt(abs(x_data))/4)) == 1
+xdetected_mc <- rbernoulli(nsim_mc,1-exp(-sqrt(abs(x_mc))/4)) == 1
 
 # Add Smearing
-ermu <- -x^(1/4)
-ersd <- log((x+10)/4)
-y <- x + rnorm(nsim, mean = ermu, sd = ersd)
+err_mu_data <- -abs(x_data)^(1/4)
+err_sd_data <- log((abs(x_data)+10)/4)
+y_data <- x_data + rnorm(3*nsim_data, mean = err_mu_data, sd = err_sd_data)
 
-ermumc <- -xmc^(1/4)
-ersdmc <- log((xmc+10)/4)
-ymc <- xmc + rnorm(mcsim, mean = ermumc, sd = ersdmc)
+err_mu_mc <- -abs(x_mc)^(1/4)
+err_sd_mc <- log((abs(x_mc)+10)/4)
+y_mc <- x_mc + rnorm(2*nsim_mc, mean = err_mu_mc, sd = err_sd_mc)
 
 # Binned representation
-xymin <- 4
-xymax <- 26
+xymin <- 2
+xymax <- 27
 xystep <- 3
-dxy <- 4
+dxy <- 2
 xyaxes <- c(xymin-dxy,xymin,
             seq(xymin+xystep,xymax-xystep,xystep),
             xymax,xymax+dxy)
 
-sims <- tibble("Truth" = x,
-               "Measured" = y,
-               "Detected" = xdetected)
+sims_data <- tibble("Theory" = 
+                      rep(c("Theory 1","Theory 2","Theory 3"),
+                          each = nsim_data),
+                    "Truth" = x_data,
+                    "Reconstructed" = y_data,
+                    "Detected" = xdetected_data) %>%
+  filter(Truth <= 30 & Truth >= 0)
+sims_mc <- tibble("Theory" = 
+                    rep(c("Theory 1","Theory 2"),
+                        each = nsim_mc),
+                  "Truth" = x_mc,
+                  "Reconstructed" = y_mc,
+                  "Detected" = xdetected_mc) %>%
+  filter(Truth <= 30 & Truth >= 0)
 
-simsmc <- tibble("Truth" = xmc,
-                 "Measured" = ymc,
-                 "Detected" = xdetectedmc)
 
-step_hist_notfolded <- hist(x[which(x > xymin-dxy & x < xymax+dxy)], 
-                            breaks = seq(xymin-dxy,xymax+dxy,1), plot = F)
-step_hist_folded <- hist(y[which(y > xymin-dxy & y < xymax+dxy & xdetected == TRUE)], 
-                         breaks = seq(xymin-dxy,xymax+dxy,1), plot = F)
+bins_data <- sims_data %>%
+  pivot_longer(c(Reconstructed,Truth), 
+               names_to = "Treatment", 
+               values_to = "Bin") %>%
+  mutate(Bin = ceiling(Bin)) %>%
+  filter(Bin <= 30 & Bin >= 1) %>%
+  filter((Treatment == "Reconstructed" & Detected == TRUE) | Treatment == "Truth") %>%
+  count(Theory, Bin, Treatment, name = "Counts") %>%
+  complete(Theory, Bin=1:30, Treatment, fill = list(Counts=0)) %>%
+  mutate(LBin = Bin-1,
+         LCounts = cbind(
+           rbind(diag(rep(1,62))[c(3,4,3:58,61,62),-c(1,2)],diag(0,60),diag(0,60)),
+           rbind(diag(0,60),diag(rep(1,62))[c(3,4,3:58,61,62),-c(1,2)],diag(0,60)),
+           rbind(diag(0,60),diag(0,60),diag(rep(1,62))[c(3,4,3:58,61,62),-c(1,2)])) %*% 
+           Counts) %>%
+  mutate(Density = Counts/nsim_data,
+         LDensity = LCounts/nsim_data) %>%
+  select(Theory, Treatment,LBin,Bin,LCounts,Counts,LDensity,Density)
 
-fmax <- 1.075*max(c(step_hist_folded$density,step_hist_notfolded$density))
-fmax_count <- 1.05*max(c(step_hist_folded$count,step_hist_notfolded$count))
+bins_mc <- sims_mc %>%
+  pivot_longer(c(Reconstructed,Truth), 
+               names_to = "Treatment", 
+               values_to = "Bin") %>%
+  mutate(Bin = ceiling(Bin)) %>%
+  filter(Bin <= 30 & Bin >= 1) %>%
+  filter((Treatment == "Reconstructed" & Detected == TRUE) | Treatment == "Truth") %>%
+  count(Theory, Bin, Treatment, name = "Counts") %>%
+  complete(Theory, Bin=1:30,  Treatment, fill = list(Counts=0)) %>%
+  mutate(LBin = Bin-1,
+         LCounts = cbind(
+           rbind(diag(rep(1,62))[c(3,4,3:58,61,62),-c(1,2)],diag(0,60)),
+           rbind(diag(0,60),diag(rep(1,62))[c(3,4,3:60),-c(1,2)])) %*% 
+           Counts) %>%
+  mutate(Density = Counts/nsim_data,
+         LDensity = LCounts/nsim_data) %>%
+  select(Theory,Treatment,LBin,Bin,LCounts,Counts,LDensity,Density)
 
-step_hist <- 
-  tibble(binLow = c(step_hist_folded$breaks[-length(step_hist_folded$breaks)],
-                    step_hist_notfolded$breaks[-length(step_hist_notfolded$breaks)]),
-         binHigh = c(step_hist_folded$breaks[-1],step_hist_notfolded$breaks[-1]),
-         CountsL = c(c(0,step_hist_folded$counts[-length(step_hist_folded$counts)]),
-                     c(0,step_hist_notfolded$counts[-length(step_hist_notfolded$counts)])),
-         Counts = c(step_hist_folded$counts,step_hist_notfolded$counts),
-         DensityL = c(c(0,step_hist_folded$density[-length(step_hist_folded$density)]),
-                      c(0,step_hist_notfolded$density[-length(step_hist_notfolded$density)])),
-         Density = c(step_hist_folded$density,step_hist_notfolded$density),
-         Treatment = c(rep("folded", length(step_hist_folded$density)),
-                       rep("not folded", length(step_hist_notfolded$density))))
+bins_all <- rbind(bins_data,bins_mc) %>%
+  mutate(Source = c(rep("Data",180),rep("MC",120)),
+         LCounts = LCounts/c(rep(1,180),rep(dmrat,120)),
+         Counts = Counts/c(rep(1,180),rep(dmrat,120))) %>%
+  mutate(Name = paste(Treatment,Source)) %>%
+  filter(Source == "MC" | Treatment == "Reconstructed")
+
+bins_all$Name[which(bins_all$Source == "Data")] <- "Reconstructed Data"
+
+#max(sims_mc$Truth,sims_mc$Reconstructed,sims_data$Truth,sims_data$Reconstructed)
 ```
 
 ```{r, echo = F}
 # Continuous representation
-X <- seq(xymin-dxy,xymax+dxy,0.01)
+X <- seq(0,30,0.01)
 nx <- length(X)
 
-fx = p*dgamma(X, shape = alpha1, scale = beta) + 
-     (1-p)*dgamma(X, shape = alpha2, scale = beta)
+fp1x <- dcauchy(X, location = loctn[1], scale = scale[1]) 
+fp2x <- dcauchy(X, location = loctn[2], scale = scale[2])
+fp3x <- dcauchy(X, location = loctn[3], scale = scale[3])
 #fx <- p*dlnorm(X, meanlog = 2.25, sdlog = 0.25) +
 #  (1-p)*dlnorm(X, meanlog = 2.8, sdlog = 0.15)
 
-fx_data <- tibble(X = X, Density = fx)
-# fy_data content calculated in fyEstimate.nb
-fy_data <- read.csv("fyEstimate.csv")
+fpx_truth1 <- tibble(X = rep(X,2), Density = c(p1[1]*fp1x,p1[2]*fp2x), 
+                     Process = rep(c("Process 1","Process 2"), each = nx),
+                     Theory = rep("Theory 1",2*nx))
+fpx_truth2 <- tibble(X = rep(X,3), Density = c(p2[1]*fp1x,p2[2]*fp2x,p2[3]*fp3x), 
+                     Process = rep(c("Process 1","Process 2","Process 3"), each = nx),
+                     Theory = rep("Theory 2",3*nx))
+fx_truth1 <- tibble(X = X, Density = p1[1]*fp1x + p1[2]*fp2x, 
+                    Theory = rep("Theory 1",nx),Treatment = rep("Truth",nx))
+fx_truth2 <- tibble(X = X, Density = p2[1]*fp1x + p2[2]*fp2x + p2[3]*fp3x,
+                    Theory = rep("Theory 2",nx),Treatment = rep("Truth",nx))
+fy_truth1 <- read.csv("f1yEstimate.csv") %>% 
+  mutate(Theory = "Theory 1", Treatment = "Reconstructed")
+fy_truth2 <- read.csv("f2yEstimate.csv") %>% 
+  mutate(Theory = "Theory 2", Treatment = "Reconstructed")
+names(fy_truth1)[1] <- names(fx_truth1)[1] <- 
+  names(fy_truth2)[1] <- names(fx_truth2)[1] <- "XY"
 
 # Binned expected counts
-exp_hist <- read.csv("histExpected.csv")
-exp_hist[,3:4] <- nsim*exp_hist[,3:4]
+bins_expected1 <- read.csv("hist1Expected.csv") %>%
+  mutate(LDensity = LCounts,
+         Density = Counts,
+         LCounts = LCounts*nsim_data,
+         Counts = Counts*nsim_data)
+bins_expected2 <- read.csv("hist2Expected.csv") %>%
+  mutate(LDensity = LCounts,
+         Density = Counts,
+         LCounts = LCounts*nsim_data,
+         Counts = Counts*nsim_data)
 
 # Counts max
-fmax_count <- max(fmax_count, 1.05*max(nsim*fx_data$Density))
+fmax_density <- 1.05*max(c(bins_data$Density,bins_mc$Density,
+                           fx_truth1$Density,fx_truth2$Density,
+                           fy_truth1$Density,fy_truth2$Density,
+                           bins_expected1$Density,bins_expected2$Density))
+fmax_count <- 1.05*max(c(bins_data$Counts,bins_mc$Counts/dmrat,
+                         fx_truth1$Density*nsim_data,fx_truth2$Density*nsim_data,
+                         fy_truth1$Density*nsim_data,fy_truth2$Density*nsim_data,
+                         bins_expected1$Counts,bins_expected2$Counts))
 ```
 
-```{r, fig.height=4.8, fig.width=7.5, fig.align='center', echo = F}
+```{r, fig.height=7, fig.width=7.5, fig.align='center', echo = F}
 # Plotting
-comp1 <- ggplot(data = step_hist) + 
+continuous1 <- ggplot() + 
   theme_bw() +
-  geom_segment(data = filter(exp_hist, 
-                             Treatment == "not folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
-                             y = Counts,
-                          xend = binHigh,
-                          yend = Counts,
-                         color = "E[Binned Truth]",
-                      linetype = "E[Binned Truth]")) +
-  geom_segment(data = filter(exp_hist, 
-                             Treatment == "not folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
-                             y = CountsL,
-                          xend = binLow,
-                          yend = Counts,
-                         color = "E[Binned Truth]",
-                      linetype = "E[Binned Truth]")) +
-  geom_segment(data = filter(exp_hist, 
-                             Treatment == "folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
-                             y = Counts,
-                          xend = binHigh,
-                          yend = Counts,
-                         color = "E[Binned Measured]",
-                      linetype = "E[Binned Measured]")) +
-  geom_segment(data = filter(exp_hist, 
-                             Treatment == "folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
-                             y = CountsL,
-                          xend = binLow,
-                          yend = Counts,
-                         color = "E[Binned Measured]",
-                      linetype = "E[Binned Measured]")) +
-  geom_line(data = filter(fx_data,
+  geom_line(data = filter(rbind(fpx_truth1,fpx_truth2),
                             X >= xymin-dxy &
                             X <= xymax+dxy),
             mapping = aes(x = X, 
-                          y = nsim*Density,
-                      color = "Scaled PDF Truth",
-                   linetype = "Scaled PDF Truth")) +
-  geom_line(data = filter(fy_data,
-                            Y >= xymin-dxy &
-                            Y <= xymax+dxy),
-            mapping = aes(x = Y, 
-                          y = nsim*Density,
-                      color = "Scaled PDF Measured",
-                   linetype = "Scaled PDF Measured")) +
-  scale_x_continuous(breaks = xyaxes, 
-                     limits = c(xymin-dxy,xymax+dxy), 
-                     expand = c(0,0)) +
-  scale_y_continuous("Counts",
-                     limits = c(0,fmax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(fmax_count),
-                                  floor(fmax_count/1000)*200)) +
+                          y = nsim_data*Density,
+                      color = Process,
+                   linetype = Theory)) +
   scale_color_manual(name = NA,
-                     labels = c("E[Binned Truth]",
-                                "Scaled PDF Truth",
-                                "E[Binned Measured]",
-                                "Scaled PDF Measured"),
-                     breaks = c("E[Binned Truth]",
-                                "Scaled PDF Truth",
-                                "E[Binned Measured]",
-                                "Scaled PDF Measured"),
-                     values = c("E[Binned Truth]" = alpha("#009E73",1),#alpha("#4C8C2B",0.6),
-                                "Scaled PDF Truth" = alpha("#009E73",0.6),#alpha("#4C8C2B",1),
-                                "E[Binned Measured]" = alpha("#0072B2",1),#alpha("#004C97",0.6),
-                                "Scaled PDF Measured" = alpha("#0072B2",0.6))) +#alpha("#004C97",1))) +
+                     labels = c("Process 1",
+                                "Process 2",
+                                "Process 3"),
+                     breaks = c("Process 1",
+                                "Process 2",
+                                "Process 3"),
+                     values = c("Process 1" = "#5e81b5",#alpha("#009E73",0.6),
+                                "Process 2" = "#e19c24",#alpha("#0072B2",0.6),
+                                "Process 3" = "#8fb032")) +#alpha("#0072B2",1))) +
   scale_linetype_manual(name = NA,
-                        labels = c("E[Binned Truth]",
-                                   "Scaled PDF Truth",
-                                   "E[Binned Measured]",
-                                   "Scaled PDF Measured"),
-                        breaks = c("E[Binned Truth]",
-                                   "Scaled PDF Truth",
-                                   "E[Binned Measured]",
-                                   "Scaled PDF Measured"),
-                        values = c("E[Binned Truth]" = "solid",
-                                   "Scaled PDF Truth" = "solid",
-                                   "E[Binned Measured]" = "solid",
-                                   "Scaled PDF Measured" = "solid")) +
+                        labels = c("Theory 1",
+                                   "Theory 2"),
+                        breaks = c("Theory 1",
+                                   "Theory 2"),
+                        values = c("Theory 1" = "solid",
+                                   "Theory 2" = "solid")) +
+  scale_x_continuous("X (Truth)",
+                     breaks = xyaxes, 
+                     limits = c(xymin-dxy,xymax+dxy), 
+                     expand = c(0,0)) +
+  scale_y_continuous("Counts",
+                     limits = c(0,fmax_count), expand = c(0,0),
+                     breaks = seq(0,ceiling(fmax_count),100))+
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        plot.margin = margin(0.15, 0.16, 0.12, 0.01, "cm"),
-        legend.text = element_text(size = 8),
+        plot.margin = margin(0.15, 0.16, 0.12, 0.1, "cm"),
+        legend.text = element_text(size = 7),
         legend.title = element_blank(),
-        legend.position = c(.01, 0.99),
-        legend.justification = c("left", "top"),
+        legend.position = c(.99, 0.99),
+        legend.justification = c("right", "top"),
         legend.box.just = "left",
         legend.key.height = unit(10,"points"),
-        legend.margin = margin(1,5,5,5,"pt"),
-        axis.title.x = element_blank()) +
-  guides(color = guide_legend(override.aes = list(alpha = c(1,0.15,1,0.15)))) +
-  geom_rect(data=tibble(x1=xymin-dxy,x2=xymin,y1=0,y2=fmax_count),
-            mapping=aes(xmin=x1,xmax=x2,ymin=y1,ymax=y2),
-            alpha=0.5,size=0.3) +
-  geom_rect(data=tibble(x1=xymax,x2=xymax+dxy,y1=0,y2=fmax_count),
-            mapping=aes(xmin=x1,xmax=x2,ymin=y1,ymax=y2),
-            alpha=0.5,size=0.3)
+        legend.margin = margin(1,5,5,5,"pt"))
 
-comp2 <- ggplot(data = step_hist) + 
+continuous2 <- ggplot() + 
   theme_bw() +
-  geom_segment(data = filter(exp_hist, 
-                             Treatment == "not folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy ),
-               mapping = aes(x = binLow,
+  geom_line(data = rbind(fx_truth1,fx_truth2,
+                         fy_truth1,fy_truth2) %>%
+              filter(Theory == "Theory 1"),
+            mapping = aes(x = XY, 
+                          y = nsim_data*Density,
+                      color = Treatment),
+            alpha = 0.7) +
+  geom_line(data = rbind(fx_truth1,fx_truth2,
+                         fy_truth1,fy_truth2) %>%
+              filter(Theory == "Theory 2"),
+            mapping = aes(x = XY, 
+                          y = nsim_data*Density,
+                   linetype = Treatment),
+            color = rep(c("#8fb032","#eb6235"), each=nx),
+            alpha = 0.7) +
+  scale_color_manual(name = NA,
+                     labels = c("Truth",
+                                "Reconstructed"),
+                     breaks = c("Truth",
+                                "Reconstructed"),
+                     values = c("Truth" = "#5e81b5",
+                                "Reconstructed" = "#e19c24")) + 
+  scale_linetype_manual(name = NA,
+                        labels = c("Truth",
+                                   "Reconstructed"),
+                        breaks = c("Truth",
+                                   "Reconstructed"),
+                        values = c("Truth" = "solid",
+                                   "Reconstructed" = "solid")) +
+  guides(color = guide_legend(title = "Theory 1", order = 1, 
+                              override.aes = list(shape = NA,
+                                                  alpha = 0.7),
+                              title.vjust = unit(-0.2, "pt")),
+         linetype = guide_legend(title = "Theory 2", order = 2, 
+                                 override.aes = list(color = c("#8fb032","#eb6235"),
+                                                     alpha = c(0.8,0.8)),
+                                 title.vjust = unit(-0.2, "pt"))) +
+  scale_x_continuous("X (Truth), Y (Reconstructed)",
+                     breaks = seq(0,30,3), 
+                     limits = c(0,30), 
+                     expand = c(0,0)) +
+  scale_y_continuous("Counts",
+                     limits = c(0,fmax_count), expand = c(0,0),
+                     breaks = seq(0,ceiling(fmax_count),100)) +
+  labs(title = "Scaled Exact Distributions") +
+  theme(legend.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.justification = c("left", "top"),
+        legend.box.just = "left",
+        legend.spacing.y = unit(1, "pt"),
+        legend.key.height = unit(10,"points"),
+        legend.margin = margin(1,5,5,5,"pt"),
+        aspect.ratio = 1,
+        axis.title.y = element_blank())
+
+# eb6235
+# 8fb032
+
+```
+
+```{r, fig.height=7, fig.width=7.5, fig.align='center', echo = F, eval = F}
+discrete_exp <- ggplot() + 
+  theme_bw() +
+  geom_segment(data = filter(bins_expected1, 
+                             Treatment == "Truth" &
+                                  LBin >= xymin-dxy &
+                                   Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
                              y = Counts,
-                          xend = binHigh,
+                          xend = Bin,
                           yend = Counts,
-                         color = "E[Binned Truth]")) +
-  geom_segment(data = filter(exp_hist, 
-                             Treatment == "not folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
-                             y = CountsL,
-                          xend = binLow,
+                         color = "E[Theory 1 Truth]",
+                      linetype = "E[Theory 1 Truth]")) +
+  geom_segment(data = filter(bins_expected1, 
+                             Treatment == "Truth" &
+                                  LBin >= xymin-dxy &
+                                   Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
                           yend = Counts,
-                         color = "E[Binned Truth]")) +
-  geom_segment(data = filter(exp_hist, 
-                             Treatment == "folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
+                         color = "E[Theory 1 Truth]",
+                      linetype = "E[Theory 1 Truth]")) +
+  geom_segment(data = filter(bins_expected1, 
+                             Treatment == "Reconstructed" &
+                                  LBin >= xymin-dxy &
+                                   Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
                              y = Counts,
-                          xend = binHigh,
+                          xend = Bin,
                           yend = Counts,
-                         color = "E[Binned Measured]")) +
-  geom_segment(data = filter(exp_hist, 
-                             Treatment == "folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
-                             y = CountsL,
-                          xend = binLow,
+                         color = "E[Theory 1 Reconstructed]",
+                      linetype = "E[Theory 1 Reconstructed]")) +
+  geom_segment(data = filter(bins_expected1, 
+                             Treatment == "Reconstructed" &
+                                  LBin >= xymin-dxy &
+                                   Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
                           yend = Counts,
-                         color = "E[Binned Measured]")) +
-  geom_segment(data = filter(step_hist, 
-                             Treatment == "not folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
+                         color = "E[Theory 1 Reconstructed]",
+                      linetype = "E[Theory 1 Reconstructed]")) +
+  geom_segment(data = filter(bins_expected2, 
+                             Treatment == "Truth" &
+                                  LBin >= xymin-dxy &
+                                   Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
                              y = Counts,
-                          xend = binHigh,
+                          xend = Bin,
                           yend = Counts,
-                         color = "Binned Truth")) +
-  geom_segment(data = filter(step_hist, 
-                             Treatment == "not folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
-                             y = CountsL,
-                          xend = binLow,
+                         color = "E[Theory 2 Truth]",
+                      linetype = "E[Theory 2 Truth]")) +
+  geom_segment(data = filter(bins_expected2, 
+                             Treatment == "Truth" &
+                                  LBin >= xymin-dxy &
+                                   Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
                           yend = Counts,
-                         color = "Binned Truth")) +
-  geom_segment(data = filter(step_hist, 
-                             Treatment == "folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
+                         color = "E[Theory 2 Truth]",
+                      linetype = "E[Theory 2 Truth]")) +
+  geom_segment(data = filter(bins_expected2, 
+                             Treatment == "Reconstructed" &
+                                  LBin >= xymin-dxy &
+                                   Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
                              y = Counts,
-                          xend = binHigh,
+                          xend = Bin,
                           yend = Counts,
-                         color = "Binned Measured")) +
-  geom_segment(data = filter(step_hist, 
-                             Treatment == "folded" &
-                                binLow >= xymin-dxy &
-                               binHigh <= xymax+dxy),
-               mapping = aes(x = binLow,
-                             y = CountsL,
-                          xend = binLow,
+                         color = "E[Theory 2 Reconstructed]",
+                      linetype = "E[Theory 2 Reconstructed]")) +
+  geom_segment(data = filter(bins_expected2, 
+                             Treatment == "Reconstructed" &
+                                  LBin >= xymin-dxy &
+                                   Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
                           yend = Counts,
-                         color = "Binned Measured")) +
-  scale_x_continuous(breaks = xyaxes, 
+                         color = "E[Theory 2 Reconstructed]",
+                      linetype = "E[Theory 2 Reconstructed]")) +
+  scale_x_continuous("X (Truth), Y (Reconstructed)",
+                     breaks = xyaxes, 
                      limits = c(xymin-dxy,xymax+dxy), 
                      expand = c(0,0)) +
   scale_y_continuous("Counts",
@@ -415,17 +505,88 @@ comp2 <- ggplot(data = step_hist) +
                      breaks = seq(0,ceiling(fmax_count),
                                   floor(fmax_count/1000)*200)) +
   scale_color_manual(name = NA,
-                     breaks = c("E[Binned Truth]",
-                                "Binned Truth",
-                                "E[Binned Measured]",
-                                "Binned Measured"),
-                     values = c("E[Binned Truth]" = alpha("#009E73",1),
-                                "Binned Truth" = alpha("#E69F00",1),#alpha("#CB6015",0.7),
-                                "E[Binned Measured]" = alpha("#0072B2",1),#alpha("#004C97",0.7),
-                                "Binned Measured" = alpha("#D55E00",1)))+#alpha("#8A2A2B",0.7))) +
+                     labels = c("E[Theory 1 Truth]",
+                                "E[Theory 2 Truth]",
+                                "E[Theory 1 Reconstructed]",
+                                "E[Theory 2 Reconstructed]"),
+                     breaks = c("E[Theory 1 Truth]",
+                                "E[Theory 2 Truth]",
+                                "E[Theory 1 Reconstructed]",
+                                "E[Theory 2 Reconstructed]"),
+                     values = c("E[Theory 1 Truth]" = alpha("#5e81b5",1),#alpha("#009E73",0.6),
+                                "E[Theory 2 Truth]" = alpha("#5e81b5",1),#alpha("#009E73",1),
+                                "E[Theory 1 Reconstructed]" = alpha("#e19c24",1),#alpha("#0072B2",0.6),
+                                "E[Theory 2 Reconstructed]" = alpha("#e19c24",1))) +#alpha("#0072B2",1))) +
+  scale_linetype_manual(name = NA,
+                        labels = c("E[Theory 1 Truth]",
+                                   "E[Theory 2 Truth]",
+                                   "E[Theory 1 Reconstructed]",
+                                   "E[Theory 2 Reconstructed]"),
+                        breaks = c("E[Theory 1 Truth]",
+                                   "E[Theory 2 Truth]",
+                                   "E[Theory 1 Reconstructed]",
+                                   "E[Theory 2 Reconstructed]"),
+                        values = c("E[Theory 1 Truth]" = "solid",
+                                   "E[Theory 2 Truth]" = "dashed",
+                                   "E[Theory 1 Reconstructed]" = "solid",
+                                   "E[Theory 2 Reconstructed]" = "dashed")) +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), 
-        plot.margin = margin(0.15, 0.16, 0.12, 0.01, "cm"),
+        plot.margin = margin(0.15, 0.16, 0.12, 0.1, "cm"),
+        legend.text = element_text(size = 7),
+        legend.title = element_blank(),
+        legend.position = c(.01, 0.99),
+        legend.justification = c("left", "top"),
+        legend.box.just = "left",
+        legend.key.height = unit(10,"points"),
+        legend.margin = margin(1,5,5,5,"pt"),
+        axis.title.x = element_blank()) +
+  guides(color = guide_legend(override.aes = list(alpha = c(1,1,1,1))))
+
+discrete_theory1 <- ggplot() + 
+  theme_bw() +
+  geom_segment(data = filter(bins_all,
+                               Theory == "Theory 1" &
+                               LBin >= xymin-dxy &
+                               Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
+                             y = Counts,
+                          xend = Bin,
+                          yend = Counts,
+                         color = Name)) +
+  geom_segment(data = filter(bins_all, 
+                               Theory == "Theory 1" &
+                               LBin >= xymin-dxy &
+                               Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
+                          yend = Counts,
+                         color = Name)) +
+  scale_x_continuous("X (Truth), Y (Reconstructed)",
+                     breaks = xyaxes, 
+                     limits = c(xymin-dxy,xymax+dxy), 
+                     expand = c(0,0)) +
+  scale_y_continuous("Counts",
+                     limits = c(0,fmax_count), expand = c(0,0),
+                     breaks = seq(0,ceiling(fmax_count),
+                                  floor(fmax_count/1000)*200)) +
+  scale_color_manual(name = "Theory 1",
+                     labels = c("MC Truth",
+                                "Data Truth",
+                                "MC Reconstructed",
+                                "Data Reconstructed"),
+                     breaks = c("MC Truth",
+                                "Data Truth",
+                                "MC Reconstructed",
+                                "Data Reconstructed"),
+                     values = c("MC Truth" = alpha("#5e81b5",1),#alpha("#009E73",0.6),
+                                "Data Truth" = alpha("#e19c24",1),#alpha("#009E73",1),
+                                "MC Reconstructed" = alpha("#8fb032",1),#alpha("#0072B2",0.6),
+                                "Data Reconstructed" = alpha("#eb6235",1))) +#alpha("#0072B2",1))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        plot.margin = margin(0.15, 0.16, 0.12, 0.1, "cm"),
         legend.text = element_text(size = 8),
         legend.title = element_blank(),
         legend.position = c(.01, 0.99),
@@ -434,47 +595,187 @@ comp2 <- ggplot(data = step_hist) +
         legend.key.height = unit(10,"points"),
         legend.margin = margin(1,5,5,5,"pt"),
         axis.title.x = element_blank()) +
-  geom_rect(data=tibble(x1=xymin-dxy,x2=xymin,y1=0,y2=fmax_count),
-            mapping=aes(xmin=x1,xmax=x2,ymin=y1,ymax=y2),
-            alpha=0.5,size=0.3) +
-  geom_rect(data=tibble(x1=xymax,x2=xymax+dxy,y1=0,y2=fmax_count),
-            mapping=aes(xmin=x1,xmax=x2,ymin=y1,ymax=y2),
-            alpha=0.5,size=0.3) #+
-  #guides(color = guide_legend(override.aes = list(alpha = 0.2)))
+  guides(color = guide_legend(override.aes = list(alpha = c(1,1,1,1))))
 
-migration <- sims %>%
-  mutate(across(Detected, factor, levels = c("TRUE","FALSE"))) %>%
-  filter(Truth <= xymax+dxy & Truth >= xymin-dxy &
-           Measured <= xymax+dxy & Measured >= xymin-dxy) %>%
+discrete_theory2 <- ggplot() + 
+  theme_bw() +
+  geom_segment(data = filter(bins_all,
+                               Theory == "Theory 2" &
+                               LBin >= xymin-dxy &
+                               Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
+                             y = Counts,
+                          xend = Bin,
+                          yend = Counts,
+                         color = Name)) +
+  geom_segment(data = filter(bins_all, 
+                               Theory == "Theory 2" &
+                               LBin >= xymin-dxy &
+                               Bin <= xymax+dxy),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
+                          yend = Counts,
+                         color = Name)) +
+  scale_x_continuous("X (Truth), Y (Reconstructed)",
+                     breaks = xyaxes, 
+                     limits = c(xymin-dxy,xymax+dxy), 
+                     expand = c(0,0)) +
+  scale_y_continuous("Counts",
+                     limits = c(0,fmax_count), expand = c(0,0),
+                     breaks = seq(0,ceiling(fmax_count),
+                                  floor(fmax_count/1000)*200)) +
+  scale_color_manual(name = "Theory 2",
+                     labels = c("MC Truth",
+                                "Data Truth",
+                                "MC Reconstructed",
+                                "Data Reconstructed"),
+                     breaks = c("MC Truth",
+                                "Data Truth",
+                                "MC Reconstructed",
+                                "Data Reconstructed"),
+                     values = c("MC Truth" = alpha("#5e81b5",1),#alpha("#009E73",0.6),
+                                "Data Truth" = alpha("#e19c24",1),#alpha("#009E73",1),
+                                "MC Reconstructed" = alpha("#8fb032",1),#alpha("#0072B2",0.6),
+                                "Data Reconstructed" = alpha("#eb6235",1))) +#alpha("#0072B2",1))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        plot.margin = margin(0.15, 0.16, 0.12, 0.1, "cm"),
+        legend.text = element_text(size = 8),
+        legend.title = element_blank(),
+        legend.position = c(.01, 0.99),
+        legend.justification = c("left", "top"),
+        legend.box.just = "left",
+        legend.key.height = unit(10,"points"),
+        legend.margin = margin(1,5,5,5,"pt"),
+        axis.title.x = element_blank()) +
+  guides(color = guide_legend(override.aes = list(alpha = c(1,1,1,1))))
+```
+
+```{r, fig.height=4, fig.width=7.5, fig.align='center', echo = F}
+################### MC and Data #################################
+
+discrete_DataMC <- ggplot() + 
+  theme_bw() +
+  geom_segment(data = filter(bins_all,
+                               LBin >= 0 &
+                               Bin <= 30 &
+                               Source == "MC" &
+                               Theory == "Theory 1"),
+               mapping = aes(x = LBin,
+                             y = Counts,
+                          xend = Bin,
+                          yend = Counts,
+                         color = Name),
+               alpha = 0.7) +
+  geom_segment(data = filter(bins_all,
+                               LBin >= 0 &
+                               Bin <= 30 &
+                               Source == "MC" &
+                               Theory == "Theory 1"),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
+                          yend = Counts,
+                         color = Name),
+               alpha = 0.7) +
+  geom_segment(data = bins_all %>% 
+                 filter(LBin >= 0 &
+                          Bin <= 30 &
+                          Source == "MC" &
+                          Theory == "Theory 2") %>%
+                 arrange(desc(Treatment)),
+               mapping = aes(x = LBin,
+                             y = Counts,
+                          xend = Bin,
+                          yend = Counts,
+                      linetype = Name),
+                         color = rep(c("#eb6235","#8fb032"),each=30),
+               alpha = 0.7) +
+  geom_segment(data = bins_all %>% 
+                 filter(LBin >= 0 &
+                          Bin <= 30 &
+                          Source == "MC" &
+                          Theory == "Theory 2") %>% 
+                 arrange(desc(Treatment)),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
+                          yend = Counts,
+                      linetype = Name),
+                         color = rep(c("#eb6235","#8fb032"),each=30),
+               alpha = 0.7) +
+  geom_point(data = bins_all %>% 
+               filter(LBin >= 0 & Bin <= 30 &
+                        Source == "Data" & Theory == "Theory 2"),
+             mapping = aes(x = LBin+0.5,
+                           y = Counts,
+                           fill = "Reconstructed"),
+             shape = 20, color = "black") +
+  scale_x_continuous("X (Truth), Y (Reconstructed)",
+                     breaks = seq(0,30,3), 
+                     limits = c(0,30), 
+                     expand = c(0,0)) +
+  scale_y_continuous("Counts",
+                     limits = c(0,fmax_count), expand = c(0,0),
+                     breaks = seq(0,ceiling(fmax_count),100)) +
+  scale_color_manual(name = NA,
+                     labels = c("Truth",
+                                "Reconstructed"),
+                     breaks = c("Truth MC",
+                                "Reconstructed MC"),
+                     values = c("Truth MC" = "#5e81b5",
+                                "Reconstructed MC" = "#e19c24")) + #"#eb6235","#8fb032"
+  scale_linetype_manual(name = NA,
+                        labels = c("Truth",
+                                   "Reconstructed"),
+                        breaks = c("Truth MC",
+                                   "Reconstructed MC"),
+                        values = c("Truth MC" = "solid",
+                                   "Reconstructed MC" = "solid")) +
+  guides(color = guide_legend(title = "Theory 1", order = 1, 
+                              override.aes = list(shape = NA,
+                                                  alpha = 0.7),
+                              title.vjust = unit(-0.5, "pt")),
+         linetype = guide_legend(title = "Theory 2", order = 2, 
+                                 override.aes = list(color = c("#eb6235","#8fb032"),
+                                                     alpha = 0.7),
+                                 title.vjust = unit(-0.5, "pt")),
+         fill = guide_legend(title = "Data", order = 3, title.vjust = unit(-0.5, "pt"))) +
+  labs(title = "MC Simulations and ''Data''") +
+  theme(legend.title = element_text(size = 9),
+        legend.text = element_text(size = 8),
+        legend.box.just = "left",
+        legend.spacing.y = unit(-2.5, "pt"),
+        legend.key.height = unit(10,"points"),
+        aspect.ratio = 1,
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.y = element_blank())
+```
+
+```{r, fig.height=4, fig.width=7.5, fig.align='center', echo = F}
+########## MIGRATION ###########################################################
+
+migration <- sims_mc %>%
+  filter(Detected == TRUE &
+           Truth <= 30 & Truth >= 0) %>%
   ggplot() +
-    scale_x_continuous(breaks = xyaxes,
-                       limits = c(xymin-dxy,xymax+dxy), 
+    scale_y_continuous(breaks = seq(0,30,by=3),
+                       limits = c(0,30), 
                        expand = c(0,0)) +
-    scale_y_continuous(breaks = xyaxes, 
-                       limits = c(xymin-dxy,xymax+dxy), 
+    scale_x_continuous(breaks = seq(-3,33,by=3), 
+                       limits = c(-4,35), 
                        expand = c(0,0)) +
-    theme_bw() + theme(panel.grid.major = element_blank(), 
-                       panel.grid.minor = element_blank()) +
-    stat_bin2d(mapping = aes(x = Truth, 
-                             y = Measured), 
-               breaks = list(x = seq(xymin-dxy,xymax+dxy,1),
-                             y = seq(xymin-dxy,xymax+dxy,1))) +
-    labs(x = "X (Truth)", y = "Y (Measured)",
-         title = "Event Detected") +
-    geom_rect(data=tibble(x1=xymin-dxy,x2=xymax+dxy,y1=xymin-dxy,y2=xymin),
-              mapping=aes(xmin=x1,xmax=x2,ymin=y1,ymax=y2),
-              alpha=0.5,size=0.3) +
-    geom_rect(data=tibble(x1=xymin-dxy,x2=xymin,y1=xymin-dxy,y2=xymax+dxy),
-              mapping=aes(xmin=x1,xmax=x2,ymin=y1,ymax=y2),
-              alpha=0.5,size=0.3) +
-    geom_rect(data=tibble(x1=xymin-dxy,x2=xymax+dxy,y1=xymax,y2=xymax+dxy),
-              mapping=aes(xmin=x1,xmax=x2,ymin=y1,ymax=y2),
-              alpha=0.5,size=0.3) +
-    geom_rect(data=tibble(x1=xymax,x2=xymax+dxy,y1=xymin-dxy,y2=xymax+dxy),
-              mapping=aes(xmin=x1,xmax=x2,ymin=y1,ymax=y2),
-              alpha=0.5,size=0.3) +
+    theme_bw() +
+    stat_bin2d(mapping = aes(x = Reconstructed, 
+                             y = Truth), 
+               breaks = list(x = seq(-4,35,1),
+                             y = seq(0,30,1))) +
+    labs(x = "Y (Reconstructed)", y = "X (Truth)",
+         title = "MC Migration") +
     geom_abline(intercept=0,slope=1,lty="dashed",col="red") +
-    facet_wrap(Detected~., nrow = 2, scales = "free")
+    facet_wrap(Theory~., ncol = 2)
 
 gradient_max <- max(ggplot_build(migration)$data[[1]]$count)
 gmins <- abs(floor(gradient_max/10^(floor(log10(gradient_max))-1))/
@@ -485,170 +786,171 @@ gradient_step <- c(5,10,20,25,50)[which(gmins == min(gmins))]*
 migration <- migration +
   scale_fill_gradientn(colours = viridis(11),
                        breaks = seq(0,gradient_max,gradient_step),
-                       guide = guide_colourbar(barwidth = 0.75, 
-                                               barheight = 15,
+                       guide = guide_colourbar(barwidth = 1, 
+                                               barheight = 8.5,
+                                               frame.colour = "black",
+                                               ticks.colour = "black",
                                                title = "Counts"))
-
-grid.arrange(arrangeGrob(comp1, comp2, richtext_grob("X (Truth), Y (Measured)"),
-                         heights = c(10,10,1)), 
-             migration, ncol = 2, widths = c(6,5))
-
-rmu <- sims %>%
-  filter(Truth <= xymax+dxy & Truth >= xymin-dxy) %>%
-  select(Truth) %>%
-  mutate(Truth = ceiling(Truth)-floor(min(Truth))) %>%
-  count(Truth, name = "counts") %>%
-  pull(counts)
-
-rR <- sims %>%
-  filter(Truth <= xymax & Truth >= xymin &
-           Measured <= xymax & Measured >= xymin &
-           Detected == "TRUE") %>%
-  select(Measured, Truth) %>%
-  mutate(Measured = ceiling(Measured)-floor(min(Measured)),
-         Truth = ceiling(Truth)-floor(min(Truth))) %>%
-  count(Measured, Truth, name = "counts") %>%
-  complete(Measured, Truth, fill = list(counts=0)) %>%
-  pull(counts) %>%
-  matrix(ncol = xymax-xymin, byrow = T)
-
-#step_hist
-dp_hist <- sims %>%
-  filter(Truth <= xymax+dxy & Truth >= xymin-dxy &
-           Measured <= xymax+dxy & Measured >= xymin-dxy) %>%
-  pivot_longer(c(Measured,Truth), 
-               names_to = "Treatment", 
-               values_to = "binLow") %>%
-  filter((Treatment == "Measured" & Detected == TRUE) | Treatment == "Truth") %>%
-  mutate(binHigh = ceiling(binLow),
-         binLow = floor(binLow)) %>%
-  count(binHigh, Treatment, name = "Counts") %>%
-  mutate(Density = Counts/nsim)
-
 ```
-  \caption{\emph{The above plots feature two bimodal gamma distributions depicting events before and after after detector effects. (Top Left) The two continuous distributions correspond to the theoretical PDFs of the two distributions rescaled to correspond with the counts from 10,000 events. The histograms are calculated from the PDFs and correspond to the expected event counts from 10,000 simulated events. (Bottom Left) These four histograms consist of the same expected event counts as well as one instance of actual counts resulting from 10,000 simulated events. (Right) A visual study of simulated detector efficiency is provided by a side-by-side comparison of two heat maps that demonstrate the skewness and dispersion added by a simulated measurement process for detected and undetected events. This study is not intended to meaningfully represent a hypothetical distribution of undetected events in any real detector. Actual detector efficiencies are almost certainly governed by much more complicated collections of parameters.}}
+\begin{figure}[!ht]
+    \centering
+    \hrulefill
+```{r, fig.height=3, fig.width=7.5, fig.align='center', echo = F}
+plot1 <- ggplotGrob(continuous2 + theme(legend.position = "none",
+                                        axis.title.x = element_blank()))
+plot2 <- ggplotGrob(discrete_DataMC + theme(legend.position = "none",
+                                        axis.title.x = element_blank()))
+#list(plot1$widths,plot2$widths)
+
+#plot1$widths[3] <- plot2$widths[9]
+#plot1$widths[6] <- plot2$widths[6]
+
+egg::ggarrange(continuous2 + theme(legend.position = "none", axis.title.x = element_blank()), 
+               discrete_DataMC + theme(axis.title.x = element_blank()), nrow = 1,
+               left = textGrob("Counts", rot = 90, vjust = 0.25),
+               bottom = textGrob("X (Truth), Y (Reconstructed)", hjust = 0.8))
+```
+  \caption{\emph{The above plots feature two bimodal gamma distributions depicting events before and after after detector effects. (Top Left) The two continuous distributions correspond to the theoretical PDFs of the two distributions rescaled to correspond with the counts from 20,000 events. The histograms are calculated from the PDFs and correspond to the expected event counts from 20,000 simulated events. (Bottom Left) These four histograms consist of the same expected event counts as well as one instance of actual counts resulting from 20,000 simulated events. (Right) A visual study of simulated detector efficiency is provided by a side-by-side comparison of two heat maps that demonstrate the skewness and dispersion added by a simulated measurement process for detected and undetected events. This study is not intended to meaningfully represent a hypothetical distribution of undetected events in any real detector. Actual detector efficiencies are almost certainly governed by much more complicated collections of parameters.}}
   \label{BasicExample}
   \hrulefill
 \end{figure}
 
 ```{r, echo=F}
-dp_hist <- sims %>%
-  pivot_longer(c(Measured,Truth), 
-               names_to = "Treatment", 
-               values_to = "binHigh") %>%
-  mutate(binHigh = ceiling(binHigh)) %>%
-  filter(binHigh <= 30 & binHigh >= 1) %>%
-  filter((Treatment == "Measured" & Detected == TRUE) | Treatment == "Truth") %>%
-  count(binHigh, Treatment, name = "Counts") %>%
-  complete(binHigh=1:30, Treatment, fill = list(Counts=0)) %>%
-  mutate(binLow = binHigh-1,
-         LCounts = rbind(diag(rep(1,60))[1:2,],diag(rep(1,60))[1:58,]) %*% Counts) %>%
-  mutate(Density = Counts/mcsim,
-         LDensity = LCounts/mcsim) %>%
-  select(Treatment,binLow,binHigh,LCounts,Counts,LDensity,Density)
-
-mc_bins <- simsmc %>%
-  pivot_longer(c(Measured,Truth), 
-               names_to = "Treatment", 
-               values_to = "Bin") %>%
-  mutate(Bin = ceiling(Bin)) %>%
-  filter(Bin <= 30 & Bin >= 1) %>%
-  filter((Treatment == "Measured" & Detected == TRUE) | Treatment == "Truth") %>%
-  count(Bin, Treatment, name = "Counts") %>%
-  complete(Bin=1:30, Treatment, fill = list(Counts=0)) %>%
-  mutate(LBin = Bin-1,
-         LCounts = rbind(diag(rep(1,60))[1:2,],diag(rep(1,60))[1:58,]) %*% Counts) %>%
-  mutate(Density = Counts/mcsim,
-         LDensity = LCounts/mcsim) %>%
-  select(Treatment,LBin,Bin,LCounts,Counts,LDensity,Density)
-
-dnu <- dp_hist %>%
-  filter(Treatment == "Measured") %>%
-  select(binHigh,Counts) %>%
-  mutate(Good = Counts>50)
-dmu <- dp_hist %>%
-  filter(Treatment == "Truth") %>%
-  select(binHigh,Counts) %>%
-  mutate(Good = Counts>50)
-
-mcnu <- mc_bins %>%
-  filter(Treatment == "Measured") %>%
+### Data 1
+dataReco1 <- sims_data %>%
+  filter(Theory == "Theory 1" &
+           Truth <= 30 & Truth >= 0 &
+           Detected == TRUE) %>%
+  mutate(Bin = ceiling(Reconstructed)) %>%
+  count(Bin, name = "Counts") %>%
   select(Bin, Counts)
-mcmu <- mc_bins %>%
-  filter(Treatment == "Truth") %>%
+sidedata1 <- dataReco1 %>%
+  filter(Bin < 1 | Bin > 30) %>% pull(Bin)
+dataReco1 <- dataReco1 %>%
+  filter(Bin >= 1 & Bin <= 30) %>%
+  rbind(dataReco1 %>% filter(Bin < 1 | Bin > 30) %>%
+          mutate(Counts = sum(Counts)) %>% 
+          filter(Bin == 31))
+
+dataTruth1 <- sims_data %>%
+  filter(Theory == "Theory 1" &
+           Truth <= 30 & Truth >= 0) %>%
+  mutate(Bin = ceiling(Truth)) %>%
+  count(Bin, name = "Counts") %>%
   select(Bin, Counts)
 
-mR <- as.matrix(read.csv("migrationMatrix.csv", header = F))
-colnames(mR) <- NULL
-mR <- mR[dnu$Good,dmu$Good]
-mR <- zapsmall(mR, digits = 6)
+### Data 2
+dataReco2 <- sims_data %>%
+  filter(Theory == "Theory 2" &
+           Truth <= 30 & Truth >= 0 &
+           Detected == TRUE) %>%
+  mutate(Bin = ceiling(Reconstructed)) %>%
+  count(Bin, name = "Counts") %>%
+  select(Bin, Counts)
+sidedata2 <- dataReco2 %>%
+  filter(Bin < 1 | Bin > 30) %>% pull(Bin)
+dataReco2 <- dataReco2 %>%
+  filter(Bin >= 1 & Bin <= 30) %>%
+  rbind(dataReco2 %>% filter(Bin < 1 | Bin > 30) %>%
+          mutate(Counts = sum(Counts)) %>% 
+          filter(Bin == 31))
 
-mRsvd <- svd(mR, nu = dim(mR)[1], nv = dim(mR)[2])
+dataTruth2 <- sims_data %>%
+  filter(Theory == "Theory 2" &
+           Truth <= 30 & Truth >= 0) %>%
+  mutate(Bin = ceiling(Truth)) %>%
+  count(Bin, name = "Counts") %>%
+  select(Bin, Counts)
 
-Sig <- zapsmall(t(mRsvd$u) %*% mR %*% mRsvd$v, digits=6)
-invSig <- t(rbind(diag(1/mRsvd$d),matrix(rep(0,(dim(mR)[1]-dim(mR)[2])*dim(mR)[2]),ncol=dim(mR)[2])))
+### Data 3
+dataReco3 <- sims_data %>%
+  filter(Theory == "Theory 3" &
+           Truth <= 30 & Truth >= 0 &
+           Detected == TRUE) %>%
+  mutate(Bin = ceiling(Reconstructed)) %>%
+  count(Bin, name = "Counts") %>%
+  select(Bin, Counts)
+sidedata3 <- dataReco3 %>%
+  filter(Bin < 1 | Bin > 30) %>% pull(Bin)
+dataReco3 <- dataReco3 %>%
+  filter(Bin >= 1 & Bin <= 30) %>%
+  rbind(dataReco2 %>% filter(Bin < 1 | Bin > 30) %>%
+          mutate(Counts = sum(Counts)) %>% 
+          filter(Bin == 31))
 
-enu <- exp_hist %>%
-  filter(Treatment == "folded") %>%
-  pull(Counts)
+dataTruth3 <- sims_data %>%
+  filter(Theory == "Theory 3" &
+           Truth <= 30 & Truth >= 0) %>%
+  mutate(Bin = ceiling(Truth)) %>%
+  count(Bin, name = "Counts") %>%
+  select(Bin, Counts)
 
-muSVD <- mRsvd$v %*% invSig %*% t(mRsvd$u) %*% (dnu$Counts[dnu$Good]/(enu[dnu$Good]))
+### MC 1
+mcReco1 <- sims_mc %>%
+  filter(Theory == "Theory 1" &
+           Truth <= 30 & Truth >= 0 &
+           Detected == TRUE) %>%
+  mutate(Bin = ceiling(Reconstructed)) %>%
+  count(Bin, name = "Counts") %>%
+  select(Bin, Counts)
 
-#plot(x=c(-5,35),y=c(0,0), xlim = c(5,25), ylim = c(min(muSVD)-10,max(muSVD,dmu$Counts)+10), type = "l", xlab = "X", ylab = "Counts", main="SVD in progress, no regularization")
-#points((1:30)[dmu$Good]-0.5, muSVD, col = 2)
-#lines(rbind((1:30)[dmu$Good]-1,(1:30)[dmu$Good]), rep(muSVD,each=2), col = 2)
-#points((1:30)[dmu$Good]-0.5, dmu$Counts[dmu$Good], col = 4)
-#lines(rbind((1:30)[dmu$Good]-1,(1:30)[dmu$Good]), rep(dmu$Counts[dmu$Good],each=2), col = 4)
+sidemc1 <- mcReco1 %>%
+  filter(Bin < 1 | Bin > 30) %>% pull(Bin)
+mcmat1 <- matrix(rep(0,31*max(sidemc1-min(sidemc1)+1)),ncol=31)
+mcmat1[(1:30-min(sidemc1)+1),1:30] <- diag(1,30)
+mcmat1[(sidemc1-min(sidemc1)+1),31] <- 1
+
+mcReco1 <- mcReco1 %>%
+  filter(Bin >= 1 & Bin <= 30) %>%
+  rbind(mcReco1 %>% filter(Bin < 1 | Bin > 30) %>%
+          mutate(Counts = sum(Counts)) %>% 
+          filter(Bin == 31))
+
+mcTruth1 <- sims_mc %>%
+  filter(Theory == "Theory 1" &
+           Truth <= 30 & Truth >= 0) %>%
+  mutate(Bin = ceiling(Truth)) %>%
+  count(Bin, name = "Counts") %>%
+  select(Bin, Counts)
+
+### MC 2
+mcReco2 <- sims_mc %>%
+  filter(Theory == "Theory 2" &
+           Truth <= 30 & Truth >= 0 &
+           Detected == TRUE) %>%
+  mutate(Bin = ceiling(Reconstructed)) %>%
+  count(Bin, name = "Counts") %>%
+  select(Bin, Counts)
+
+sidemc2 <- mcReco2 %>%
+  filter(Bin < 1 | Bin > 30) %>% pull(Bin)
+mcmat2 <- matrix(rep(0,31*max(sidemc2-min(sidemc2)+1)),ncol=31)
+mcmat2[(1:30-min(sidemc2)+1),1:30] <- diag(1,30)
+mcmat2[(sidemc2-min(sidemc2)+1),31] <- 1
+
+mcReco2 <- mcReco2 %>%
+  filter(Bin >= 1 & Bin <= 30) %>%
+  rbind(mcReco2 %>% filter(Bin < 1 | Bin > 30) %>%
+          mutate(Counts = sum(Counts)) %>% 
+          filter(Bin == 31))
+
+mcTruth2 <- sims_mc %>%
+  filter(Theory == "Theory 2" &
+           Truth <= 30 & Truth >= 0) %>%
+  mutate(Bin = ceiling(Truth)) %>%
+  count(Bin, name = "Counts") %>%
+  select(Bin, Counts)
 
 
-#vals <- rep(0,15)
-#for (i in 1:15){
-#  vals[i] <- sqrt(sum((zapsmall(mR,digits=i) %*% dmu$Counts - mR %*% dmu$Counts)^2))
-#}
-#plot(1:15, log10(vals))
-#cbind(1:15,vals)
-
-#mR %*% (step_hist %>% filter(Treatment == "not folded") %>% pull(Counts)) - step_hist %>% filter(Treatment == "folded") %>% pull(Counts)
-
-#length(step_hist %>% filter(Treatment == "not folded") %>% pull(Counts))
-
-#sum(mc_hist %>% filter(Treatment == "Truth") %>% pull(Counts))
-
-
-Rmc <- (simsmc %>%
-  filter(Detected == TRUE,
-         Measured >= 0 & Measured <= 30) %>%
-  mutate(Truth = ceiling(Truth),
-         Measured = ceiling(Measured)) %>%
-  count(Truth, Measured, name = "Counts") %>%
-  complete(Measured=30:1, Truth=1:30, fill = list(Counts=0)) %>%
-  pull(Counts) %>%
-  matrix(byrow = T, ncol = 30)) %*% (simsmc %>%
-  mutate(Truth = ceiling(Truth)) %>%
-  select(Truth) %>%
-  count(Truth, name = "Counts") %>%
-  mutate(Rscale = 1/Counts) %>%
-  complete(Truth = 1:30, 
-           fill = list(Counts=0,Rscale=0)) %>%
-  pull(Rscale) %>% diag)
-
-plot(1:30, Rmc %*% mcmu$Counts, pch = 15, col = "red")
-points(1:30, mcnu$Counts, pch = 5, col = "blue")
 ```
-```{r}
-Rmc
-svd(Rmc, nu = dim(Rmc)[1], nv = dim(Rmc)[2])
-(svdRmc <- svd(Rmc[,4:30], nu = dim(Rmc[,4:30])[1], nv = dim(Rmc[,4:30])[2]))
-```
 
-\section{Unfolding methods in particle physics}
+\section{Unfolding in particle physics}
 
 \subsection{Bin-by-bin}
 
 In this approach a multiplicative \textbf{correction factor} $C_i$ is applied to the observed number of signal events $n_i$ for each bin to produce the estimator of $\mu_i$ \cite{Cowan1998},
 \begin{align}
-  \hat{\mu}_i &= C_i(n_i-\beta_i)\nonumber\\
-  &= C_i\mu_i.\label{eq:binest}
+  \hat{\mu}_i &= C_in_i.\label{eq:binest}
 \end{align}
 The correction factors are determined by taking the respective ratios of a bin's MC simulated truth signal event counts $\mu_i^{\text{MC}}$ to its MC simulated reconstructed signal event counts $\nu_i^{\text{MC}}$,
 \begin{align}C_i = \frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}.\label{eq:cfact}\end{align}
@@ -666,7 +968,371 @@ The expectation value of the estimate can be calculated easily enough as well, a
   &= \left(\frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}-\frac{\mu_i}{\nu_i}\right)\nu_i.\label{eq:binbias}
 \end{align}
 
+```{r, echo = F}
+BbB_bins <- tibble(Theory = c(rep(c("Theory 1","Theory 2","Theory 3"),each=60),
+                              rep(c("Theory 1","Theory 2"),each=30)),
+                   `Assumed Theory` = rep(rep(c("Theory 1","Theory 2"),each=30),4),
+                   LBin = rep(0:29,8), Bin = rep(1:30,8),
+                   LCounts = c(((mcTruth1$Counts/mcReco1$Counts[1:30])*
+                                  dataReco1$Counts[1:30])[c(1,1:29)],
+                               ((mcTruth2$Counts/mcReco2$Counts[1:30])*
+                                  dataReco1$Counts[1:30])[c(1,1:29)],
+                               ((mcTruth1$Counts/mcReco1$Counts[1:30])*
+                                  dataReco2$Counts[1:30])[c(1,1:29)],
+                               ((mcTruth2$Counts/mcReco2$Counts[1:30])*
+                                  dataReco2$Counts[1:30])[c(1,1:29)],
+                               ((mcTruth1$Counts/mcReco1$Counts[1:30])*
+                                  dataReco3$Counts[1:30])[c(1,1:29)],
+                               ((mcTruth2$Counts/mcReco2$Counts[1:30])*
+                                  dataReco3$Counts[1:30])[c(1,1:29)],
+                               mcTruth1$Counts[c(1,1:29)]/dmrat,
+                               mcTruth2$Counts[c(1,1:29)]/dmrat),
+                   Counts = c((mcTruth1$Counts/mcReco1$Counts[1:30])*
+                                dataReco1$Counts[1:30],
+                              (mcTruth2$Counts/mcReco2$Counts[1:30])*
+                                dataReco1$Counts[1:30],
+                              (mcTruth1$Counts/mcReco1$Counts[1:30])*
+                                dataReco2$Counts[1:30],
+                              (mcTruth2$Counts/mcReco2$Counts[1:30])*
+                                dataReco2$Counts[1:30],
+                              (mcTruth1$Counts/mcReco1$Counts[1:30])*
+                                dataReco3$Counts[1:30],
+                              (mcTruth2$Counts/mcReco2$Counts[1:30])*
+                                dataReco3$Counts[1:30],
+                              mcTruth1$Counts/dmrat,
+                              mcTruth2$Counts/dmrat),
+                   Name = c(rep(c("Theory 1 Data","Theory 2 Data",
+                                  "Theory 3 Data"),each=60),
+                            rep("MC",60)))
 
+BbB_bins_res <- BbB_bins
+BbB_bins_res <- BbB_bins_res %>% 
+  mutate(`Assumed Theory` = rep(rep(c("Theory 1 Residuals",
+                                      "Theory 2 Residuals"),each=30),4),
+         LCounts = rep(c(0,mcTruth1$Counts[1:29]/dmrat,
+                         0,mcTruth2$Counts[1:29]/dmrat),4) - LCounts,
+         Counts = rep(c(mcTruth1$Counts/dmrat,
+                        mcTruth2$Counts/dmrat),4) - Counts)
+BbB_bins <- rbind(BbB_bins,BbB_bins_res)
+
+
+ggplot() + 
+  theme_bw() +
+  geom_rect(data = BbB_bins %>%
+              mutate(ymin = Counts - 
+                       rep(sqrt(c((mcTruth1$Counts^2/
+                                 mcReco1$Counts[1:30]),
+                              (mcTruth2$Counts^2/
+                                 mcReco2$Counts[1:30]))),8),
+                     ymax = Counts + 
+                       rep(sqrt(c((mcTruth1$Counts^2/
+                                 mcReco1$Counts[1:30]),
+                              (mcTruth2$Counts^2/
+                                 mcReco2$Counts[1:30]))),8),
+                     xmin = LBin, xmax = Bin),
+            mapping = aes(xmin=xmin,ymin=ymin,
+                          xmax=xmax,ymax=ymax,
+                          fill=Name),alpha=0.2) +
+  geom_segment(data = BbB_bins,
+               mapping = aes(x = LBin,
+                             y = Counts,
+                          xend = Bin,
+                          yend = Counts,
+                         color = Name),
+               alpha = 0.7) +
+  geom_segment(data = BbB_bins,
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
+                          yend = Counts,
+                         color = Name),
+               alpha = 0.7) +
+  scale_x_continuous("X (Truth)",
+                     breaks = seq(0,30,by=3), 
+                       limits = c(0,30), 
+                       expand = c(0,0)) +
+  scale_color_manual(labels = c("Theory 1 Data","Theory 2 Data","Theory 3 Data","MC"),
+                     breaks = c("Theory 1 Data","Theory 2 Data","Theory 3 Data","MC"),
+                     values = c("#5e81b5","#e19c24","#eb6235","#000000")) +
+  scale_fill_manual(labels = c("Theory 1 Data","Theory 2 Data","Theory 3 Data","MC"),
+                     breaks = c("Theory 1 Data","Theory 2 Data","Theory 3 Data","MC"),
+                     values = c(alpha("#5e81b5",0.2),alpha("#e19c24",0.2),
+                                alpha("#eb6235",0.2),NA)) +
+  guides(fill = guide_legend("Key", override.aes = list(fill=c(alpha("#5e81b5",0.2),alpha("#e19c24",0.2),
+                                alpha("#eb6235",0.2),NA))),
+         color = guide_legend("Key")) +
+  facet_wrap(`Assumed Theory` ~ ., ncol = 2, dir = "v", scales = "free")
+```
+
+```{r, echo = F}
+
+biases <- c((mcTruth1$Counts/mcReco1$Counts[1:30] - 
+  (bins_expected1 %>% filter(Treatment == "Truth") %>% pull(Counts))/
+  (bins_expected1 %>% filter(Treatment == "Measured") %>% pull(Counts))) *
+  (bins_expected1 %>% filter(Treatment == "Measured") %>% pull(Counts)),
+  (mcTruth1$Counts/mcReco1$Counts[1:30] - 
+  (bins_expected2 %>% filter(Treatment == "Truth") %>% pull(Counts))/
+  (bins_expected2 %>% filter(Treatment == "Measured") %>% pull(Counts))) *
+  (bins_expected2 %>% filter(Treatment == "Measured") %>% pull(Counts)),
+  (mcTruth2$Counts/mcReco1$Counts[1:30] - 
+  (bins_expected1 %>% filter(Treatment == "Truth") %>% pull(Counts))/
+  (bins_expected1 %>% filter(Treatment == "Measured") %>% pull(Counts))) *
+  (bins_expected1 %>% filter(Treatment == "Measured") %>% pull(Counts)),
+  (mcTruth2$Counts/mcReco1$Counts[1:30] - 
+  (bins_expected2 %>% filter(Treatment == "Truth") %>% pull(Counts))/
+  (bins_expected2 %>% filter(Treatment == "Measured") %>% pull(Counts))) *
+  (bins_expected2 %>% filter(Treatment == "Measured") %>% pull(Counts)),
+  ((bins_expected1 %>% filter(Treatment == "Truth") %>% pull(Counts))/
+  (bins_expected1 %>% filter(Treatment == "Measured") %>% pull(Counts))-
+    (bins_expected2 %>% filter(Treatment == "Truth") %>% pull(Counts))/
+  (bins_expected2 %>% filter(Treatment == "Measured") %>% pull(Counts))) *
+    (bins_expected2 %>% filter(Treatment == "Measured") %>% pull(Counts)))
+
+plot(c(-1,31), c(0,0), lty=2, ylim=c(min(biases),max(biases)), type="l")
+lines(1:30, biases[1:30], col=2)
+lines(1:30, biases[31:60], col=3)
+
+plot(c(-1,31), c(0,0), lty=2, ylim=c(min(biases),max(biases)), type="l")
+lines(1:30, biases[61:90], col=4)
+lines(1:30, biases[91:120], col=6)
+```
+\subsection{Inverting the Response Matrix}
+
+```{r, echo=F}
+R_mc1 <- sims_mc %>%
+  filter(Theory == "Theory 1" &
+           Detected == TRUE &
+           Truth <= 30 & Truth >= 0) %>%
+  mutate(Truth = ceiling(Truth),
+         Reconstructed = ceiling(Reconstructed)) %>%
+  count(Truth, Reconstructed, name = "Counts") %>%
+  complete(Reconstructed=max(Reconstructed):min(Reconstructed),
+           Truth=1:30, fill = list(Counts=0)) %>%
+  pull(Counts) %>% matrix(byrow = T, ncol = 30) %>% 
+  t() %*% mcmat1 %>% t() * matrix(rep(1/mcTruth1$Counts,each=31),ncol=30)
+
+R_mc2 <- sims_mc %>%
+  filter(Theory == "Theory 2" &
+           Detected == TRUE &
+           Truth <= 30 & Truth >= 0) %>%
+  mutate(Truth = ceiling(Truth),
+         Reconstructed = ceiling(Reconstructed)) %>%
+  count(Truth, Reconstructed, name = "Counts") %>%
+  complete(Reconstructed=max(Reconstructed):min(Reconstructed),
+           Truth=1:30, fill = list(Counts=0)) %>%
+  pull(Counts) %>% matrix(byrow = T, ncol = 30) %>% 
+  t() %*% mcmat2 %>% t() * matrix(rep(1/mcTruth2$Counts,each=31),ncol=30)
+
+
+Vnu1 <- diag(mcReco1$Counts/dmrat)
+Vnu2 <- diag(mcReco2$Counts/dmrat)
+
+inv_R_mc1 <- solve(t(R_mc1) %*% solve(Vnu1) %*% R_mc1) %*% t(R_mc1) %*% solve(Vnu1)
+inv_R_mc2 <- solve(t(R_mc2) %*% solve(Vnu2) %*% R_mc2) %*% t(R_mc2) %*% solve(Vnu2)
+
+Vmu1 <- inv_R_mc1 %*% Vnu1 %*% t(inv_R_mc1)
+Vmu2 <- inv_R_mc2 %*% Vnu2 %*% t(inv_R_mc2)
+
+data1_unfolded_mc1 <- inv_R_mc1 %*% dataReco1$Counts
+data1_unfolded_mc2 <- inv_R_mc2 %*% dataReco1$Counts
+data2_unfolded_mc1 <- inv_R_mc1 %*% dataReco2$Counts
+data2_unfolded_mc2 <- inv_R_mc2 %*% dataReco2$Counts
+data3_unfolded_mc1 <- inv_R_mc1 %*% dataReco3$Counts
+data3_unfolded_mc2 <- inv_R_mc2 %*% dataReco3$Counts
+mc1_unfolded_mc1 <- inv_R_mc1 %*% mcReco1$Counts
+mc1_unfolded_mc2 <- inv_R_mc2 %*% mcReco1$Counts
+mc2_unfolded_mc1 <- inv_R_mc1 %*% mcReco2$Counts
+mc2_unfolded_mc2 <- inv_R_mc2 %*% mcReco2$Counts
+```
+
+```{r, echo=F}
+bins_hat <- tibble(Theory = c(rep(c(rep(c("Theory 1","Theory 2","Theory 3"),each=30),
+                                    rep(c("Theory 1","Theory 2"),each=30)),2),
+                              c(rep(c("Theory 1","Theory 2","Theory 3"),each=60),
+                                  rep(c("Theory 1","Theory 2"),each=60))),
+                   `Assumed Theory` = c(rep(c(rep(c("Theory 1","Theory 2","Theory 3"),each=30),
+                                    rep(c("Theory 1","Theory 2"),each=30)),2),
+                              c(rep(rep(c("Theory 1","Theory 2"),each=30),5))),
+                   LBin = rep(0:29,20),
+                   Bin = rep(1:30,20),
+                   LCounts = c(dataReco1$Counts[c(1,1:29)],
+                               dataReco2$Counts[c(1,1:29)],
+                               dataReco3$Counts[c(1,1:29)],
+                               mcReco1$Counts[c(1,1:29)]/dmrat,
+                               mcReco2$Counts[c(1,1:29)]/dmrat,
+                               dataTruth1$Counts[c(1,1:29)],
+                               dataTruth2$Counts[c(1,1:29)],
+                               dataTruth3$Counts[c(1,1:29)],
+                               mcTruth1$Counts[c(1,1:29)]/dmrat,
+                               mcTruth2$Counts[c(1,1:29)]/dmrat,
+                               data1_unfolded_mc1[c(1,1:29)],
+                               data1_unfolded_mc2[c(1,1:29)],
+                               data2_unfolded_mc1[c(1,1:29)],
+                               data2_unfolded_mc2[c(1,1:29)],
+                               data3_unfolded_mc1[c(1,1:29)],
+                               data3_unfolded_mc2[c(1,1:29)],
+                               mc1_unfolded_mc1[c(1,1:29)]/dmrat,
+                               mc1_unfolded_mc2[c(1,1:29)]/dmrat,
+                               mc2_unfolded_mc1[c(1,1:29)]/dmrat,
+                               mc2_unfolded_mc2[c(1,1:29)]/dmrat),
+                   Counts = c(dataReco1$Counts[1:30],
+                              dataReco2$Counts[1:30],
+                              dataReco3$Counts[1:30],
+                              mcReco1$Counts[1:30]/dmrat,
+                              mcReco2$Counts[1:30]/dmrat,
+                              dataTruth1$Counts,
+                              dataTruth2$Counts,
+                              dataTruth3$Counts,
+                              mcTruth1$Counts/dmrat,
+                              mcTruth2$Counts/dmrat,
+                              data1_unfolded_mc1,
+                              data1_unfolded_mc2,
+                              data2_unfolded_mc1,
+                              data2_unfolded_mc2,
+                              data3_unfolded_mc1,
+                              data3_unfolded_mc2,
+                              mc1_unfolded_mc1/dmrat,
+                              mc1_unfolded_mc2/dmrat,
+                              mc2_unfolded_mc1/dmrat,
+                              mc2_unfolded_mc2/dmrat),
+                   Treatment = c(rep(c("Reconstructed","Truth"),each=5*30),
+                                 rep("TruthHat",300)),
+                   Source = c(rep("Data",3*30),rep("MC",2*30),
+                              rep("Data",3*30),rep("MC",2*30),
+                              rep("Data",6*30),rep("MC",4*30)),
+                   Name = c(rep("Theory 1 Reconstucted Data",30),
+                            rep("Theory 2 Reconstucted Data",30),
+                            rep("Theory 3 Reconstucted Data",30),
+                            rep("Theory 1 Reconstucted MC",30),
+                            rep("Theory 2 Reconstucted MC",30),
+                            rep("Theory 1 Truth Data",30),
+                            rep("Theory 2 Truth Data",30),
+                            rep("Theory 3 Truth Data",30),
+                            rep("Theory 1 Truth MC",30),
+                            rep("Theory 2 Truth MC",30),
+                            rep("Theory 1 Unfolded Data",60),
+                            rep("Theory 2 Unfolded Data",60),
+                            rep("Theory 3 Unfolded Data",60),
+                            rep("Theory 1 Unfolded MC",60),
+                            rep("Theory 2 Unfolded MC",60)),
+                   Error = c(sqrt(diag(Vnu1))[1:30],
+                             sqrt(diag(Vnu2))[1:30],
+                             rep(0,30),
+                             sqrt(diag(Vmu1)),
+                             sqrt(diag(Vmu2)),
+                             rep(0,11*30),
+                             sqrt(diag(Vmu1)),
+                             sqrt(diag(Vmu2)),
+                             sqrt(diag(Vmu1)),
+                             sqrt(diag(Vmu2))))
+
+ggplot() + 
+  theme_bw() +
+  geom_segment(data = bins_hat %>%
+                 filter(Source == "MC" & 
+                          Treatment == "Truth") %>%
+                 select(LBin,Counts,Bin),
+               mapping = aes(x = LBin,
+                             y = Counts,
+                          xend = Bin,
+                          yend = Counts),
+               alpha = 0.3) +
+  geom_segment(data = bins_hat %>%
+                 filter(Source == "MC" & 
+                          Treatment == "Truth") %>%
+                 select(LBin,LCounts,Counts),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
+                          yend = Counts),
+               alpha = 0.3) +
+  geom_segment(data = bins_hat %>%
+                 filter(Treatment == "TruthHat"),
+               mapping = aes(x = LBin,
+                             y = Counts,
+                          xend = Bin,
+                          yend = Counts,
+                         color = `Assumed Theory`),
+               alpha = 0.7) +
+  geom_segment(data = bins_hat %>%
+                 filter(Treatment == "TruthHat"),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
+                          yend = Counts,
+                         color = `Assumed Theory`),
+               alpha = 0.7) +
+  scale_x_continuous(breaks = seq(0,30,by=3), 
+                       limits = c(0,30), 
+                       expand = c(0,0)) +
+  scale_color_manual(values = c("#5e81b5","#e19c24")) +
+  facet_wrap(Name ~ ., ncol = 3, scales = "free") +
+  theme(legend.position = c(0.95, 0.1), legend.justification = c(1, 0))
+
+```
+
+```{r echo = F}
+
+C <- rbind(rep(0,30),cbind(diag(1,29),rep(0,29))) + 
+  rbind(cbind(rep(0,29),diag(1,29)),rep(0,30)) +
+  diag(c(-1,rep(-2,28),-1)) + diag(10^(-3),30)
+
+A1 <- R_mc1 %*% diag(mcTruth1$Counts)
+Ainv1 <- svd(A1)$v %*% solve(diag(svd(A1)$d)) %*% t(svd(A1)$u)
+
+plot(1:30, svd(A1)$d, log="y")
+
+#max(svd(A1)$d)/min(svd(A1)$d)
+
+#svd(A1)$v %*% solve(diag(svd(A1)$d))^2 %*% t(svd(A1)$v)
+
+y1 <- dataReco1$Counts/sqrt(mcReco1$Counts)
+#t(svd(A1)$u) %*% y1
+
+
+B1 <- Vnu1
+Q1 <- svd(B1)$u
+R1 <- diag(svd(B1)$d)
+As1 <- t(t(Q1) %*% solve(R1)) %*% A1
+Xinv1 <- diag(0,30)
+for(j in 1:30){
+  for(k in 1:30){
+    Xinv1[j,k] <- (1/prod(mcTruth1$Counts[c(j,k)]))*sum(As1[,j]*As1[,k])
+  }
+}
+bs1 <- diag(solve(R1)) * (Q1 %*% mcReco1$Counts)
+U1 <- svd(As1 %*% solve(C))$u
+V1 <- svd(As1 %*% solve(C))$v
+d <- t(U1) %*% bs1
+
+plot(1:30, abs(d), log="y")
+abline(h = sqrt(pi)/2, lty = 2)
+
+plot(1:30,rev(cumsum(rev(abs(d)))/(1:30)),log="y")
+abline(h = sqrt(pi)/2, lty = 2)
+
+A2 <- R_mc2 %*% diag(mcTruth2$Counts)
+B2 <- Vnu2
+Q2 <- svd(B2)$u
+R2<- diag(svd(B2)$d)
+
+inv_R_mc1 <- solve(t(R_mc1) %*% solve(Vnu1) %*% R_mc1) %*% t(R_mc1) %*% solve(Vnu1)
+inv_R_mc2 <- solve(t(R_mc2) %*% solve(Vnu2) %*% R_mc2) %*% t(R_mc2) %*% solve(Vnu2)
+
+Vmu1 <- inv_R_mc1 %*% Vnu1 %*% t(inv_R_mc1)
+Vmu2 <- inv_R_mc2 %*% Vnu2 %*% t(inv_R_mc2)
+
+data1_unfolded_mc1 <- inv_R_mc1 %*% dataReco1$Counts
+data1_unfolded_mc2 <- inv_R_mc2 %*% dataReco1$Counts
+data2_unfolded_mc1 <- inv_R_mc1 %*% dataReco2$Counts
+data2_unfolded_mc2 <- inv_R_mc2 %*% dataReco2$Counts
+data3_unfolded_mc1 <- inv_R_mc1 %*% dataReco3$Counts
+data3_unfolded_mc2 <- inv_R_mc2 %*% dataReco3$Counts
+mc1_unfolded_mc1 <- inv_R_mc1 %*% mcReco1$Counts
+mc1_unfolded_mc2 <- inv_R_mc2 %*% mcReco1$Counts
+mc2_unfolded_mc1 <- inv_R_mc1 %*% mcReco2$Counts
+mc2_unfolded_mc2 <- inv_R_mc2 %*% mcReco2$Counts
+```
 
 \section{Algorithm Construction}
 
@@ -736,13 +1402,13 @@ The drawing of multiple samples from the posteriors is used to form an ensemble 
 
 \section{A Basic Example}
 
-In the following example 100,000 random samples are drawn from a Cauchy distribution and then subject to some processes that disperse, bias, and reduce event selection efficiency. The results of these simulations are shown in Figure [\ref{exampleUnfold}]. The migration matrix does a decent job of demonstrating how the true data was smeared. For unaffected data one would see just a diagonal line from the bottom left to the top right. It was with this in mind that instead of choosing the earlier mentioned flat prior for $\bm\alpha_{prior_i}$ I decided to go with 
+In the following example 400,000 random samples are drawn from a Cauchy distribution and then subject to some processes that disperse, bias, and reduce event selection efficiency. The results of these simulations are shown in Figure [\ref{exampleUnfold}]. The migration matrix does a decent job of demonstrating how the true data was smeared. For unaffected data one would see just a diagonal line from the bottom left to the top right. It was with this in mind that instead of choosing the earlier mentioned flat prior for $\bm\alpha_{prior_i}$ I decided to go with 
 \begin{eqnarray}
   \alpha_{ij} = e^{-\vert x_{truth}-x_{smeared}\vert}\nonumber,
 \end{eqnarray}
 the values of which are represented in Figure [\ref{prior}].
 
-```{r, fig.height=7.5, fig.align='center', fig.width=5, echo=F, fig.cap="\\label{exampleUnfold}\\emph{TOP: The true and smeared distribution of our toy model. BOTTOM: When considering count data, the smearing matrix is often referred to as the response or migration matrix. The bottom row corresponds to the events that were not assigned to an effect.}"}
+```{r, fig.height=7.5, fig.align='center', fig.width=5, echo=F, fig.cap="\\label{exampleUnfold}\\emph{TOP: The true and smeared distribution of our toy model. BOTTOM: When considering count data, the smearing matrix is often referred to as the response or migration matrix. The bottom row corresponds to the events that were not assigned to an effect.}", eval = F}
 nsim <- 100000
 
 true <- rcauchy(nsim, 0.5, 1)
@@ -819,7 +1485,7 @@ smear_m <- ggplot(filter(smear, `True X` <= 10 & `Observed X` <= 10, `True X` >=
 grid.arrange(dists, smear_m, nrow=2)
 ```
 
-```{r, fig.height=3.75, fig.align='center', fig.width=4.5, echo=F, fig.cap="\\label{prior}\\emph{Instead of choosing a flat prior Dirichlet($\\bm\\alpha_{prior_i}$) in which $\\bm\\alpha_{prior_i}=\\{1,\\dots,1\\}$, I opted for one that assumed a dominant diagonal signal, corresponding to a max value of alpha along the diagonal that decays exponentially the further you get from the diagonal.}"}
+```{r, fig.height=3.75, fig.align='center', fig.width=4.5, echo=F, fig.cap="\\label{prior}\\emph{Instead of choosing a flat prior Dirichlet($\\bm\\alpha_{prior_i}$) in which $\\bm\\alpha_{prior_i}=\\{1,\\dots,1\\}$, I opted for one that assumed a dominant diagonal signal, corresponding to a max value of alpha along the diagonal that decays exponentially the further you get from the diagonal.}", eval = F}
 test <- tibble(x = rep(seq(-9.5,9.5,1),20),
                y = rep(seq(-9.5,9.5,1),each=20))
 test$scale <- exp(-abs(test$x-test$y))
@@ -841,7 +1507,7 @@ ggplot(test) +
 ```
 
 
-```{r, echo = F}     
+```{r, echo = F, eval = F}     
 # Number of "causes" and "effects"
 nc <- ne <-  40
 
@@ -926,7 +1592,7 @@ it1 <- ggplot(data = step_hist_iter1) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ```
 
-```{r, echo = F}
+```{r, echo = F, eval = F}
 # Get observed number of events per effect
 xE2 <- xC1
 
@@ -999,7 +1665,7 @@ it2 <- ggplot(data = step_hist_iter2) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 ```
 
-```{r, echo = F, warning=F}
+```{r, echo = F, warning=F, eval = F}
 # Get observed number of events per effect
 xE3 <- xC2
 
@@ -1086,7 +1752,7 @@ The results of my unfolding are shown below in Figure [\ref{iterations}]. The it
 
 There is almost certainly an error in the code governing the 3rd iteration, resulting in a vastly larger confidence band. Instead of trying to fix this issue I think it would be better use of my time to study some similar working examples \cite{Burgard2021}.
 
-```{r, fig.height=8, fig.align='center', warning=F, fig.width=4.5, echo=F, fig.cap="\\label{iterations}\\emph{The first iteration looks like itd heading the right direction. It is my belief that I have an error somehwere in my work.}"}
+```{r, fig.height=8, fig.align='center', warning=F, fig.width=4.5, echo=F, fig.cap="\\label{iterations}\\emph{The first iteration looks like itd heading the right direction. It is my belief that I have an error somehwere in my work.}", eval = F}
 grid.arrange(it1,it2,it3, nrow=3)
 ```
 
