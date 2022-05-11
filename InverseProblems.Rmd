@@ -21,6 +21,10 @@ abstract: \singlespacing This report provides a survey of some of the common met
 fontsize: 12pt
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
 ```{r, message = F, echo=F}
 library(tidyverse)
 library(gridExtra)
