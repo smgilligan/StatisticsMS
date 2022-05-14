@@ -39,11 +39,18 @@ library(gtools)
 library(cowplot)
 library(egg)
 library(scales)
+library(ggforce)
 ```
 
 
 \section{Introduction}
-A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during the data collection process. While the possible sources of these errors are as varied as the possible events which the data might describe, significant work has been done to develop methods the can help would-be analysts reconcile them. The requisite understanding of a scenario's underlying systematic and stochastic processes might not allow researchers to truly reverse entropy, but it can approximate it with a quantifiable degree of certainty. The applied mathematics that this involves falls within the general category of \textbf{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. Within the applications described here there is the colloquially vague \textbf{unsmearing}, but there are also names that reference specific applications and methods, such as those characterized in this report.
+A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during the data collection process. While the possible sources of these errors are as varied as the possible events which the data might describe, significant work has been done to develop methods the can help would-be analysts reconcile them. The requisite understanding of a scenario's underlying systematic and stochastic processes might not allow researchers to truly reverse entropy or make up for the finite resolution of a detector, but it can approximate them with a quantifiable degree of certainty. The applied mathematics that this involves falls within the general category of \textbf{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. Within the applications described here there is the colloquially vague \textbf{unsmearing}, but there are also names that reference specific applications and methods, such as those characterized in this report.
+
+For the sake of simplicity, the manner of inverse problems addressed here will only involve linear operations between two Hilbert spaces\footnote{The definition of a Hilbert space is provided in Appendix \ref{appHilbert} for convenience}. Symbolically this can be expressed by the equation
+\begin{align}
+Az=u,\nonumber
+\end{align}
+where $A$ is a linear operator mapping the operand $z$, the sought "solution", in some Hilbert space $Z$ to $u$, the "initial data", in some Hilbert space $U$.
 
 \subsection{The Deconvolution}
 
@@ -1103,6 +1110,7 @@ biasplotT2 <- plot(c(-1,31), c(0,0), lty=2, ylim=c(min(biases),max(biases)), typ
 lines(1:30, biases[61:90], col=4)
 lines(1:30, biases[91:120], col=6)
 ```
+
 \subsection{Inverting the Response Matrix}
 
 ```{r, echo=F}
@@ -1793,19 +1801,91 @@ grid.arrange(it1,it2,it3, nrow=3)
 
 \appendix
 
-\section{Derivations}
+\section{Supplementary Mathematical Definitions and Derivations}
 
-\subsection{Bin-by-bin}\label{bin}
+\subsection{Hilbert Spaces}\label{appHilbert}
 
-\section{R Code}
+The following definitions come from Rudin in \cite{Rudin1991}. A couple additional definitions are in order, as Hilbert spaces exist at the intersection of several other important vector spaces. To start, a \textbf{vector space}, as defined here, consists of a set $X$ of vectors for which addition and scalar multiplication are defined such that for all $x,y,z\in X$ and any complex number $\alpha\in\mathbb{C}$
+\begin{enumerate}
+  \item There exists a vector in $X$ such that
+    \begin{enumerate}
+      \item addition is commutative: $x+y=y+x$,
+      \item addition is associative: $x+(y+z)=(x+y)+z$,
+    \end{enumerate}
+  \item $\alpha x$ exists in $X$ such that $1x=x$, $0x=0$ (the $0$ vector), and multiplication is distributive:
+    \begin{enumerate}
+      \item $\alpha(\beta x)=(\alpha\beta x)$,
+      \item $\alpha(x+y)=\alpha x+\alpha y$, and
+      \item $(\alpha +\beta)x=\alpha x+\beta x$.
+    \end{enumerate}
+\end{enumerate}
+The range of $alpha$ above describes a complex vector space. If $\alpha$ is restricted to the reals $\mathbb{R}$, then $X$ is considered a real vector space. Note that vector spaces include more than just traditional coordinate-style vectors, but also include function spaces such as the vector space of all polynomials with degree of at most $n$, which has the basis $\{1,x,x^2,\dots,x^{n-1},x^n\}$.
 
-The libraries I used are shown here
-```{r, message = F, eval=F}
-library(tidyverse)
-library(gridExtra)
-library(knitr)
-library(RColorBrewer)
-library(gtools)
+An important set of spaces that intersects with the set of all vector spaces are the metric spaces. A space $X$ is a \textbf{metric space} if for all $x,y\in X$ there exists an operator $d(x,y)$ that maps them to a nonnegative real number that defines their distance from each other within $X$. The properties of this operator are
+\begin{enumerate}
+  \item $0\leq d(x,y)<\infty$ for all $x$ and $y\in X$,
+  \item $d(x,y)=0$ iff $x=y$,
+  \item $d(x,y)=d(y,x)$ for all $x$ and $y\in X$,
+  \item $d(x,z)\leq d(x,y)+d(y,z)$ for all $x$, $y$, $z\in X$.
+\end{enumerate}
+The distance operator here $d$ is referred to as the metric on $X$. The intersection of vector and metric spaces form the set of normed spaces. As extension of the conditions thus far, a space $X$ is a \textbf{normed space} if $\forall x\in X$ there exists a nonnegative real number $\vert\vert x\vert\vert$, called the \textbf{norm} of $x$ such that
+\begin{enumerate}
+  \item $\vert\vert x+y\vert\vert\leq\vert\vert x\vert\vert+\vert\vert y\vert\vert\;\forall x,y\in X$,
+  \item $\vert\vert\alpha x\vert\vert = \vert\alpha\vert\,\vert\vert x\vert\vert$ if $x\in X$ and $\alpha$ is a scalar,
+  \item $\vert\vert x\vert\vert>0$ if $x\neq 0$.
+\end{enumerate} 
+Such a set is said to be \textbf{complete} if every \textbf{Cauchy sequence} in $X$ converges to a point in $X$. A Cauchy sequence in a metric space $X$ is any sequence $\{x_n\}$ that $\forall\varepsilon>0$ there exists an integer $N$ such that $d(x_m,x_n)<\varepsilon$ when $m>N$ and $n>N$. A quick example of this is the sequence defined by $x_n=\sqrt{n}$. For some starting $x_m$ and $x_n$ where $m-n=\delta$, we have
+\begin{align}
+d(x_m,x_n)
+  &=\sqrt{m}-\sqrt{n}\nonumber\\
+  &=\sqrt{n+\delta}-\sqrt{n}\nonumber\\
+  &=(\sqrt{n+\delta}-\sqrt{n})\frac{\sqrt{n+\delta}+\sqrt{n}}{\sqrt{n+\delta}+\sqrt{n}}\nonumber\\
+  &=\frac{n+\delta-n}{\sqrt{n+\delta}+\sqrt{n}}\nonumber\\
+  &=\frac{\delta}{\sqrt{n}(\sqrt{1+\delta/n}+\sqrt{1})}\nonumber\\
+  &<\frac{1}{\sqrt{n}}\left(\frac{\delta}{2}\right),\nonumber
+\end{align}
+for which the limit as $n\longrightarrow\infty$ is the $0$ vector.
+
+Incidentally, a normed vector space that is complete as defined here meets the definition of a \textbf{Banach space}. An additional subset of the normed vector spaces consists of those spaces in which for all $x,y\in X$ there exists a real or complex number $\langle x,y\rangle$ defined by an operator called the \textbf{inner product}. For all $x,y,z\in X$ this operation must satisfy
+\begin{enumerate}
+  \item $\langle x,y\rangle=\langle y,x\rangle^*$ (where the * represents the complex conjugate),
+  \item $\langle x+y,z\rangle=\langle x,z\rangle+\langle y,z\rangle$,
+  \item $\langle \alpha x,y\rangle=\alpha\langle x,y\rangle$ (for $\alpha\in\mathbb{C}$),
+  \item $\langle x,x\rangle\geq0$, and
+  \item $\langle x,x\rangle=0$ iff $x=0$.
+\end{enumerate}
+A space that satisfies these requirements forms an \textbf{inner product space}, and the inner product defined in such a space relates to the form of its norm, such that $\vert\vert x\vert\vert=\langle x,x\rangle^{1/2}$. Finally, at the intersection of Banach spaces and inner product spaces are the Hilbert spaces. I.e. a \textbf{Hilbert space} is a complete vector space with an inner product defined by its norm.
+
+
+```{r, echo=F, fig.height=3.5, fig.width=3.5}
+venndiagram <- tibble(X0 = c(0,0,-1.2,0.9),
+                      Y0 = c(-0.75,0.75,0,-1.05),
+                      R = c(4.5,4.5,2.75,2.3),
+                      space = c("Vector Space", "Metric Space", "Inner Product Space",
+                                "Banach Space")) %>%
+  mutate(across(space, factor, 
+                levels = c("Vector Space","Metric Space","Normed Space",
+                           "Inner Product Space","Banach Space", "Hilbert Space")))
+venntext <- tibble(X = c(0,2,0,-2.2,1.8,0),
+                   Y = c(4.5,2,-4.5,0.75,-1.8,-0.6),
+                   theta = c(0,-45,0,50,55,0),
+                   text = c("Vector Space\n(vectors)","Normed Space\n(length)",
+                                "Metric Space\n(distance)", "Inner Product\nSpace\n(angle/orthogonality)",
+                                "Banach Space\n(completeness)", "Hilbert\nSpace"))
+                           
+
+ggplot() +
+  coord_fixed() + theme_void() +
+  geom_circle(data = venndiagram,
+              mapping = aes(x0 = X0, y0 = Y0, r = R,
+                            fill = space),
+              alpha = 0.35) +
+  geom_text(data = venntext,
+            mapping = aes(x = X, y = Y, angle = theta,
+                          label = text), size = 3.5) +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = c("#a01000", "#409500", "#e55500", "#000090", "#ffffff"))
+  
 ```
 
-\subsection{Code used for Figure [\ref{BasicExample}]}
+\section{R Code}
