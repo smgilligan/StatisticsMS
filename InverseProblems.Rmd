@@ -12,9 +12,11 @@ header-includes:
   - \usepackage{xcolor}
   - \usepackage{bm}
   - \usepackage{amsmath}
+  - \usepackage{parskip}
   - \usepackage{hyperref}
   - \usepackage{csquotes}
   - \usepackage{float}
+  - \usepackage{wrapfig}
   - \hypersetup{colorlinks=TRUE,linkcolor=red,citecolor=blue,filecolor=magenta,urlcolor=blue}
   - \newcommand{\comment}[1]{}
 abstract: \singlespacing This report provides a survey of some of the common methods used by the high energy physics community to understand and solve ill-posed inverse problems as they pertain to signal distortions that result from imperfect measuring devices and processes. These methods are in general collectively referred to as unfolding. The specifics of data and data collection methods are generalized. Common features are discussed insofar as they contribute to the necessary understanding of the data and implementation of any covered unfolding methods. In order to construct a slightly more wholistic picture some additional topics are briefly touched upon if they relate to other common aspects of data analysis in particle physics, but only during parts of relevant discussions where they would otherwise normally appear.
@@ -42,19 +44,26 @@ library(scales)
 library(ggforce)
 ```
 
-
 \section{Introduction}
 A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during the data collection process. While the possible sources of these errors are as varied as the possible events which the data might describe, significant work has been done to develop methods the can help would-be analysts reconcile them. The requisite understanding of a scenario's underlying systematic and stochastic processes might not allow researchers to truly reverse entropy or make up for the finite resolution of a detector, but it can approximate them with a quantifiable degree of certainty. The applied mathematics that this involves falls within the general category of \textbf{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. Within the applications described here there is the colloquially vague \textbf{unsmearing}, but there are also names that reference specific applications and methods, such as those characterized in this report.
 
-For the sake of simplicity, the manner of inverse problems addressed here will only involve linear operations between two Hilbert spaces\footnote{The definition of a Hilbert space is provided in Appendix \ref{appHilbert} for convenience}. Symbolically this can be expressed by the equation
+For the sake of simplicity, the manner of inverse problems addressed here will only involve linear operations that map from one Hilbert space\footnote{The definition of a Hilbert space is provided in Appendix \ref{appHilbert} for convenience.} to another. Symbolically this can be expressed by the equation
 \begin{align}
 Az=u,\nonumber
 \end{align}
-where $A$ is a linear operator mapping the operand $z$, the sought "solution", in some Hilbert space $Z$ to $u$, the "initial data", in some Hilbert space $U$.
+where $A$ is a linear operator acting on an element $z\in Z$, the sought solution, to produce an element $u\in U$, the observed data. Within the context of the methods described herein $z$ and $u$ take the form of continuous or discrete distributions that when integrated or summed over the domain of their arguments result in finite real quantities.
+
+The difficulty of solving for $z$ can be nominally classified into one of two camps. The easiest cases involve conditions that create a \textbf{well-posed} problem, which requires that \cite{Yagola2011ch2}
+\begin{enumerate}
+  \item a solution exists $\forall u\in U$,
+  \item the solution is unique,
+  \item and if $u_n\longrightarrow u$, $Az_n\longrightarrow u_n$, and $Az\longrightarrow u$, then $z_n\longrightarrow z$.
+\end{enumerate}
+Conditions 1 and 2 work together to imply that the inverse operator $A^{-1}$ exists, and Condition 3 is often worded to describe the inverse as continuous, which means that small deviations in $u$ should correspond to similarly small deviations in $z$. When one or more of these conditions are not meant, the problem is said to be \textbf{ill-posed}, and some of the consequences of assuming otherwise should hopefully become clear in the coming pages. Entire books have been written on this subject that do not begin to cover the full scope of the methods developed to deal with ill-posed problems. The hope of this paper is for it to serve as an introduction to this content and provide some degree of direction for those who would like to know more. In the next section convolutions and deconvolutions are discussed in some detail for the continuous case before generalizing and shifting over to discrete approaches that allow for the better use of computational methods.
 
 \subsection{The Deconvolution}
 
-One way to characterize a basic example would be the following. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f(x)\,dx$$ and $$\int_\mathcal{X}f(x)\,dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured/reconstructed values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, 
+One way to characterize a basic example of a situation suitable for being treated as a convolution would be the following. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f(x)\,dx$$ and $$\int_\mathcal{X}f(x)\,dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured/reconstructed values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, 
 \begin{align}Y_i&=g(X_i,\varepsilon_i)\nonumber\\&=X_i+\varepsilon_i.\label{eq:meas}\end{align} 
 In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ using the mathematics of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textbf{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by \cite{Panaretos2011} \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
 where $J$ represents the Jacobian of the transformation involved in performing the change of basis on $f_\varepsilon$ from $\varepsilon$ to $x$, which is necessary for the evaluation of the integral for a given $y$. The magnitude of the Jacobian for transformation of $\varepsilon$ to $y-x$ through the manipulation of Equation \eqref{eq:meas} happens to be $1$.
@@ -1805,30 +1814,33 @@ grid.arrange(it1,it2,it3, nrow=3)
 
 \subsection{Hilbert Spaces}\label{appHilbert}
 
-The following definitions come from Rudin in \cite{Rudin1991}. A couple additional definitions are in order, as Hilbert spaces exist at the intersection of several other important vector spaces. To start, a \textbf{vector space}, as defined here, consists of a set $X$ of vectors for which addition and scalar multiplication are defined such that for all $x,y,z\in X$ and any complex number $\alpha\in\mathbb{C}$
+Hilbert spaces are a major structural component of the field of functional analysis. They see significant application in partial differential equations, quantum mechanics, and signal processing, where they are commonly implemented in the performance of Fourier analysis. Mathematically they represent an extension beyond the real and complex geometric-like vector spaces developed by earlier generalizations of Euclidean spaces in the 19th century. Developments in real analysis at the beginning of the 20th century lead the spaces of functions and sequences to being conceptualized as linear spaces in their own right.
+
+As extensions of previously understood spaces they necessarily exist at the intersection of several other important spaces that aught to be understood beforehand. With that said, the following definitions come from Rudin in \cite{Rudin1991}. 
+To start, a \textbf{vector space}, as defined here, consists of a set $X$ of vectors for which addition and scalar multiplication are defined such that for all $x,y,z\in X$ and any complex number $\alpha\in\mathbb{C}$
 \begin{enumerate}
-  \item There exists a vector in $X$ such that
+  \item there exists a vector in $X$ such that
     \begin{enumerate}
       \item addition is commutative: $x+y=y+x$,
       \item addition is associative: $x+(y+z)=(x+y)+z$,
     \end{enumerate}
-  \item $\alpha x$ exists in $X$ such that $1x=x$, $0x=0$ (the $0$ vector), and multiplication is distributive:
+  \item $\alpha x$ exists in $X$ such that $1x=x$, $0x=0$ (the zero vector), and multiplication is distributive:
     \begin{enumerate}
       \item $\alpha(\beta x)=(\alpha\beta x)$,
       \item $\alpha(x+y)=\alpha x+\alpha y$, and
       \item $(\alpha +\beta)x=\alpha x+\beta x$.
     \end{enumerate}
 \end{enumerate}
-The range of $alpha$ above describes a complex vector space. If $\alpha$ is restricted to the reals $\mathbb{R}$, then $X$ is considered a real vector space. Note that vector spaces include more than just traditional coordinate-style vectors, but also include function spaces such as the vector space of all polynomials with degree of at most $n$, which has the basis $\{1,x,x^2,\dots,x^{n-1},x^n\}$.
+The range of $\alpha$ above describes a complex vector space. If $\alpha$ is restricted to the reals $\mathbb{R}$, then $X$ is considered a real vector space. Note that vector spaces include more than just traditional coordinate-style vectors, but also include function spaces such as the vector space of all polynomials with degree of at most $n$, which has the basis $\{1,x,x^2,\dots,x^{n-1},x^n\}$.
 
-An important set of spaces that intersects with the set of all vector spaces are the metric spaces. A space $X$ is a \textbf{metric space} if for all $x,y\in X$ there exists an operator $d(x,y)$ that maps them to a nonnegative real number that defines their distance from each other within $X$. The properties of this operator are
+Typically associated in applications, metric spaces form a another relevant set of spaces that has some significant overlap with the vector spaces. A space $X$ is said to be a \textbf{metric space} if for all $x,y\in X$ there exists an operator $d(x,y)$ that maps them to a nonnegative real number that defines their distance from each other within $X$. The properties of this operator are
 \begin{enumerate}
   \item $0\leq d(x,y)<\infty$ for all $x$ and $y\in X$,
   \item $d(x,y)=0$ iff $x=y$,
   \item $d(x,y)=d(y,x)$ for all $x$ and $y\in X$,
   \item $d(x,z)\leq d(x,y)+d(y,z)$ for all $x$, $y$, $z\in X$.
 \end{enumerate}
-The distance operator here $d$ is referred to as the metric on $X$. The intersection of vector and metric spaces form the set of normed spaces. As extension of the conditions thus far, a space $X$ is a \textbf{normed space} if $\forall x\in X$ there exists a nonnegative real number $\vert\vert x\vert\vert$, called the \textbf{norm} of $x$ such that
+For a metric space $X$, the distance operator $d$ is referred to as the metric on $X$. The intersection of the vector and metric spaces form the set of normed spaces. As an extension of the conditions thus far, a space $X$ is a \textbf{normed space} if $\forall x\in X$ there exists a nonnegative real number $\vert\vert x\vert\vert$, called the \textbf{norm} of $x$ such that
 \begin{enumerate}
   \item $\vert\vert x+y\vert\vert\leq\vert\vert x\vert\vert+\vert\vert y\vert\vert\;\forall x,y\in X$,
   \item $\vert\vert\alpha x\vert\vert = \vert\alpha\vert\,\vert\vert x\vert\vert$ if $x\in X$ and $\alpha$ is a scalar,
@@ -1842,13 +1854,68 @@ d(x_m,x_n)
   &=(\sqrt{n+\delta}-\sqrt{n})\frac{\sqrt{n+\delta}+\sqrt{n}}{\sqrt{n+\delta}+\sqrt{n}}\nonumber\\
   &=\frac{n+\delta-n}{\sqrt{n+\delta}+\sqrt{n}}\nonumber\\
   &=\frac{\delta}{\sqrt{n}(\sqrt{1+\delta/n}+\sqrt{1})}\nonumber\\
-  &<\frac{1}{\sqrt{n}}\left(\frac{\delta}{2}\right),\nonumber
+  &<\frac{1}{\sqrt{n}}\left(\frac{\delta}{2}\right)<\varepsilon\nonumber\\
+  \implies n &> \left(\frac{\delta}{2\varepsilon}\right)^2.\nonumber
 \end{align}
-for which the limit as $n\longrightarrow\infty$ is the $0$ vector.
+Noting that for constant $\delta$ the limit of $\frac{1}{\sqrt{n}}\left(\frac{\delta}{2}\right)$ as $n\longrightarrow\infty$ is the zero vector (the point of convergence) would also be sufficient to show that $x_n=\sqrt{n}$ is a Cauchy sequence.
 
+\begin{wrapfigure}{r}{0.55\textwidth}
+  \centering
+```{r, echo=F, fig.height=3.6, fig.width=3.6, fig.align='center'}
+venndiagram <- tibble(X0 = c( 0.0,0.0,
+                             -1.3,0.9),
+                      Y0 = c(-0.75, 0.75,
+                              0.00,-1.05),
+                      R = c(4.50,4.5,
+                            2.75,2.3),
+                      space = c("Vector Space",
+                                "Metric Space",
+                                "Inner Product Space",
+                                "Banach Space")) %>%
+  mutate(across(space, factor, 
+                levels = c("Vector Space",
+                           "Metric Space",
+                           "Inner Product Space",
+                           "Banach Space")))
+venntext <- tibble(X = c(0.0, 1.90,
+                         0.0,-2.25,
+                         1.7, 0.00),
+                   Y = c( 4.45, 2.10,
+                         -4.45, 0.75,
+                         -1.70,-0.60),
+                   theta = c( 0,-35,
+                              0, 50,
+                             55,  0),
+                   text = c("Vector Space\n(vectors)",
+                            "Normed Space\n(length)",
+                            "Metric Space\n(distance)", 
+                            "Inner Product\nSpace\n(angle/orthogonality)",
+                            "Banach Space\n(completeness)",
+                            "Hilbert\nSpace"))
+                           
+
+ggplot() +
+  coord_fixed() + theme_void() +
+  geom_circle(data = venndiagram,
+              mapping = aes(x0 = X0, y0 = Y0, r = R,
+                            fill = space)) +
+  geom_text(data = venntext,
+            mapping = aes(x = X, y = Y, angle = theta,
+                          label = text), size = 3.5) +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = c(alpha("#b91500",0.35),
+                               alpha("#45a500",0.35),
+                               alpha("#ef6800",0.25),
+                               alpha("#0000e0",0.25)))
+  
+```
+  \caption{\emph{A Venn diagram representing the intersection and nesting of the spaces described in Appendix \ref{appHilbert}.}}
+  \label{spaceVenn}
+  \vspace{-30pt}
+\end{wrapfigure}
 Incidentally, a normed vector space that is complete as defined here meets the definition of a \textbf{Banach space}. An additional subset of the normed vector spaces consists of those spaces in which for all $x,y\in X$ there exists a real or complex number $\langle x,y\rangle$ defined by an operator called the \textbf{inner product}. For all $x,y,z\in X$ this operation must satisfy
 \begin{enumerate}
-  \item $\langle x,y\rangle=\langle y,x\rangle^*$ (where the * represents the complex conjugate),
+  \item $\langle x,y\rangle=\langle y,x\rangle^*$ (where the ${}^*$ represents the complex conjugate),
   \item $\langle x+y,z\rangle=\langle x,z\rangle+\langle y,z\rangle$,
   \item $\langle \alpha x,y\rangle=\alpha\langle x,y\rangle$ (for $\alpha\in\mathbb{C}$),
   \item $\langle x,x\rangle\geq0$, and
@@ -1856,36 +1923,14 @@ Incidentally, a normed vector space that is complete as defined here meets the d
 \end{enumerate}
 A space that satisfies these requirements forms an \textbf{inner product space}, and the inner product defined in such a space relates to the form of its norm, such that $\vert\vert x\vert\vert=\langle x,x\rangle^{1/2}$. Finally, at the intersection of Banach spaces and inner product spaces are the Hilbert spaces. I.e. a \textbf{Hilbert space} is a complete vector space with an inner product defined by its norm.
 
-
-```{r, echo=F, fig.height=3.5, fig.width=3.5}
-venndiagram <- tibble(X0 = c(0,0,-1.2,0.9),
-                      Y0 = c(-0.75,0.75,0,-1.05),
-                      R = c(4.5,4.5,2.75,2.3),
-                      space = c("Vector Space", "Metric Space", "Inner Product Space",
-                                "Banach Space")) %>%
-  mutate(across(space, factor, 
-                levels = c("Vector Space","Metric Space","Normed Space",
-                           "Inner Product Space","Banach Space", "Hilbert Space")))
-venntext <- tibble(X = c(0,2,0,-2.2,1.8,0),
-                   Y = c(4.5,2,-4.5,0.75,-1.8,-0.6),
-                   theta = c(0,-45,0,50,55,0),
-                   text = c("Vector Space\n(vectors)","Normed Space\n(length)",
-                                "Metric Space\n(distance)", "Inner Product\nSpace\n(angle/orthogonality)",
-                                "Banach Space\n(completeness)", "Hilbert\nSpace"))
-                           
-
-ggplot() +
-  coord_fixed() + theme_void() +
-  geom_circle(data = venndiagram,
-              mapping = aes(x0 = X0, y0 = Y0, r = R,
-                            fill = space),
-              alpha = 0.35) +
-  geom_text(data = venntext,
-            mapping = aes(x = X, y = Y, angle = theta,
-                          label = text), size = 3.5) +
-  theme(legend.position = "none") +
-  scale_fill_manual(values = c("#a01000", "#409500", "#e55500", "#000090", "#ffffff"))
-  
-```
+A commonly presented example is the $L^2$ function space, which consists of functions that are square integrable, i.e. if $f(x)\in L^2\implies \vert\vert f(x)\vert\vert^2=\int_\chi\vert  f(x)\vert^2dx<\infty$, where $\chi$ is the domain of $x$. The subset $L^2[-\pi,\pi]$, where $\chi=[-\pi,\pi]$, has the well known Fourier series as a basis, which is commonly written such that for $f(x)\in L^2[-\pi,\pi]$
+\begin{align}
+  f(x)=\frac{a_0}{2} + \sum_{n=1}^\infty\left[a_n\cos(nx)+b_n\sin(nx)\right],\nonumber
+\end{align}
+where
+$$\begin{matrix}
+  a_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\cos(nx)dx \\ \text{and} \\ b_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\sin(nx)dx.
+\end{matrix}$$
+Verification that this basis meets all the requirements laid out so far is beyond the scope of this paper.
 
 \section{R Code}
