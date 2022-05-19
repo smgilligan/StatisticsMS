@@ -1,5 +1,5 @@
 ---
-title: "Inverse Problems in Experimental Particle Physics"
+title: "The Structure of Inverse Problems in Experimental Particle Physics"
 author: "Sean Gilligan"
 output: 
   pdf_document:
@@ -21,6 +21,9 @@ header-includes:
   - \newcommand{\comment}[1]{}
 abstract: \singlespacing This report provides a survey of some of the common methods used by the high energy physics community to understand and solve ill-posed inverse problems as they pertain to signal distortions that result from imperfect measuring devices and processes. These methods are in general collectively referred to as unfolding. The specifics of data and data collection methods are generalized. Common features are discussed insofar as they contribute to the necessary understanding of the data and implementation of any covered unfolding methods. In order to construct a slightly more wholistic picture some additional topics are briefly touched upon if they relate to other common aspects of data analysis in particle physics, but only during parts of relevant discussions where they would otherwise normally appear.
 fontsize: 12pt
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
@@ -46,121 +49,296 @@ library(latex2exp)
 ```
 
 \section{Introduction} \label{intro}
-A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during the data collection process. While the possible sources of these errors are as varied as the possible events which the data might describe, significant work has been done to develop methods the can help would-be analysts reconcile them. The requisite understanding of a scenario's underlying systematic and stochastic processes might not allow researchers to truly reverse entropy or make up for the finite resolution of a detector, but it can approximate them with a quantifiable degree of certainty. The applied mathematics that this involves falls within the general category of \textbf{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. Within the applications described here there is the colloquially vague \textbf{unsmearing}, but there are also names that reference specific applications and methods, such as those characterized in this report.
 
-For the sake of simplicity, the manner of inverse problems addressed here will only involve linear operations that map from one Hilbert space\footnote{The definition of a Hilbert space is provided in Appendix \ref{appHilbert} for convenience.} to another. Symbolically this can be expressed by the equation
+A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during the data collection process. While the possible sources of these errors are as varied as the possible events which the data might describe, significant work has been done to develop methods the can help would-be analysts reconcile them. The requisite understanding of a scenario's underlying systematic and stochastic processes might not allow researchers to truly reverse entropy or make up for the finite resolution of a detector, but it can approximate them with a quantifiable degree of certainty. 
+
+The applied mathematics that this involves falls within the general category of \textbf{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. There is the colloquially vague \textbf{unsmearing}, but there are also names that reference specific applications and methods. For the sake of simplicity, and any necessary physical constraints, the manner of inverse problems addressed here will only have satisfactory solutions that involve linear operations that map from one Hilbert space\footnote{The definition of a Hilbert space is provided in Appendix \ref{appHilbert} for convenience.} to another. Symbolically this can be expressed by the equation
 \begin{align}
 Az=u,\nonumber
-\end{align}
-where $A$ is a linear operator acting on an element $z\in Z$, the sought solution, to produce an element $u\in U$, the observed data. Within the context of the methods described herein $z$ and $u$ take the form of continuous or discrete distributions that when integrated or summed over the domain of their arguments result in finite real quantities.
+\end{align} 
+where $A$ is a linear operator acting on an element $z\in Z$, the sought solution, to produce an element $u\in U$, the observed data. Within the context of the methods described herein $z$
+and $u$ take the form of continuous or discrete distributions that when integrated or summed over the domain of their arguments result in finite real quantities.
 
-The difficulty of solving for $z$ can be nominally classified into one of two camps. The easiest cases involve conditions that create a \textbf{well-posed} problem, which requires that \cite{Yagola2011ch2}
+The difficulty of solving for $z$ can be classified into one of two camps. The easiest cases involve conditions that create a \textbf{well-posed} problem, which requires that \cite{Yagola2011ch2}
 \begin{enumerate}
   \item a solution exists $\forall u\in U$,
   \item the solution is unique,
   \item and if $u_n\longrightarrow u$, $Az_n\longrightarrow u_n$, and $Az\longrightarrow u$, then $z_n\longrightarrow z$.
 \end{enumerate}
-Conditions 1 and 2 work together to imply that the inverse operator $A^{-1}$ exists, and Condition 3 is often worded to describe the inverse as continuous, which means that small deviations in $u$ should correspond to similarly small deviations in $z$. When one or more of these conditions are not meant, the problem is said to be \textbf{ill-posed}, and some of the consequences of assuming otherwise should hopefully become clear in the coming pages. Entire books have been written on this subject that do not begin to cover the full scope of the methods developed to deal with ill-posed problems. The hope of this paper is for it to serve as an introduction to this content and provide some degree of direction for those who would like to know more. In the next section convolutions and deconvolutions are discussed in some detail for the continuous case before generalizing and shifting over to discrete approaches that allow for the better use of computational methods.
+Conditions 1 and 2 work together to imply that the inverse operator
+$A^{-1}$ exists, and Condition 3 is often worded to describe the inverse
+as continuous, which implies that small deviations in $u$ should
+correspond to similar deviations in $z$. When one or more of
+these conditions are not met, the problem is said to be
+\textbf{ill-posed}, and some of the consequences of assuming otherwise
+should hopefully become clear in the coming pages.
 
-\subsection{The Deconvolution}
+In Section \ref{deconvolution} the convolution and deconvolution are
+briefly discussed in the capacity of continuously distributed data. They
+are then generalized in Section \ref{general}, and discretization
+introduced in Section \ref{discret} establishes a data structure that
+makes accessible to analysts a host of rigorous statistical and
+computational methods. This comes in handy as Section \ref{simulation} presents a number of simulated
 
-One way to characterize a basic example of a situation suitable for being treated as a convolution would be one that should be very familiar to anyone who has ever taken statistics course. Assume that data collected regarding $n$ statistical events represent the measurement of $n$ independent and identically distributed (i.i.d.) random variables $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values represented by the probability density function (PDF) $f_X(x)$, such that the probability of a random variable $X_i$ having a value between $x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f_X(x)\,dx$$ and $$\int_\mathcal{X}f_X(x)\,dx=1,$$ where $\mathcal{X}$ represents the domain of $x$. The error introduced during the measurement process is similarly represented by a set of i.i.d. random variables $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$ with a PDF $f_\varepsilon(\varepsilon)$, where the sets $\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent of each other. The set of measured/reconstructed values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined in terms of the preceding sets of variables such that for event $i\in\{1,\dots,n\}$, 
-\begin{align}Y_i&=g(X_i,\varepsilon_i)\nonumber\\&=X_i+\varepsilon_i.\label{eq:meas}\end{align} 
-In light of this relationship, the corresponding PDF $f_Y(y)$ can be found explicitly through an operation on $f_X(x)$ and $f_\varepsilon(\varepsilon)$ using the mathematics of functional analysis. Stated in more general terms, the empirical density function $f_Y$ is formed from the \textbf{convolution} of the true density function $f_X$ and the error density function $f_\varepsilon$, and is defined by \cite{Panaretos2011} \begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
-where $J$ represents the Jacobian of the transformation involved in performing the change of basis on $f_\varepsilon$ from $\varepsilon$ to $x$, which is necessary for the evaluation of the integral for a given $y$. The magnitude of the Jacobian for transformation of $\varepsilon$ to $y-x$ through the manipulation of Equation \eqref{eq:meas} happens to be $1$.
+Entire books have been written on this subject that do not begin to cover the full scope
+of the methods developed to deal with ill-posed problems. With that in mind the hope for this short paper is for it to serve as an introduction to ill-posed problems while providing some degree of direction for those who would like to know more.
 
-As the collection of measured values $\bm{Y}$ accumulates an estimate of empirical density $\hat{f}_Y$ can readily be formed. However, a major goal in an analysis of data like this is typically to develop an accurate estimate of the true density $\hat{f}_X$. Using the information contained in $\hat{f}_Y$ to accomplish this necessarily requires some attempt at finding an inverse process to the convolution, i.e. the \textbf{deconvolution}.
+\subsection{The Deconvolution}\label{deconvolution}
 
-For cases in the form of this particular example there are a variety approaches, but they commonly involve the Fourier transform of the density functions $\left\{f_X,f_\varepsilon,f_Y\right\}$ into their corresponding characteristic functions $\left\{\phi_X,\phi_\varepsilon,\phi_Y\right\}$ \cite{Meister2009}\cite{Panaretos2011}. Minor aspects of the definition for the Fourier transform can vary slightly between applications, resulting primarily from the use of different scale factors and sign conventions. Here it will be defined for some random variable $U\in\mathbb{R}$ with density function $f_U(u)$ and random variable $T\in\mathbb{R}$ as \begin{align}\phi_T(t)=\int_{-\infty}^\infty f_U(u)\,e^{itu}\,du.\label{eq:ft}\end{align} When conditions permit the inverse Fourier transform can be found via \begin{align}f_U(u)=\int_{-\infty}^\infty \phi_T(t)\,e^{-itu}\,dt.\label{eq:ift}\end{align} The Fourier transform is important in deconvolution methods because when you apply it to the convolution of two density functions the link between their respective characteristic functions becomes purely multiplicative, i.e.
-$$f_Y=f_X*f_\varepsilon\implies\phi_Y=\phi_X\phi_\varepsilon.$$
-An instructional proof of this result is provided on page 447 of \cite{Boas2005}. The steps so far characterize a typical deconvolution scheme, with later steps consisting of various ways to perform density estimation and addressing issues similar to those that will be seen ahead\cite{Meister2009}. 
+One way to characterize a basic example of a situation suitable for
+being treated as a convolution would be one that should be very familiar
+to anyone who has ever taken statistics course. Assume that data
+collected regarding $n$ statistical events represent the measurement of
+$n$ independent and identically distributed (i.i.d.) random variables
+$\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values
+represented by the probability density function (PDF) $f_X(x)$, such
+that the probability of a random variable $X_i$ having a value between
+$x_a$ and $x_b$ is $$P(\:x_a<X_i<x_b\:)=\int_{x_a}^{x_b}f_X(x)\,dx$$ and
+$$\int_\mathcal{X}f_X(x)\,dx=1,$$ where $\mathcal{X}$ represents the
+domain of $x$. The error introduced during the measurement process is
+similarly represented by a set of i.i.d. random variables
+$\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$
+with a PDF $f_\varepsilon(\varepsilon)$, where the sets
+$\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent
+of each other. The set of measured/reconstructed values
+$\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined
+in terms of the preceding sets of variables such that for event
+$i\in\{1,\dots,n\}$,
+\begin{align}Y_i&=g(X_i,\varepsilon_i)\nonumber\\&=X_i+\varepsilon_i.\label{eq:meas}\end{align}
+In light of this relationship, the corresponding PDF $f_Y(y)$ can be
+found explicitly through an operation on $f_X(x)$ and
+$f_\varepsilon(\varepsilon)$ using the mathematics of functional
+analysis. Stated in more general terms, the empirical density function
+$f_Y$ is formed from the \textbf{convolution} of the true density
+function $f_X$ and the error density function $f_\varepsilon$, and is
+defined by \cite{Panaretos2011}
+\begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
+where $J$ represents the Jacobian of the transformation involved in
+performing the change of basis on $f_\varepsilon$ from $\varepsilon$ to
+$x$, which is necessary for the evaluation of the integral for a given
+$y$. The magnitude of the Jacobian for transformation of $\varepsilon$
+to $y-x$ through the manipulation of Equation \eqref{eq:meas} happens to
+be $1$.
 
-\subsection{Generalizing}
+As the collection of measured values $\bm{Y}$ accumulates an estimate of
+empirical density $\hat{f}_Y$ can readily be formed. However, a major
+goal in an analysis of data like this is typically to develop an
+accurate estimate of the true density $\hat{f}_X$. Using the information
+contained in $\hat{f}_Y$ to accomplish this necessarily requires some
+attempt at finding an inverse process to the convolution, i.e. the
+\textbf{deconvolution}.
 
-The remainder of this paper is dedicated to a more generalized study of these type of problems. With the understanding that even experts can be fairly loose and inconsistent with their vocabulary, this paper will do its best to provide clear demarcations to distinguish between similar processes and utilize consistent notation throughout. To begin, while most literature on deconvolution methods do use the word "convolution", this operation is also referred to by the German word \textit{faltung} \cite{Weisstein}. The latter's English translation, \textbf{folding}, is featured prominently in the particle physics community, but refers to a more generalized process than what is described by Equation \eqref{eq:conv2} \cite{DAgostini1994}\cite{Adye2011}\cite{Blobel2013}. In general, the terms folding and \textbf{unfolding} are used to describe two supersets of processes that respectively include convolution and deconvolution.
+For cases in the form of this particular example there are a variety
+approaches, but they commonly involve the Fourier transform of the
+density functions $\left\{f_X,f_\varepsilon,f_Y\right\}$ into their
+corresponding characteristic functions
+$\left\{\phi_X,\phi_\varepsilon,\phi_Y\right\}$
+\cite{Meister2009}\cite{Panaretos2011}. Minor aspects of the definition
+for the Fourier transform can vary slightly between applications,
+resulting primarily from the use of different scale factors and sign
+conventions. Here it will be defined for some random variable
+$U\in\mathbb{R}$ with density function $f_U(u)$ and random variable
+$T\in\mathbb{R}$ as
+\begin{align}\phi_T(t)=\int_{-\infty}^\infty f_U(u)\,e^{itu}\,du.\label{eq:ft}\end{align}
+When conditions permit the inverse Fourier transform can be found via
+\begin{align}f_U(u)=\int_{-\infty}^\infty \phi_T(t)\,e^{-itu}\,dt.\label{eq:ift}\end{align}
+The Fourier transform is important in deconvolution methods because when
+you apply it to the convolution of two density functions the link
+between their respective characteristic functions becomes purely
+multiplicative, i.e.
+$$f_Y=f_X*f_\varepsilon\implies\phi_Y=\phi_X\phi_\varepsilon.$$ An
+instructional proof of this result is provided on page 447 of
+\cite{Boas2005}. The steps so far characterize a typical deconvolution
+scheme, with later steps consisting of various ways to perform density
+estimation and addressing issues similar to those that will be seen
+ahead \cite{Meister2009}.
 
-One way to arrive at the intended generalization is with the help of conditional probability. Thinking of $\{X,Y\}$ as a continuous bivariate random vector with joint PDF $f(x,y)$ and marginal PDFs $f_X(x)$ and $f_Y(y)$, we can define the conditional PDF of $Y$ given that $X=x$ as function of $y$, $f(y\,\vert x)$ \cite{Casella2001}. The relationship between these PDFs is sufficient to define any one of them in terms of operations involving one or more of the others. As such, for $f_Y(y)$ it can be shown
+\subsection{Generalizing}\label{general}
+
+The remainder of this paper is dedicated to a more generalized study of
+these type of problems. With the understanding that even experts can be
+fairly loose and inconsistent with their vocabulary, this paper will do
+its best to provide clear definitions. To begin, while most literature
+on deconvolution methods do use the word "convolution", this operation
+is also referred to by the German word \textit{faltung}
+\cite{Weisstein}. The latter's English translation, \textbf{folding}, is
+featured prominently in the particle physics community, but refers to a
+more generalized process than what is described by Equation
+\eqref{eq:conv2} \cite{DAgostini1994}\cite{Adye2011}\cite{Blobel2013}.
+In general, folding and \textbf{unfolding} refer to two sets of
+processes within which the sets of convolution and deconvolution
+processes form proper respective subsets.
+
+One way to arrive at the desired generalization is with the help of
+conditional probability. Thinking of $\{X,Y\}$ as a continuous bivariate
+random vector with joint PDF $f(x,y)$ and marginal PDFs $f_X(x)$ and
+$f_Y(y)$, we can define the conditional PDF of $Y$ given that $X=x$ as
+function of $y$, $f(y\,\vert x)$ \cite{Casella2001}. The relationship
+between these PDFs is sufficient to define any one of them in terms of
+operations involving one or more of the others. As such, for $f_Y(y)$ it
+can be shown
 \begin{align}f_Y(y)&=\int_\mathcal{X}f(x,y)\,dx\nonumber\\&=\int_\mathcal{X}f(y\,\vert x)f_X(x)\,dx\nonumber\\&=\int_\mathcal{X}K(x,y)f_X(x)\,dx.\label{eq:fred}\end{align}
-While integrating over $x$, $f(y\,\vert x)$ is implicitly treated as a function of both $x$ and $y$. Acknowledging this allows for understanding Equation \eqref{eq:fred} as a Fredholm integral of the first kind with a Kernel function $K(x,y)$ that reflects the physical measurement process \cite{Blobel2011}. The relationship between $x$ and $y$ in $K(x,y)$ is not defined, but when the kernel is a function of the difference of its arguments, such that $K(x,y)=K(y-x)$, Equation \eqref{eq:fred} becomes the convolution described in Equation \eqref{eq:conv2}.
+While integrating over $x$, $f(y\,\vert x)$ is implicitly treated as a
+function of both $x$ and $y$. Acknowledging this allows for
+understanding Equation \eqref{eq:fred} as a Fredholm integral of the
+first kind with a Kernel function $K(x,y)$ that reflects the physical
+measurement process \cite{Blobel2011}. The relationship between $x$ and
+$y$ in $K(x,y)$ is not defined, but when the kernel is a function of the
+difference of its arguments, such that $K(x,y)=K(y-x)$, Equation
+\eqref{eq:fred} becomes the convolution described in Equation
+\eqref{eq:conv2}.
 
-In particle physics experiments, analysts make use of Monte-Carlo (MC) simulations to estimate detector response to randoms samples from some true distribution $f_X(x)^{\text{MC}}$, which is itself estimated by way of MC simulations using models that typically contain theory being tested by the experiment in question. The resulting measured distribution $f_Y(y)^{\text{MC}}$ grants implicit knowledge of $K(x,y)$ by way of Equation \eqref{eq:fred} \cite{Blobel2013}. Finding the inverse of this Kernel is then the goal, as it should in theory allow for the mapping of experimental observations $\bm Y$, as randomly sampled from $f_Y(y)$, back to their true values $\bm X$.
+In particle physics experiments, analysts make use of Monte-Carlo (MC)
+simulations to estimate detector response to randoms samples from some
+true distribution $f_X(x)^{\text{MC}}$, which is itself estimated by way
+of MC simulations using models that typically contain theory being
+tested by the experiment in question. The resulting measured
+distribution $f_Y(y)^{\text{MC}}$ grants implicit knowledge of $K(x,y)$
+by way of Equation \eqref{eq:fred} \cite{Blobel2013}. Finding the
+inverse of this Kernel is then the goal, as it should in theory allow
+for the mapping of experimental observations $\bm Y$, as randomly
+sampled from $f_Y(y)$, back to their true values $\bm X$.
 
 \subsection{Discretization} \label{discret}
 
-In practice researchers are only ever dealing with estimates $\hat f_X$, $\hat f_Y$, $\hat f_X^{\text{MC}}$, and $\hat f_Y^{\text{MC}}$, and the sets of data that contribute to these estimates are organized by bin into histograms that form unnormalized granular approximations of their true distributions. Thinking in terms of these histograms allows for the reformulation of Equation \eqref{eq:fred} into the linear matrix equation:
-\begin{align}\bm\nu = \bm{R}\bm\mu.\label{eq:mat}\end{align}
-The vectors $\bm\nu$, $\bm\mu$ and matrix $\bm{R}$ relate to their continuous counterparts by \cite{Blobel2013}:
-\begin{align}
+In practice researchers are only ever dealing with estimates $\hat f_X$,
+$\hat f_Y$, $\hat f_X^{\text{MC}}$, and $\hat f_Y^{\text{MC}}$, and the
+sets of data that contribute to these estimates are organized by bin
+into histograms that form unnormalized granular approximations of their
+true distributions. Thinking in terms of these histograms allows for the
+reformulation of Equation \eqref{eq:fred} into the linear matrix
+equation: \begin{align}\bm\nu = \bm{R}\bm\mu.\label{eq:mat}\end{align}
+The vectors $\bm\nu$, $\bm\mu$ and matrix $\bm{R}$ relate to their
+continuous counterparts by \cite{Blobel2013}: \begin{align}
   \text{true distribution }f_X(x)&\longrightarrow\bm\mu\,\in\,\{\mathcal{U}\equiv\mathbb{R}^M_{+}\cup\bm{0}\}\text{ the unknown true bin counts,}\nonumber\\
   \text{measured distribution }f_Y(y)&\longrightarrow\bm\nu\,\in\,\mathcal{V}\equiv\{\mathbb{R}^N_{+}\cup\bm{0}\}\text{ the measured bin counts,}\nonumber\\
   \text{Kernel }K(x,y)&\longrightarrow\bm{R}\;\;\text{the rectangular }N\text{-by-}M\text{ \bf response matrix}\text{.}\nonumber
-\end{align}
-The components of vectors $\bm\nu$ and $\bm\mu$ represent the number of events that have occurred within the regions of $x$ and $y$ that define the components' corresponding bins. For $i=1,\dots,N$ and $j=1,\dots,M$ the components of matrix $\bm R$ are defined by the conditional probability \cite{Cowan1998}
-\begin{align}
+\end{align} The components of vectors $\bm\nu$ and $\bm\mu$ represent
+the number of events that have occurred within the regions of $x$ and
+$y$ that define the components' corresponding bins. For $i=1,\dots,N$
+and $j=1,\dots,M$ the components of matrix $\bm R$ are defined by the
+conditional probability \cite{Cowan1998} \begin{align}
   R_{ij}&=P(\text{measured value in bin }i\vert\text{true value in bin }j)\nonumber\\
         &=\frac{P(\text{measured value in bin }i\text{ and true value in bin }j)}{P(\text{true value in bin }j)}\nonumber\\
         &=\frac{\int_{\text{bin }i}\int_{\text{bin }j}K(x,y)f_X(x)dx\,dy}{\int_{\text{bin }j}dx\,f_X(x)}\nonumber\\
         &\equiv P(\nu_i\vert\mu_j).\label{eq:Rij}
-\end{align}
-In terms of $P(\nu_i\vert\mu_j)$ the full response matrix then has the form
-\begin{align}
+\end{align} In terms of $P(\nu_i\vert\mu_j)$ the full response matrix
+then has the form \begin{align}
   \bm{R}=\begin{pmatrix}
     P(\nu_1\vert\mu_1)     & P(\nu_1\vert\mu_2)     & \dots  & P(\nu_1\vert\mu_{N})   \\
     P(\nu_2\vert\mu_1)     & P(\nu_2\vert\mu_2)     & \cdots & P(\nu_2\vert\mu_{N})   \\
     \vdots                 & \vdots                 & \ddots & \vdots                 \\
     P(\nu_{M}\vert\mu_1)   & P(\nu_{M}\vert\mu_2)   & \dots  & P(\nu_{M}\vert\mu_{N})
   \end{pmatrix}.\label{eq:Rmat}
-\end{align}
-With these definitions Equation \eqref{eq:mat} tells us that an event produced in bin $\mu_j$ has some probability $\geq 0$ of being measured in each of the $N$ bins of $\bm\nu$, and that each bin count $\nu_i$ receives potential contributions from each of the $M$ bins in $\bm\mu$, i.e. 
+\end{align} With these definitions Equation \eqref{eq:mat} tells us that
+an event produced in bin $\mu_j$ has some probability $\geq 0$ of being
+measured in each of the $N$ bins of $\bm\nu$, and that each bin count
+$\nu_i$ receives potential contributions from each of the $M$ bins in
+$\bm\mu$, i.e.
 \begin{align}\nu_i = \sum_{j=1}^MR_{ij}\mu_j.\label{eq:bini}\end{align}
-The number of bins are typically set such that $M\leq N$, with the convention $N=M+1$ being common. A higher number of bins in the measured distribution reflects that the measuring process is expected to map some events in $\bm X$ to values of $\bm Y$ that are outside the region of values that define the initial $M$ bins. These one or more extra bins are intended to account for all the possible values that a particular event could be mapped to, such that for a given event starting in bin $j$ one might expect the probabilities of it being measured in each of the $N$ final bins to sum to $1$. 
+The number of bins are typically set such that $M\leq N$, with the
+convention $N=M+1$ being common. A higher number of bins in the measured
+distribution reflects that the measuring process is expected to map some
+events in $\bm X$ to values of $\bm Y$ that are outside the region of
+values that define the initial $M$ bins. These one or more extra bins
+are intended to account for all the possible values that a particular
+event could be mapped to, such that for a given event starting in bin
+$j$ one might expect the probabilities of it being measured in each of
+the $N$ final bins to sum to $1$.
 
-However, in practice there are a variety of constraints on events that can either result in them not being included for analysis or even prevent them from being detected at all. For example, an analyst might cut events observed in regions of a detector that result in insufficient data collection, or maybe some event information carriers miss the detector entirely, resulting in such events going unseen. In either case the effect of these missing events is described using the detector \textbf{efficiency}, and represented mathematically by the $N$-vector $\bm\epsilon$, where component $\epsilon_j$ is the efficiency of the $j$th true bin defined\footnote{In the continuous case it is typically written as $\epsilon(x)$, and understood to be the conditional probability of an event producing any measured value given it has a true value of $x$. It is typically absorbed into $K(x,y)$ where it goes on to manifest within $\bm R$ in the manner shown in Equation \eqref{eq:eff} \cite{Blobel2013}.} by \cite{Cowan1998}:
+However, in practice there are a variety of constraints on events that
+can either result in them not being included for analysis or even
+prevent them from being detected at all. For example, an analyst might
+cut events observed in regions of a detector that result in insufficient
+data collection, or maybe some event information carriers miss the
+detector entirely, resulting in such events going unseen. In either case
+the effect of these missing events is described using the detector
+\textbf{efficiency}, and represented mathematically by the $N$-vector
+$\bm\epsilon$, where component $\epsilon_j$ is the efficiency of the
+$j$th true bin
+defined\footnote{In the continuous case it is typically written as $\epsilon(x)$, and understood to be the conditional probability of an event producing any measured value given it has a true value of $x$. It is typically absorbed into $K(x,y)$ where it goes on to manifest within $\bm R$ in the manner shown in Equation \eqref{eq:eff} \cite{Blobel2013}.}
+by \cite{Cowan1998}:
 \begin{align}\sum_{i=1}^{N}P(\nu_i\vert\mu_j)=\sum_{i=1}^{N}R_{ij}=\epsilon_j\leq 1.\label{eq:eff}\end{align}
-In contrast to this are contributions to measured counts from \textbf{background} processes. Just as events produced in a region of interest can be smeared out of it, events produced out of it can be smeared into it. The crossed barrier could correspond to the variable of interest, but it can also include events excluded from analysis due to assigned constraints on other variables that describe the event. Background processes are often studied and dealt with prior to the unfolding procedures described in the paper. It is briefly mentioned here to provide a slightly more holistic picture of particle physics analysese. Mathematically, background would be included by modifying Equation \eqref{eq:bini} to read
-\begin{align}\nu_i = \sum_{j=1}^MR_{ij}\mu_j+\beta_i,\end{align}
-where $\beta_i$ is the $i$th component of the $N$-vector $\bm\beta$, which represents the binned background counts. This leads to equations like $\nu_i^{\text{sig}}=\nu_i-\beta_i$ in order to specify the expected number of measured counts that are from the signal of interest. Going forward background will be assumed to already have been accounted for, and $\nu_i$ will refer to the expected signal counts of bin $i$.
+In contrast to this are contributions to measured counts from
+\textbf{background} processes. Just as events produced in a region of
+interest can be smeared out of it, events produced out of it can be
+smeared into it. The crossed barrier could correspond to the variable of
+interest, but it can also include events excluded from analysis due to
+assigned constraints on other variables that describe the event.
+Background processes are often studied and dealt with prior to the
+unfolding procedures described in the paper. It is briefly mentioned
+here to provide a slightly more holistic picture of particle physics
+analysese. Mathematically, background would be included by modifying
+Equation \eqref{eq:bini} to read
+\begin{align}\nu_i = \sum_{j=1}^MR_{ij}\mu_j+\beta_i,\end{align} where
+$\beta_i$ is the $i$th component of the $N$-vector $\bm\beta$, which
+represents the binned background counts. This leads to equations like
+$\nu_i^{\text{sig}}=\nu_i-\beta_i$ in order to specify the expected
+number of measured counts that are from the signal of interest. Going
+forward background will be assumed to already have been accounted for,
+and $\nu_i$ will refer to the expected signal counts of bin $i$.
 
-As all these variables so far have been derived from the exact continuous distributions $f_X(x)$ and $f_Y(y)$, they correspond to the expectation values that researchers are estimating during data collection and analysis. As this is a counting process the components of the observed number of signal events $\bm{n}$, an $N$-vector, are often related to the components of the expected number of observed counts $\bm\nu$ as a collection of $N$ separate and independent Poisson processes. That is to say the observed counts $n_i$ in bin $i$ are treated as i.i.d. random variables with the probability mass function
+As all these variables so far have been derived from the exact
+continuous distributions $f_X(x)$ and $f_Y(y)$, they correspond to the
+expectation values that researchers are estimating during data
+collection and analysis. As this is a counting process the components of
+the observed number of signal events $\bm{n}$, an $N$-vector, are often
+related to the components of the expected number of observed counts
+$\bm\nu$ as a collection of $N$ separate and independent Poisson
+processes. That is to say the observed counts $n_i$ in bin $i$ are
+treated as i.i.d. random variables with the probability mass function
 \begin{align}P(n_i\vert\nu_i)=\frac{\nu_i^{n_i}e^{-\nu_i}}{n_i!}.\label{eq:pois}\end{align}
-The counts $n_i$ would in theory then form the estimate $\hat\nu_i$ of the expected counts $\nu_i$ by
+The counts $n_i$ would in theory then form the estimate $\hat\nu_i$ of
+the expected counts $\nu_i$ by
 \begin{align}\nu_i&=\text{E}[\hat\nu_i]=\text{E}[n_i]\nonumber\\&=\text{Var}[\hat\nu_i]=\text{Var}[n_i].\nonumber\end{align}
-Understanding the probability distribution of $\bm{n}$ allows for unfolding methods that involve the use of maximum likelihood estimation. For methods based on least squares it becomes necessary to find the covariance matrix $\bm{\Sigma}^{\nu}$ of the observations, which for independent Poisson processes has components of the form
+Understanding the probability distribution of $\bm{n}$ allows for
+unfolding methods that involve the use of maximum likelihood estimation.
+For methods based on least squares it becomes necessary to find the
+covariance matrix $\bm{\Sigma}^{\nu}$ of the observations, which for
+independent Poisson processes has components of the form
 \begin{align}\Sigma^{\nu}_{ij}&=\text{Cov}[n_i,n_j]\nonumber\\&=\delta_{ij}\nu_i,\label{eq:cov}\end{align}
-where $\delta_{ij}$ is the Kronecker delta\footnote{The Kronecker delta $\delta_{ij}$ is a piecewise function of variables $i$ and $j$ defined by $\delta_{ij}=\begin{cases}0\;\;\;\text{if }i\neq j\\1\;\;\;\text{if }i=j\end{cases}.$}. The path to the covariance matrix of the estimated true distribution $\bm{\hat\mu}$ can be considered briefly by considering the maximum log-likelihood, where it can be shown
-\begin{align}
+where $\delta_{ij}$ is the Kronecker
+delta\footnote{The Kronecker delta $\delta_{ij}$ is a piecewise function of variables $i$ and $j$ defined by $\delta_{ij}=\begin{cases}0\;\;\;\text{if }i\neq j\\1\;\;\;\text{if }i=j\end{cases}.$}.
+The path to the covariance matrix of the estimated true distribution
+$\bm{\hat\mu}$ can be considered briefly by considering the maximum
+log-likelihood, where it can be shown \begin{align}
   \log L(\bm\mu)
     &=\sum_{i=1}^N\log\left(\frac{\nu_i^{n_i}e^{-\nu_i}}{n_i!}\right)\nonumber\\
     &=\sum_{i=1}^N\left(n_i\log\nu_i-\nu_i-\log n_i!\right)\nonumber\\
   \frac{\partial\log L}{\partial\mu_k}
     &=\sum_{i=1}^N\frac{\partial\log L}{\partial\nu_i}\frac{\partial\nu_i}{\partial\mu_k}\nonumber\\
     &=\sum_{i=1}^N\left(\frac{n_i}{\nu_i}-1\right)R_{ik}=0.\nonumber
-\end{align}
-Some minor algebra here reproduces the estimate $\bm{\hat\nu}=\bm{n}$, which has been assumed up until now. Continuing with an additional derivative shows
+\end{align} Some minor algebra here reproduces the estimate
+$\bm{\hat\nu}=\bm{n}$, which has been assumed up until now. Continuing
+with an additional derivative shows 
 \begin{align}
   \frac{\partial^2\log L}{\partial\mu_k\partial\mu_l}
     &=-\sum_{i=1}^N\left(\frac{n_i}{\nu_i^2}\frac{\partial\nu_i}{\partial\mu_l}\right) R_{ik}\nonumber\\
     &=-\sum_{i=1}^N\frac{n_i R_{il}R_{ik}}{\nu_i^2},\nonumber
-  \end{align}
-the expectation value of which is the Fisher information.
+\end{align} the negative of the expectation value of which is the Fisher information. The Fisher information's relationship with the Cram$\acute{\text{e}}$r-Rao lower bound can, as its name implies, create a lower bound on the covariance matrix of an unbiased estimator of $\bm{\mu}$. For such an unbiased estimator $\bm{\hat T}_{\mu\text{nbiased}}$ we have
+\begin{align}
+  \text{Cov}\left(\bm{\hat T}_{\mu\text{nbiased}}\right)\geq \bm{I}(\bm{\mu})^{-1}
+    &=\left(-E\left[\frac{\partial^2\log L}{\partial\mu_k\partial\mu_l}\right]\right)^{-1}\nonumber\\
+    &=\left(\sum_{i=1}^N\frac{E[n_i] R_{il}R_{ik}}{\nu_i^2}\right)^{-1}\nonumber\\
+    &=\left(\sum_{i=1}^N\frac{R_{il}R_{ik}}{\nu_i}\right)^{-1}\nonumber\\
+    &=\left(\bm{R}^T\bm{\Sigma}_\nu^{-1}\bm{R}\right)^{-1}\nonumber\\
+    &=\bm{R}^{-1}\bm{\Sigma}_\nu\bm{R}^{-1^{T}}.\label{CRlb}
+\end{align}
+Indeed, this matrix must then be lower bound for the covariance matrix of any unbiased estimator of $\bm{\mu}$. This is some good insight to have before getting into the weeds of working on actual data.
 
-\subsection{A Simulated Example}
+\subsection{A Simulated Example}\label{simulation}
 
-Consider an example of the form described by Equation \eqref{eq:meas}, i.e. $Y_i=\epsilon_i\left(X_i+\varepsilon_i\right)$. Let $X_i$ be a i.i.d. random variable from a bimodal distribution of the form $X_i=Z_iX_{1,i}+(1-Z_i)X_{2,i}$, where
+Consider the following three sets of i.i.d. random variables from separate Cauchy distributions.
 \begin{align}
-  X_{1,i}&\sim \text{Gamma}(24,0.4),\nonumber\\
-  X_{2,i}&\sim \text{Gamma}(42,0.4),\nonumber\\
-  \text{and }Z_i&\sim\text{Bernoulli}(2/7),\nonumber
-\end{align}
-and let the effects of detector smearing be represented by i.i.d random variables generated by the conditional Gaussian process $\varepsilon_i\sim N\left(\mu(X_i),\sigma(X_i)^2\right)$, the mean and variance of which are functions defined by
-\begin{align}
-  \mu(X_i=x)&=-x^{1/4}\;\;\text{and}\nonumber\\
-  \sigma(X_i=x)&=\log\left(\frac{x+10}{4}\right).\nonumber
-\end{align}
-The efficiency is similarly conditional on $X_i$, and is modeled here as a Bernoulli process with i.i.d random variables $\epsilon_i\sim\text{Bernoulli}\big(p(X_i)\big)$, where the average detection rate (when $\epsilon_i=1$) is a function of the form
-\begin{align}
-  p(X_i=x)=1-e^{-\sqrt{x}/4}.\nonumber
-\end{align}
+  X_{1,i}&\sim \text{Cauchy}(x_0^{(1)},\gamma_1)\nonumber\\
+  X_{2,i}&\sim \text{Cauchy}(x_0^{(2)},\gamma_2)\nonumber\\
+  X_{3,i}&\sim \text{Cauchy}(x_0^{(3)},\gamma_3)\nonumber
+\end{align} 
+Current models predict that some class of physics events observed in past detectors are solely coming from the first two processes, such that for $n$ events the number coming from the first process is an i.i.d. random variable from the binomial distribution $B(n,p)$. Meanwhile, a new model has been developed that suggests that the third process has been occurring this whole time but has been incorrectly categorized as one or the other of the first two. Napkin math has estimated a contribution rate that is reflective of some probability $p_3$, such that the binomial distribution is actually a multinomial distribution with probabilities $\bm p=\{p_1,p_2,p_3\}$.
+
+A new experiment is being designed and funded to test this new theory, on top of many others, and simulations are being performed to give analyzers plenty of opportunities to develop their collaboration's analysis framework, perform calibrations, and make ready a myriad of studies that hope to shed light on many an unanswered question. The corresponding MC simulations performed during this time include such simulations for the physics events of interest, but also for the detector. The purposes of this paper a relatively simple set of simulations have been performed, leading to 400,000 simulated events per theory that are meant to represent the MC simulations, as well as a set of 20,000 simulated events for each theory the are meant to represent hypothetical data as they might be produced. 
+
+Please see Appendix \ref{simuApp} for information regarding the simulations performed. Please see Figure
 
 ```{r, echo = F}
 set.seed(12321)
@@ -838,6 +1016,8 @@ migration <- migration +
 
 migration
 ```
+
+
 \begin{figure}[!ht]
     \centering
     \hrulefill
@@ -863,6 +1043,7 @@ egg::ggarrange(continuous2 +
   \label{BasicExample}
   \hrulefill
 \end{figure}
+
 
 ```{r, echo=F}
 ### Data 1
@@ -995,33 +1176,589 @@ mcTruth2 <- sims_mc %>%
 
 \section{Unfolding in particle physics}
 
-\subsection{Bin-by-bin}
+Intro to section 2
 
-In this approach a multiplicative \textbf{correction factor} $C_i$ is applied to the observed number of signal events $n_i$ for each bin to produce the estimator of $\mu_i$ \cite{Cowan1998},
+\subsection{Inverting the Response Matrix}
+
+In the event of Equation \eqref{eq:mat} being well-posed the obvious
+approach would be to construct the unique inverse of the response matrix
+$\bm{R}^{-1}$ and map the reconstructed counts back to an estimate of
+the true counts via \begin{align}
+  \bm{\hat\mu}=\bm{R}^{-1}\bm{n}.\label{eq:naiveInv}
+\end{align} A statistical justification for this comes from performing
+generalized least squares \cite{Johnson2007} fit to estimate $\bm\mu$,
+which relies on approximating bin count $n_i$ as normally distributed
+with mean $\nu_i$ and variance $1/\nu_i$. Minimizing the sums of squares
+yields \begin{align}\min_{\bm\mu}\nabla_{\bm\mu}\bm\chi^2(\bm{\mu})
+  &=\nabla_{\bm\mu}(\bm{R}\bm{\mu}-\bm{n})^T\bm{\Sigma}_{\nu}^{-1}(\bm{R}\bm{\mu}-\bm{n})\nonumber\\
+  &=\nabla_{\bm\mu}(\bm{\mu}^T\bm{R}^T-\bm{n}^T)\bm{\Sigma}_{\nu}^{-1}(\bm{R}\bm{\mu}-\bm{n})\nonumber\\
+  &=\nabla_{\bm\mu}(\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{n}^{-1}\bm{R}\bm{\mu}-\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}-\bm{n}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}+\bm{n}^T\bm{\Sigma}_{\nu}^{-1}\bm{n})\nonumber\\
+  &=\nabla_{\bm\mu}(\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{n}^{-1}\bm{R}\bm{\mu}-2\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}+\bm{n}^T\bm{\Sigma}_{\nu}^{-1}\bm{n})\nonumber\\
+  &=2\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}-2\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}\nonumber\\
+  &=0\nonumber\\
+  \implies\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}&=\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}\nonumber\\
+  \implies\bm{\hat\mu}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}=\bm{R}^{+}\bm{n}\label{eq:naivemu}\\
+  \implies\bm{R}^{+}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1},\label{eq:penrose}
+\end{align} where $\bm{R}^{+}$ is the Moore-Penrose generalized inverse
+(or pseudo-inverse) \cite{Blobel2013}, and it is assumed that
+$\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}$ is not singular. The
+corresponding covariance matrix is more quickly calculated by way of
+\begin{align}
+  \bm{\Sigma}_\mu&=\text{Cov}[\bm{\hat\mu},\bm{\hat\mu}]=\text{Cov}[\bm{R}^{+}\bm{n},\bm{R}^{+}\bm{n}]=\bm{R}^{+}\text{Cov}[\bm{n},\bm{n}]\bm{R}^{+^T}=\bm{R}^{+}\bm{\Sigma}_\nu\bm{R}^{+^T}\nonumber.
+\end{align} One such inverse matrix was calculated from each of the MC
+Theory simulations and both were applied to every set of the
+Reconstructed counts. The residuals of these unfolding calculations are
+paired with a $1 \sigma$ uncertainty from the estimated Truth counts.
+They are then scaled by the expected Truth for the assumed theory and
+plotted on a log10 scale in Figure \ref{NaiveRes}.
+
+```{r, echo=F, fig.height=3}
+R_mc1 <- sims_mc %>%
+  filter(Theory == "Theory 1" &
+           Detected == TRUE &
+           Truth <= 30 & Truth >= 0) %>%
+  mutate(Truth = ceiling(Truth),
+         Reconstructed = ceiling(Reconstructed)) %>%
+  count(Truth, Reconstructed, name = "Counts") %>%
+  complete(Reconstructed=max(Reconstructed):min(Reconstructed),
+           Truth=1:30, fill = list(Counts=0)) %>%
+  pull(Counts) %>% matrix(byrow = T, ncol = 30) %>% 
+  t() %*% mcmat1 %>% t() * matrix(rep(1/mcTruth1$Counts,each=31),ncol=30)
+
+R_mc2 <- sims_mc %>%
+  filter(Theory == "Theory 2" &
+           Detected == TRUE &
+           Truth <= 30 & Truth >= 0) %>%
+  mutate(Truth = ceiling(Truth),
+         Reconstructed = ceiling(Reconstructed)) %>%
+  count(Truth, Reconstructed, name = "Counts") %>%
+  complete(Reconstructed=max(Reconstructed):min(Reconstructed),
+           Truth=1:30, fill = list(Counts=0)) %>%
+  pull(Counts) %>% matrix(byrow = T, ncol = 30) %>% 
+  t() %*% mcmat2 %>% t() * matrix(rep(1/mcTruth2$Counts,each=31),ncol=30)
+
+
+Vnu1 <- diag(mcReco1$Counts/dmrat)
+Vnu2 <- diag(mcReco2$Counts/dmrat)
+
+inv_R_mc1 <- solve(t(R_mc1) %*% solve(Vnu1) %*% R_mc1) %*% 
+  t(R_mc1) %*% solve(Vnu1)
+inv_R_mc2 <- solve(t(R_mc2) %*% solve(Vnu2) %*% R_mc2) %*% 
+  t(R_mc2) %*% solve(Vnu2)
+
+Vmu1 <- inv_R_mc1 %*% Vnu1 %*% t(inv_R_mc1)
+Vmu2 <- inv_R_mc2 %*% Vnu2 %*% t(inv_R_mc2)
+
+data1_unfolded_mc1 <- inv_R_mc1 %*% dataReco1$Counts
+data1_unfolded_mc2 <- inv_R_mc2 %*% dataReco1$Counts
+data2_unfolded_mc1 <- inv_R_mc1 %*% dataReco2$Counts
+data2_unfolded_mc2 <- inv_R_mc2 %*% dataReco2$Counts
+data3_unfolded_mc1 <- inv_R_mc1 %*% dataReco3$Counts
+data3_unfolded_mc2 <- inv_R_mc2 %*% dataReco3$Counts
+mc1_unfolded_mc1 <- inv_R_mc1 %*% mcReco1$Counts
+mc1_unfolded_mc2 <- inv_R_mc2 %*% mcReco1$Counts
+mc2_unfolded_mc1 <- inv_R_mc1 %*% mcReco2$Counts
+mc2_unfolded_mc2 <- inv_R_mc2 %*% mcReco2$Counts
+```
+
+
+\begin{figure}[!ht]
+    \centering
+```{r, echo=F,fig.height=3.5, fig.align='center'}
+bins_hat <- tibble(Theory = c(rep(c(rep(c("Theory 1",
+                                          "Theory 2"),each=30),
+                                    rep(c("Theory 1",
+                                          "Theory 2"),each=30)),2),
+                              c(rep(c("Theory 1",
+                                      "Theory 2"),each=60),
+                                  rep(c("Theory 1",
+                                        "Theory 2"),each=60))),
+                   `Assumed Theory` = c(rep(c(rep(c("Theory 1",
+                                                    "Theory 2"),each=30),
+                                    rep(c("Theory 1",
+                                          "Theory 2"),each=30)),2),
+                              c(rep(rep(c("Theory 1",
+                                          "Theory 2"),each=30),4))),
+                   LBin = rep(0:29,16),
+                   Bin = rep(1:30,16),
+                   LCounts = c(dataReco1$Counts[c(1,1:29)],
+                               dataReco2$Counts[c(1,1:29)],
+                               mcReco1$Counts[c(1,1:29)]/dmrat,
+                               mcReco2$Counts[c(1,1:29)]/dmrat,
+                               dataTruth1$Counts[c(1,1:29)],
+                               dataTruth2$Counts[c(1,1:29)],
+                               mcTruth1$Counts[c(1,1:29)]/dmrat,
+                               mcTruth2$Counts[c(1,1:29)]/dmrat,
+                               data1_unfolded_mc1[c(1,1:29)],
+                               data1_unfolded_mc2[c(1,1:29)],
+                               data2_unfolded_mc1[c(1,1:29)],
+                               data2_unfolded_mc2[c(1,1:29)],
+                               mc1_unfolded_mc1[c(1,1:29)]/dmrat,
+                               mc1_unfolded_mc2[c(1,1:29)]/dmrat,
+                               mc2_unfolded_mc1[c(1,1:29)]/dmrat,
+                               mc2_unfolded_mc2[c(1,1:29)]/dmrat),
+                   Counts = c(dataReco1$Counts[1:30],
+                              dataReco2$Counts[1:30],
+                              mcReco1$Counts[1:30]/dmrat,
+                              mcReco2$Counts[1:30]/dmrat,
+                              dataTruth1$Counts,
+                              dataTruth2$Counts,
+                              mcTruth1$Counts/dmrat,
+                              mcTruth2$Counts/dmrat,
+                              data1_unfolded_mc1,
+                              data1_unfolded_mc2,
+                              data2_unfolded_mc1,
+                              data2_unfolded_mc2,
+                              mc1_unfolded_mc1/dmrat,
+                              mc1_unfolded_mc2/dmrat,
+                              mc2_unfolded_mc1/dmrat,
+                              mc2_unfolded_mc2/dmrat),
+                   Treatment = c(rep(c("Reconstructed","Truth"),each=4*30),
+                                 rep("TruthHat",240)),
+                   Source = c(rep("Data",2*30),rep("MC",2*30),
+                              rep("Data",2*30),rep("MC",2*30),
+                              rep("Data",4*30),rep("MC",4*30)),
+                   Name = c(rep("Reconstucted Theory 1 Data",30),
+                            rep("Reconstucted Theory 2 Data",30),
+                            rep("Reconstucted Theory 1  MC",30),
+                            rep("Reconstucted Theory 2  MC",30),
+                            rep("Truth Theory 1 Data",30),
+                            rep("Truth Theory 2 Data",30),
+                            rep("Truth Theory 1 MC",30),
+                            rep("Truth Theory 2 MC",30),
+                            rep("Unfolded Theory 1 Data",60),
+                            rep("Unfolded Theory 2 Data",60),
+                            rep("Unfolded Theory 1 MC",60),
+                            rep("Unfolded Theory 2 MC",60)),
+                   Error = c(sqrt(diag(Vnu1))[1:30],
+                             sqrt(diag(Vnu2))[1:30],
+                             rep(0,20),
+                             sqrt(diag(Vmu1)),
+                             sqrt(diag(Vmu2)),
+                             rep(0,11*20),
+                             sqrt(diag(Vmu1)),
+                             sqrt(diag(Vmu2)),
+                             sqrt(diag(Vmu1)),
+                             sqrt(diag(Vmu2))))
+
+bins_hat <- bins_hat %>%
+  mutate(Step = "Counts") %>%
+  rbind(bins_hat %>% 
+          filter(Treatment == "TruthHat") %>%
+          mutate(LCounts = rep(bins_hat %>% 
+                                 filter(Source == "MC" & 
+                                          Treatment == "Truth") %>% 
+                                 pull(LCounts),3) - LCounts,
+                 Counts = rep(bins_hat %>% 
+                                filter(Source == "MC" & 
+                                         Treatment == "Truth") %>% 
+                                pull(Counts),3) - Counts,
+                 Step = "Residuals")) %>%
+  mutate(across(Name, factor, 
+                levels = c("Unfolded Theory 1 Data",
+                           "Unfolded Theory 2 Data",NA,
+                           "Unfolded Theory 1 MC",
+                           "Unfolded Theory 2 MC",NA)))
+
+
+asinh_trans <- function(){
+  trans_new(name = 'asinh', transform = function(x) asinh(x), 
+            inverse = function(x) sinh(x))
+}
+fancy_scientific <- function(l) {
+     # turn in to character string in scientific notation
+     l <- format(l, scientific = TRUE)
+     # replace 0e+00 with 0
+     l <- gsub("0e\\+00","0",l)
+     # remove + after exponent, if exists. E.g.: (3x10^+2 -> 3x10^2)
+     l <- gsub("e\\+","e",l)
+     # turn the 'e+' into plotmath format
+     l <- gsub("e", "\\10^", l)
+     parse(text=l)
+}
+
+ggplot() + 
+  theme_bw() +
+  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
+  geom_rect(data = bins_hat %>%
+              filter(Treatment == "TruthHat" &
+                          Step == "Residuals") %>%
+              mutate(Cplus = (Counts + sqrt(rep(c(diag(Vmu1),diag(Vmu2)),3)))/
+                       rep(c(mcTruth1$Counts/dmrat,mcTruth2$Counts/dmrat),3),
+                     Cminus = (Counts - sqrt(rep(c(diag(Vmu1),diag(Vmu2)),3)))/
+                       rep(c(mcTruth1$Counts/dmrat,mcTruth2$Counts/dmrat),3)),
+            mapping = aes(xmin = LBin,
+                          ymin = Cminus,
+                          xmax = Bin,
+                          ymax = Cplus,
+                          fill = `Assumed Theory`),
+            alpha = 0.3) +
+  geom_segment(data = bins_hat %>%
+                 filter(Treatment == "TruthHat"&
+                          Step == "Residuals"),
+               mapping = aes(x = LBin,
+                             y = Counts/rep(c(mcTruth1$Counts/dmrat,
+                                              mcTruth2$Counts/dmrat),3),
+                          xend = Bin,
+                          yend = Counts/rep(c(mcTruth1$Counts/dmrat,
+                                              mcTruth2$Counts/dmrat),3),
+                         color = `Assumed Theory`),
+               alpha = 0.9) +
+  geom_segment(data = bins_hat %>%
+                 filter(Treatment == "TruthHat"&
+                          Step == "Residuals"),
+               mapping = aes(x = LBin,
+                             y = LCounts/rep(c(1,mcTruth1$Counts[-30]/dmrat,
+                                               1,mcTruth2$Counts[-30]/dmrat),3),
+                          xend = LBin,
+                          yend = Counts/rep(c(mcTruth1$Counts/dmrat,
+                                              mcTruth2$Counts/dmrat),3),
+                         color = `Assumed Theory`),
+               alpha = 0.9) +
+  scale_x_continuous(breaks = seq(0,30,by=3), 
+                       limits = c(0,30), 
+                       expand = c(0,0)) +
+  scale_y_continuous(trans="asinh",
+                     breaks = c(-10^(4:1),0,10^(1:4)),
+                     labels = c(-10^(4:1),0,10^(1:4))) +
+  scale_color_manual(labels = c("Theory 1","Theory 2"),
+                     breaks = c("Theory 1","Theory 2"),
+                     values = c("#5e81b5","#e19c24")) +
+  scale_fill_manual(labels = c("Theory 1","Theory 2"),
+                    breaks = c("Theory 1","Theory 2"),
+                    values = c(alpha("#5e81b5",0.3),
+                               alpha("#e19c24",0.3))) +
+  facet_wrap(~Name, drop = F, ncol = 3) +
+  theme(legend.position = c(0.95, 0.1), legend.justification = c(1, 0),
+        axis.text = element_text(size=8)) +
+  labs(title = 
+         expression(Residuals~of~estimated~true~counts~using~
+                      (widehat(mu)==R^paste("+")*~n)), x = "X (Truth)", 
+       y = expression(frac(mu~-~widehat(mu),mu)~~~~~~
+                      paste("Residuals as % of\n Assumed Truth")))
+```
+\caption{\emph{\small Plots featuring the ratio of the residuals to the assumed theory's expected truth for the five sets of reconstructed counts when unfolded using response matrices derived from MC simulations for both Theory 1 and Theory 2. Note the log10 scale of the vertical axes, the large uncertainties, and negative estimated counts. The MC results are exact when unfolded under the correct theory for tautological reasons.}}
+  \label{NaiveRes}
+\end{figure}
+
+This degree of failure is disastrous, but one thing to notice here is that this
+problem does not satisfy Condition 3 of a well-posed problem as
+described in Section \ref{intro}. That the inverse calculated here maps
+$\bm{n}$ to negative counts indicates that the estimate
+$\bm{\hat\mu}\notin\mathcal{U}$, the space of allowable solutions
+defined at the beginning of Section \ref{discret}.
+
+```{r echo = F}
+
+C <- rbind(rep(0,30),cbind(diag(1,29),rep(0,29))) + 
+  rbind(cbind(rep(0,29),diag(1,29)),rep(0,30)) +
+  diag(c(-1,rep(-2,28),-1)) + diag(10^(-3),30)
+
+A1 <- R_mc1 %*% diag(mcTruth1$Counts)
+Ainv1 <- svd(A1)$v %*% solve(diag(svd(A1)$d)) %*% t(svd(A1)$u)
+
+plot(1:30, svd(A1)$d, log="y")
+
+#max(svd(A1)$d)/min(svd(A1)$d)
+
+#svd(A1)$v %*% solve(diag(svd(A1)$d))^2 %*% t(svd(A1)$v)
+
+y1 <- dataReco1$Counts/sqrt(mcReco1$Counts)
+#t(svd(A1)$u) %*% y1
+
+
+B1 <- Vnu1
+Q1 <- svd(B1)$u
+R1 <- diag(svd(B1)$d)
+As1 <- t(t(Q1) %*% solve(R1)) %*% A1
+Xinv1 <- diag(0,30)
+for(j in 1:30){
+  for(k in 1:30){
+    Xinv1[j,k] <- (1/prod(mcTruth1$Counts[c(j,k)]))*sum(As1[,j]*As1[,k])
+  }
+}
+bs1 <- diag(solve(R1)) * (Q1 %*% mcReco1$Counts)
+U1 <- svd(As1 %*% solve(C))$u
+V1 <- svd(As1 %*% solve(C))$v
+d <- t(U1) %*% bs1
+
+plot(1:30, abs(d), log="y")
+abline(h = sqrt(pi)/2, lty = 2)
+
+plot(1:30,rev(cumsum(rev(abs(d)))/(1:30)),log="y")
+abline(h = sqrt(pi)/2, lty = 2)
+
+A2 <- R_mc2 %*% diag(mcTruth2$Counts)
+B2 <- Vnu2
+Q2 <- svd(B2)$u
+R2<- diag(svd(B2)$d)
+
+inv_R_mc1 <- solve(t(R_mc1) %*% solve(Vnu1) %*% R_mc1) %*% t(R_mc1) %*% solve(Vnu1)
+inv_R_mc2 <- solve(t(R_mc2) %*% solve(Vnu2) %*% R_mc2) %*% t(R_mc2) %*% solve(Vnu2)
+
+Vmu1 <- inv_R_mc1 %*% Vnu1 %*% t(inv_R_mc1)
+Vmu2 <- inv_R_mc2 %*% Vnu2 %*% t(inv_R_mc2)
+
+data1_unfolded_mc1 <- inv_R_mc1 %*% dataReco1$Counts
+data1_unfolded_mc2 <- inv_R_mc2 %*% dataReco1$Counts
+data2_unfolded_mc1 <- inv_R_mc1 %*% dataReco2$Counts
+data2_unfolded_mc2 <- inv_R_mc2 %*% dataReco2$Counts
+data3_unfolded_mc1 <- inv_R_mc1 %*% dataReco3$Counts
+data3_unfolded_mc2 <- inv_R_mc2 %*% dataReco3$Counts
+mc1_unfolded_mc1 <- inv_R_mc1 %*% mcReco1$Counts
+mc1_unfolded_mc2 <- inv_R_mc2 %*% mcReco1$Counts
+mc2_unfolded_mc1 <- inv_R_mc1 %*% mcReco2$Counts
+mc2_unfolded_mc2 <- inv_R_mc2 %*% mcReco2$Counts
+```
+
+\newpage
+
+\appendix
+
+\section{Supplementary Mathematical Definitions and Derivations}
+
+\subsection{Hilbert Spaces}\label{appHilbert}
+
+Hilbert spaces are a prominent feature in the field of
+functional analysis. They see significant application in partial
+differential equations, quantum mechanics, and signal processing, where
+they are commonly implemented in the performance of Fourier analysis.
+Mathematically they represent an extension beyond the real and complex
+geometric-like vector spaces developed by earlier generalizations of
+Euclidean spaces in the 19th century. Developments in real analysis at
+the beginning of the 20th century lead the spaces of functions and
+sequences to being conceptualized as linear spaces in their own right.
+
+As extensions of previously understood spaces they necessarily exist at
+the intersection of several other important spaces that aught to be
+understood beforehand. With that said, the following definitions come
+from Rudin in \cite{Rudin1991}. To start, a \textbf{vector space}, as
+defined here, consists of a set $X$ of vectors for which addition and
+scalar multiplication are defined such that for all $x,y,z\in X$ and any
+complex number $\alpha\in\mathbb{C}$
+\begin{enumerate}
+  \item there exists a vector in $X$ such that
+    \begin{enumerate}
+      \item addition is commutative: $x+y=y+x$,
+      \item addition is associative: $x+(y+z)=(x+y)+z$,
+    \end{enumerate}
+  \item $\alpha x$ exists in $X$ such that $1x=x$, $0x=0$ (the zero vector), and multiplication is distributive:
+    \begin{enumerate}
+      \item $\alpha(\beta x)=(\alpha\beta x)$,
+      \item $\alpha(x+y)=\alpha x+\alpha y$, and
+      \item $(\alpha +\beta)x=\alpha x+\beta x$.
+    \end{enumerate}
+\end{enumerate}
+The range of $\alpha$ above describes a complex vector space. If
+$\alpha$ is restricted to the reals $\mathbb{R}$, then $X$ is considered
+a real vector space. Note that vector spaces include more than just
+traditional coordinate-style vectors, but also include function spaces
+such as the vector space of all polynomials with degree of at most $n$,
+which has the basis $\{1,x,x^2,\dots,x^{n-1},x^n\}$.
+
+Typically associated in applications, metric spaces form a another
+relevant set of spaces that has some significant overlap with the vector
+spaces. A space $X$ is said to be a \textbf{metric space} if for all
+$x,y\in X$ there exists an operator $d(x,y)$ that maps them to a
+nonnegative real number that defines their distance from each other
+within $X$. The properties of this operator are
+\begin{enumerate}
+  \item $0\leq d(x,y)<\infty$ for all $x$ and $y\in X$,
+  \item $d(x,y)=0$ iff $x=y$,
+  \item $d(x,y)=d(y,x)$ for all $x$ and $y\in X$,
+  \item $d(x,z)\leq d(x,y)+d(y,z)$ for all $x$, $y$, $z\in X$.
+\end{enumerate}
+For a metric space $X$, the distance operator $d$ is referred to as the
+metric on $X$. The intersection of the vector and metric spaces form the
+set of normed spaces. As an extension of the conditions thus far, a
+space $X$ is a \textbf{normed space} if $\forall x\in X$ there exists a
+nonnegative real number $\vert\vert x\vert\vert$, called the
+\textbf{norm} of $x$ such that
+\begin{enumerate}
+  \item $\vert\vert x+y\vert\vert\leq\vert\vert x\vert\vert+\vert\vert y\vert\vert\;\forall x,y\in X$,
+  \item $\vert\vert\alpha x\vert\vert = \vert\alpha\vert\,\vert\vert x\vert\vert$ if $x\in X$ and $\alpha$ is a scalar,
+  \item $\vert\vert x\vert\vert>0$ if $x\neq 0$.
+\end{enumerate}
+Such a set is said to be \textbf{complete} if every
+\textbf{Cauchy sequence} in $X$ converges to a point in $X$. A Cauchy
+sequence in a metric space $X$ is any sequence $\{x_n\}$ that
+$\forall\varepsilon>0$ there exists an integer $N$ such that
+$d(x_m,x_n)<\varepsilon$ when $m>N$ and $n>N$. A quick example of this
+is the sequence defined by $x_n=\sqrt{n}$. For some starting $x_m$ and
+$x_n$ where $m-n=\delta$, we have \begin{align}
+d(x_m,x_n)
+  &=\sqrt{m}-\sqrt{n}\nonumber\\
+  &=\sqrt{n+\delta}-\sqrt{n}\nonumber\\
+  &=(\sqrt{n+\delta}-\sqrt{n})\frac{\sqrt{n+\delta}+\sqrt{n}}{\sqrt{n+\delta}+\sqrt{n}}\nonumber\\
+  &=\frac{n+\delta-n}{\sqrt{n+\delta}+\sqrt{n}}\nonumber\\
+  &=\frac{\delta}{\sqrt{n}(\sqrt{1+\delta/n}+\sqrt{1})}\nonumber\\
+  &<\frac{1}{\sqrt{n}}\left(\frac{\delta}{2}\right)<\varepsilon\nonumber\\
+  \implies n &> \left(\frac{\delta}{2\varepsilon}\right)^2.\nonumber
+\end{align} Noting that for constant $\delta$ the limit of
+$\frac{1}{\sqrt{n}}\left(\frac{\delta}{2}\right)$ as
+$n\longrightarrow\infty$ is the zero vector (the point of convergence)
+would also be sufficient to show that $x_n=\sqrt{n}$ is a Cauchy
+sequence.
+
+\begin{wrapfigure}{r}{0.55\textwidth}
+  \centering
+```{r, echo=F, fig.height=3.6, fig.width=3.6, fig.align='center'}
+venndiagram <- tibble(X0 = c( 0.0,0.0,
+                             -1.3,0.9),
+                      Y0 = c(-0.75, 0.75,
+                              0.00,-1.05),
+                      R = c(4.50,4.5,
+                            2.75,2.3),
+                      space = c("Vector Space",
+                                "Metric Space",
+                                "Inner Product Space",
+                                "Banach Space")) %>%
+  mutate(across(space, factor, 
+                levels = c("Vector Space",
+                           "Metric Space",
+                           "Inner Product Space",
+                           "Banach Space")))
+venntext <- tibble(X = c(0.0, 1.90,
+                         0.0,-2.25,
+                         1.7, 0.00),
+                   Y = c( 4.45, 2.10,
+                         -4.45, 0.75,
+                         -1.70,-0.60),
+                   theta = c( 0,-35,
+                              0, 50,
+                             55,  0),
+                   text = c("Vector Space\n(vectors)",
+                            "Normed Space\n(length)",
+                            "Metric Space\n(distance)", 
+                            "Inner Product\nSpace\n(angle/orthogonality)",
+                            "Banach Space\n(completeness)",
+                            "Hilbert\nSpace"))
+                           
+
+ggplot() +
+  coord_fixed() + theme_void() +
+  geom_circle(data = venndiagram,
+              mapping = aes(x0 = X0, y0 = Y0, r = R,
+                            fill = space)) +
+  geom_text(data = venntext,
+            mapping = aes(x = X, y = Y, angle = theta,
+                          label = text), size = 3.5) +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = c(alpha("#b91500",0.35),
+                               alpha("#45a500",0.35),
+                               alpha("#ef6800",0.25),
+                               alpha("#0000e0",0.25)))
+  
+```
+  \caption{\emph{A Venn diagram representing the intersection and nesting of the spaces described in Appendix \ref{appHilbert}.}}
+  \label{spaceVenn}
+  \vspace{-30pt}
+\end{wrapfigure}
+
+Incidentally, a normed vector space that is complete as defined here
+meets the definition of a \textbf{Banach space}. An additional subset of
+the normed vector spaces consists of those spaces in which for all
+$x,y\in X$ there exists a real or complex number $\langle x,y\rangle$
+defined by an operator called the \textbf{inner product}. For all
+$x,y,z\in X$ this operation must satisfy
+\begin{enumerate}
+  \item $\langle x,y\rangle=\langle y,x\rangle^*$ (where the ${}^*$ represents the complex conjugate),
+  \item $\langle x+y,z\rangle=\langle x,z\rangle+\langle y,z\rangle$,
+  \item $\langle \alpha x,y\rangle=\alpha\langle x,y\rangle$ (for $\alpha\in\mathbb{C}$),
+  \item $\langle x,x\rangle\geq0$, and
+  \item $\langle x,x\rangle=0$ iff $x=0$.
+\end{enumerate}
+A space that satisfies these requirements forms an
+\textbf{inner product space}, and the inner product defined in such a
+space relates to the form of its norm, such that
+$\vert\vert x\vert\vert=\langle x,x\rangle^{1/2}$. Finally, at the
+intersection of Banach spaces and inner product spaces are the Hilbert
+spaces. I.e. a \textbf{Hilbert space} is a complete vector space with an
+inner product defined by its norm.
+
+A commonly presented example is the $L^2$ function space, which consists
+of functions that are square integrable, i.e. if
+$f(x)\in L^2\implies \vert\vert f(x)\vert\vert^2=\int_\chi\vert f(x)\vert^2dx<\infty$,
+where $\chi$ is the domain of $x$. The subset $L^2[-\pi,\pi]$, where
+$\chi=[-\pi,\pi]$, has the well known Fourier series as a basis, which
+is commonly written such that for $f(x)\in L^2[-\pi,\pi]$ \begin{align}
+  f(x)=\frac{a_0}{2} + \sum_{n=1}^\infty\left[a_n\cos(nx)+b_n\sin(nx)\right],\nonumber
+\end{align} where $$\begin{matrix}
+  a_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\cos(nx)dx \\ \text{and} \\ b_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\sin(nx)dx.
+\end{matrix}$$ Verification that this basis meets all the requirements
+laid out so far is beyond the scope of this paper.
+
+\section{Description of simulations} \label{simuApp}
+
+The Cauchy processes specifically are of the form
+\begin{align}
+  X_{1,i}&\sim \text{Cauchy}(11,4)\nonumber\\
+  X_{2,i}&\sim \text{Cauchy}(18,4)\nonumber\\
+  X_{3,i}&\sim \text{Cauchy}(14,5)\nonumber
+\end{align} 
+The probabilities under Theory 1 (in which only the first two processes take place) is $\bm{p}=\{0.3,0.7\}$. The probabilities governing Theory 2 are generated from $\bm{p}$ by
+\begin{align}
+  \bm{p'}
+    &=\bm{\Lambda}\bm{p}
+    =\begin{pmatrix}0.75 & 0 \\ 0 & 0.75 \\ 0.6 & 0.1\end{pmatrix}\begin{pmatrix}0.3\\0.7\end{pmatrix}
+    =\begin{pmatrix}0.225 \\ 0.525 \\ 0.25 \end{pmatrix}\nonumber
+\end{align}
+the effects of detector smearing is represented by i.i.d random variables generated by the conditional Gaussian process
+$$\varepsilon_i\sim N\left(\mu(X_i),\sigma(X_i)^2\right),$$
+the mean and variance of which are functions defined by 
+\begin{align}
+  \mu(X_i=x)&=-x^{1/4}\;\;\text{and}\nonumber\\
+  \sigma(X_i=x)&=\log\left(\frac{x+10}{4}\right).\nonumber
+\end{align} 
+The efficiency is similarly conditional on $X_i$, and is
+modeled here as a Bernoulli process with i.i.d random variables
+$\epsilon_i\sim\text{Bernoulli}\big(p(X_i)\big)$, where the average
+detection rate (when $\epsilon_i=1$) is a function of the form
+\begin{align}
+  p(X_i=x)=1-e^{-\sqrt{x}/4}.\nonumber
+\end{align}
+
+\section{Bin-by-bin}
+
+In this approach a multiplicative \textbf{correction factor} $C_i$ is
+applied to the observed number of signal events $n_i$ for each bin to
+produce the estimator of $\mu_i$ \cite{Cowan1998}, 
 \begin{align}
   \hat{\mu}_i &= C_in_i.\label{eq:binest}
-\end{align}
-The correction factors are determined by taking the respective ratios of a bin's MC simulated truth signal event counts $\mu_i^{\text{MC}}$ to its MC simulated reconstructed signal event counts $\nu_i^{\text{MC}}$,
-\begin{align}C_i = \frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}.\label{eq:cfact}\end{align}
-The covariance matrix $\bm{\Sigma}_\mu$ of this estimator derives naturally from Equations \eqref{eq:cov} and \eqref{eq:binest}, with components
+\end{align} 
+The correction factors are determined by taking the
+respective ratios of a bin's MC simulated truth signal event counts
+$\mu_i^{\text{MC}}$ to its MC simulated reconstructed signal event
+counts $\nu_i^{\text{MC}}$,
 \begin{align}
-  \Sigma^\mu_{ij}&=\text{Cov}[\hat\mu_i,\hat\mu_j]\nonumber\\
-  &=C_iC_j\text{Cov}[n_i,n_j]\nonumber\\
-  &=C_i^2\delta_{ij}\nu_i.\label{eq:bincov}
+  C_i=\frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}.\label{eq:cfact}
 \end{align}
-The expectation value of the estimate can be calculated easily enough as well, and with it the bias 
+The covariance matrix $\bm{\Sigma}_\mu$ of this estimator derives
+naturally from Equations \eqref{eq:cov} and \eqref{eq:binest}, with
+components 
 \begin{align}
-  \text{Bias}[\hat{\mu}_i]&=E_i[\hat{\mu}_i]-\mu_i\nonumber\\ 
-  &= C_iE[n_i]-\mu_i\nonumber\\ 
-  &= \frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}\nu_i-\mu_i\nonumber\\
-  &= \left(\frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}-\frac{\mu_i}{\nu_i}\right)\nu_i.\label{eq:binbias}
+  \Sigma^\mu_{ij}
+    &=\text{Cov}[\hat\mu_i,\hat\mu_j]\nonumber\\
+    &=C_iC_j\text{Cov}[n_i,n_j]\nonumber\\
+    &=C_i^2\delta_{ij}\nu_i\nonumber\\
+    &=\left(\frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}\right)^2\delta_{ij}\nu_i.\label{eq:bincov}
+\end{align} 
+The expectation value of the estimate can be calculated
+easily enough as well, and with it the bias 
+\begin{align}
+  \text{Bias}[\hat{\mu}_i]
+    &=E_i[\hat{\mu}_i]-\mu_i\nonumber\\ 
+    &=C_iE[n_i]-\mu_i\nonumber\\ 
+    &=\frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}\nu_i-\mu_i\nonumber\\
+    &=\left(\frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}-\frac{\mu_i}{\nu_i}\right)\nu_i.\label{eq:binbias}
 \end{align}
 
-```{r, echo = F}
-BinByBin_bins <- tibble(Theory = c(rep(c("Theory 1","Theory 2","Theory 3"),each=60),
+```{r, echo = F, fig.align='center',fig.height=3}
+BinByBin_bins <- tibble(Theory = c(rep(c("Theory 1","Theory 2"),each=60),
                               rep(c("Theory 1","Theory 2"),each=30)),
-                   `Assumed Theory` = rep(rep(c("Theory 1","Theory 2"),each=30),4),
-                   LBin = rep(0:29,8), Bin = rep(1:30,8),
+                   `Assumed Theory` = rep(rep(c("Theory 1","Theory 2"),
+                                              each=30),3),
+                   LBin = rep(0:29,6), Bin = rep(1:30,6),
                    LCounts = c(((mcTruth1$Counts/mcReco1$Counts[1:30])*
                                   dataReco1$Counts[1:30])[c(1,1:29)],
                                ((mcTruth2$Counts/mcReco2$Counts[1:30])*
@@ -1030,10 +1767,6 @@ BinByBin_bins <- tibble(Theory = c(rep(c("Theory 1","Theory 2","Theory 3"),each=
                                   dataReco2$Counts[1:30])[c(1,1:29)],
                                ((mcTruth2$Counts/mcReco2$Counts[1:30])*
                                   dataReco2$Counts[1:30])[c(1,1:29)],
-                               ((mcTruth1$Counts/mcReco1$Counts[1:30])*
-                                  dataReco3$Counts[1:30])[c(1,1:29)],
-                               ((mcTruth2$Counts/mcReco2$Counts[1:30])*
-                                  dataReco3$Counts[1:30])[c(1,1:29)],
                                mcTruth1$Counts[c(1,1:29)]/dmrat,
                                mcTruth2$Counts[c(1,1:29)]/dmrat),
                    Counts = c((mcTruth1$Counts/mcReco1$Counts[1:30])*
@@ -1044,55 +1777,66 @@ BinByBin_bins <- tibble(Theory = c(rep(c("Theory 1","Theory 2","Theory 3"),each=
                                 dataReco2$Counts[1:30],
                               (mcTruth2$Counts/mcReco2$Counts[1:30])*
                                 dataReco2$Counts[1:30],
-                              (mcTruth1$Counts/mcReco1$Counts[1:30])*
-                                dataReco3$Counts[1:30],
-                              (mcTruth2$Counts/mcReco2$Counts[1:30])*
-                                dataReco3$Counts[1:30],
                               mcTruth1$Counts/dmrat,
                               mcTruth2$Counts/dmrat),
-                   Name = c(rep(c("Theory 1 Data","Theory 2 Data",
-                                  "Theory 3 Data"),each=60),
+                   Name = c(rep(c("Theory 1 Data",
+                                  "Theory 2 Data"),each=60),
                             rep("MC",60)))
 
-BinByBinU_hat <- 
 
-BinByBin_bins_res <- BinByBin_bins
-BinByBin_bins_res <- BinByBin_bins_res %>% 
+
+BinByBin_bins_res <- BinByBin_bins %>% 
+  filter(Name == "Theory 1 Data" | Name == "Theory 2 Data") %>%
   mutate(`Assumed Theory` = rep(rep(c("Theory 1 Residuals",
-                                      "Theory 2 Residuals"),each=30),4),
+                                      "Theory 2 Residuals"),each=30),2),
          LCounts = (rep(c(0,mcTruth1$Counts[1:29]/dmrat,
-                          0,mcTruth2$Counts[1:29]/dmrat),4) - LCounts),
+                          0,mcTruth2$Counts[1:29]/dmrat),2) - LCounts),
          Counts = rep(c(mcTruth1$Counts/dmrat,
-                        mcTruth2$Counts/dmrat),4) - Counts)
-BinByBin_bins <- rbind(BinByBin_bins,BinByBin_bins_res)
+                        mcTruth2$Counts/dmrat),2) - Counts)
 
 
 ggplot() + 
   theme_bw() + 
   geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_segment(data = BinByBin_bins %>% 
+                 filter(Name == "MC"),
+               mapping = aes(x = LBin,
+                             y = Counts,
+                          xend = Bin,
+                          yend = Counts),
+               alpha = 0.6) +
+  geom_segment(data = BinByBin_bins %>% 
+                 filter(Name == "MC"),
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
+                          yend = Counts),
+               alpha = 0.6) +
   geom_rect(data = BinByBin_bins %>%
               mutate(ymin = Counts - 
                        rep(sqrt(c((mcTruth1$Counts^2/
                                  mcReco1$Counts[1:30]),
                               (mcTruth2$Counts^2/
-                                 mcReco2$Counts[1:30]))),8),
+                                 mcReco2$Counts[1:30]))),3),
                      ymax = Counts + 
                        rep(sqrt(c((mcTruth1$Counts^2/
                                  mcReco1$Counts[1:30]),
                               (mcTruth2$Counts^2/
-                                 mcReco2$Counts[1:30]))),8),
+                                 mcReco2$Counts[1:30]))),3),
                      xmin = LBin, xmax = Bin),
             mapping = aes(xmin=xmin,ymin=ymin,
                           xmax=xmax,ymax=ymax,
                           fill=Name),alpha=0.2) +
-  geom_segment(data = BinByBin_bins,
+  geom_segment(data = BinByBin_bins %>% 
+                 filter(Name == "Theory 1 Data" | Name == "Theory 2 Data"),
                mapping = aes(x = LBin,
                              y = Counts,
                           xend = Bin,
                           yend = Counts,
                          color = Name),
                alpha = 0.7) +
-  geom_segment(data = BinByBin_bins,
+  geom_segment(data = BinByBin_bins %>% 
+                 filter(Name == "Theory 1 Data" | Name == "Theory 2 Data"),
                mapping = aes(x = LBin,
                              y = LCounts,
                           xend = LBin,
@@ -1103,18 +1847,65 @@ ggplot() +
                      breaks = seq(0,30,by=3), 
                        limits = c(0,30), 
                        expand = c(0,0)) +
-  scale_y_continuous(expand = c(0,0)) +
-  scale_color_manual(labels = c("Theory 1 Data","Theory 2 Data","Theory 3 Data","MC"),
-                     breaks = c("Theory 1 Data","Theory 2 Data","Theory 3 Data","MC"),
-                     values = c("#5e81b5","#e19c24","#eb6235","#000000")) +
-  scale_fill_manual(labels = c("Theory 1 Data","Theory 2 Data","Theory 3 Data","MC"),
-                     breaks = c("Theory 1 Data","Theory 2 Data","Theory 3 Data","MC"),
-                     values = c(alpha("#5e81b5",0.2),alpha("#e19c24",0.2),
-                                alpha("#eb6235",0.2),NA)) +
-  guides(fill = guide_legend("Key", override.aes = list(fill=c(alpha("#5e81b5",0.2),alpha("#e19c24",0.2),
-                                alpha("#eb6235",0.2),NA))),
-         color = guide_legend("Key")) +
-  facet_wrap(`Assumed Theory` ~ ., ncol = 2, dir = "v", scales = "free")
+  scale_color_manual(labels = c("Theory 1","Theory 2"),
+                     breaks = c("Theory 1 Data","Theory 2 Data"),
+                     values = c("#5e81b5","#e19c24")) +
+  scale_fill_manual(labels = c("Theory 1","Theory 2"),
+                     breaks = c("Theory 1 Data","Theory 2 Data"),
+                     values = c(alpha("#5e81b5",0.2),
+                                alpha("#e19c24",0.2),NA)) +
+  guides(fill = guide_legend("Data", override.aes = list(fill=c(alpha("#5e81b5",0.2),alpha("#e19c24",0.2)))),
+         color = guide_legend("Data")) +
+  facet_wrap(`Assumed Theory` ~ ., ncol = 2, dir = "v")
+```
+
+```{r, echo = F, fig.align='center',fig.height=3}
+ggplot() + 
+  theme_bw() + 
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_rect(data = BinByBin_bins_res %>%
+              mutate(ymin = Counts - 
+                       rep(sqrt(c((mcTruth1$Counts^2/
+                                 mcReco1$Counts[1:30]),
+                              (mcTruth2$Counts^2/
+                                 mcReco2$Counts[1:30]))),2)/dmrat,
+                     ymax = Counts + 
+                       rep(sqrt(c((mcTruth1$Counts^2/
+                                 mcReco1$Counts[1:30]),
+                              (mcTruth2$Counts^2/
+                                 mcReco2$Counts[1:30]))),2)/dmrat,
+                     xmin = LBin, xmax = Bin),
+            mapping = aes(xmin=xmin,ymin=ymin,
+                          xmax=xmax,ymax=ymax,
+                          fill=Name),alpha=0.2) +
+  geom_segment(data = BinByBin_bins_res[1:120,],
+               mapping = aes(x = LBin,
+                             y = Counts,
+                          xend = Bin,
+                          yend = Counts,
+                         color = Name),
+               alpha = 0.7) +
+  geom_segment(data = BinByBin_bins_res[1:120,],
+               mapping = aes(x = LBin,
+                             y = LCounts,
+                          xend = LBin,
+                          yend = Counts,
+                         color = Name),
+               alpha = 0.7) +
+  scale_x_continuous("X (Truth)",
+                     breaks = seq(0,30,by=3), 
+                       limits = c(0,30), 
+                       expand = c(0,0)) +
+  scale_color_manual(labels = c("Theory 1","Theory 2"),
+                     breaks = c("Theory 1 Data","Theory 2 Data"),
+                     values = c("#5e81b5","#e19c24")) +
+  scale_fill_manual(labels = c("Theory 1","Theory 2"),
+                     breaks = c("Theory 1 Data","Theory 2 Data"),
+                     values = c(alpha("#5e81b5",0.3),
+                                alpha("#e19c24",0.3))) +
+  guides(fill = guide_legend("Data", override.aes = list(fill=c(alpha("#5e81b5",0.2),alpha("#e19c24",0.2)))),
+         color = guide_legend("Data")) +
+  facet_wrap(`Assumed Theory` ~ ., ncol = 2, dir = "v")
 ```
 
 ```{r, echo = F, fig.align='center',fig.height=3}
@@ -1182,8 +1973,6 @@ biasSD <- c(sqrt(((mcTruth1$Counts/mcReco1$Counts[1:30])*
                       filter(Treatment == "Truth") %>% 
                       pull(Counts)))
 
-par(mfrow = c(1,2),
-    mar = c(4,4,2,1))
 
 BinByBin_bias <- tibble(x = c(rep(c(0,rep(1:29,each=2),30,
                                      30,rep(29:1,each=2),0),4),
@@ -1236,887 +2025,5 @@ ggplot() + theme_bw() +
   theme(axis.text.x = element_text(size = 8))
 
 ```
-
-\subsection{Inverting the Response Matrix}
-
-In the event of Equation \eqref{eq:mat} being well-posed the obvious approach would be to construct the unique inverse of the response matrix $\bm{R}^{-1}$ and map the reconstructed counts back to an estimate of the true counts via
-\begin{align}
-  \bm{\hat\mu}=\bm{R}^{-1}\bm{n}.\label{eq:naiveInv}
-\end{align}
-A statistical justification for this comes from performing generalized least squares \cite{Johnson2007} fit to estimate $\bm\mu$, which relies on approximating bin count $n_i$ as normally distributed with mean $\nu_i$ and variance $1/\nu_i$. Minimizing the sums of squares yields
-\begin{align}\min_{\bm\mu}\nabla_{\bm\mu}\bm\chi^2(\bm{\mu})
-  &=\nabla_{\bm\mu}(\bm{R}\bm{\mu}-\bm{n})^T\bm{\Sigma}_{\nu}^{-1}(\bm{R}\bm{\mu}-\bm{n})\nonumber\\
-  &=\nabla_{\bm\mu}(\bm{\mu}^T\bm{R}^T-\bm{n}^T)\bm{\Sigma}_{\nu}^{-1}(\bm{R}\bm{\mu}-\bm{n})\nonumber\\
-  &=\nabla_{\bm\mu}(\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{n}^{-1}\bm{R}\bm{\mu}-\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}-\bm{n}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}+\bm{n}^T\bm{\Sigma}_{\nu}^{-1}\bm{n})\nonumber\\
-  &=\nabla_{\bm\mu}(\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{n}^{-1}\bm{R}\bm{\mu}-2\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}+\bm{n}^T\bm{\Sigma}_{\nu}^{-1}\bm{n})\nonumber\\
-  &=2\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}-2\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}\nonumber\\
-  &=0\nonumber\\
-  \implies\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}&=\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}\nonumber\\
-  \implies\bm{\hat\mu}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}=\bm{R}^{+}\bm{n}\label{eq:naivemu}\\
-  \implies\bm{R}^{+}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1},\label{eq:penrose}
-\end{align}
-where $\bm{R}^{+}$ is the Moore-Penrose generalized inverse (or pseudo-inverse) \cite{Blobel2013}, and it is assumed that $\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}$ is not singular. The corresponding covariance matrix is more quickly calculated by way of
-\begin{align}
-  \bm{\Sigma}_\mu&=\text{Cov}[\bm{\hat\mu},\bm{\hat\mu}]=\text{Cov}[\bm{R}^{+}\bm{n},\bm{R}^{+}\bm{n}]=\bm{R}^{+}\text{Cov}[\bm{n},\bm{n}]\bm{R}^{+^T}=\bm{R}^{+}\bm{\Sigma}_\nu\bm{R}^{+^T}\nonumber.
-\end{align}
-One such inverse matrix was calculated from each of the MC Theory simulations and both were applied to every set of the Reconstructed counts. The residuals of these unfolding calculations are paired with a $1 \sigma$ uncertainty from the estimated Truth counts. They are then scaled by the expected Truth for the assumed theory and plotted on a log10 scale in Figure \ref{NaiveRes}.
-
-```{r, echo=F, fig.height=3}
-R_mc1 <- sims_mc %>%
-  filter(Theory == "Theory 1" &
-           Detected == TRUE &
-           Truth <= 30 & Truth >= 0) %>%
-  mutate(Truth = ceiling(Truth),
-         Reconstructed = ceiling(Reconstructed)) %>%
-  count(Truth, Reconstructed, name = "Counts") %>%
-  complete(Reconstructed=max(Reconstructed):min(Reconstructed),
-           Truth=1:30, fill = list(Counts=0)) %>%
-  pull(Counts) %>% matrix(byrow = T, ncol = 30) %>% 
-  t() %*% mcmat1 %>% t() * matrix(rep(1/mcTruth1$Counts,each=31),ncol=30)
-
-R_mc2 <- sims_mc %>%
-  filter(Theory == "Theory 2" &
-           Detected == TRUE &
-           Truth <= 30 & Truth >= 0) %>%
-  mutate(Truth = ceiling(Truth),
-         Reconstructed = ceiling(Reconstructed)) %>%
-  count(Truth, Reconstructed, name = "Counts") %>%
-  complete(Reconstructed=max(Reconstructed):min(Reconstructed),
-           Truth=1:30, fill = list(Counts=0)) %>%
-  pull(Counts) %>% matrix(byrow = T, ncol = 30) %>% 
-  t() %*% mcmat2 %>% t() * matrix(rep(1/mcTruth2$Counts,each=31),ncol=30)
-
-
-Vnu1 <- diag(mcReco1$Counts/dmrat)
-Vnu2 <- diag(mcReco2$Counts/dmrat)
-
-inv_R_mc1 <- solve(t(R_mc1) %*% solve(Vnu1) %*% R_mc1) %*% 
-  t(R_mc1) %*% solve(Vnu1)
-inv_R_mc2 <- solve(t(R_mc2) %*% solve(Vnu2) %*% R_mc2) %*% 
-  t(R_mc2) %*% solve(Vnu2)
-
-Vmu1 <- inv_R_mc1 %*% Vnu1 %*% t(inv_R_mc1)
-Vmu2 <- inv_R_mc2 %*% Vnu2 %*% t(inv_R_mc2)
-
-data1_unfolded_mc1 <- inv_R_mc1 %*% dataReco1$Counts
-data1_unfolded_mc2 <- inv_R_mc2 %*% dataReco1$Counts
-data2_unfolded_mc1 <- inv_R_mc1 %*% dataReco2$Counts
-data2_unfolded_mc2 <- inv_R_mc2 %*% dataReco2$Counts
-data3_unfolded_mc1 <- inv_R_mc1 %*% dataReco3$Counts
-data3_unfolded_mc2 <- inv_R_mc2 %*% dataReco3$Counts
-mc1_unfolded_mc1 <- inv_R_mc1 %*% mcReco1$Counts
-mc1_unfolded_mc2 <- inv_R_mc2 %*% mcReco1$Counts
-mc2_unfolded_mc1 <- inv_R_mc1 %*% mcReco2$Counts
-mc2_unfolded_mc2 <- inv_R_mc2 %*% mcReco2$Counts
-```
-
-\begin{figure}[!ht]
-    \centering
-```{r, echo=F,fig.height=3.5, fig.align='center'}
-bins_hat <- tibble(Theory = c(rep(c(rep(c("Theory 1",
-                                          "Theory 2",
-                                          "Theory 3"),each=30),
-                                    rep(c("Theory 1",
-                                          "Theory 2"),each=30)),2),
-                              c(rep(c("Theory 1",
-                                      "Theory 2",
-                                      "Theory 3"),each=60),
-                                  rep(c("Theory 1",
-                                        "Theory 2"),each=60))),
-                   `Assumed Theory` = c(rep(c(rep(c("Theory 1",
-                                                    "Theory 2",
-                                                    "Theory 3"),each=30),
-                                    rep(c("Theory 1",
-                                          "Theory 2"),each=30)),2),
-                              c(rep(rep(c("Theory 1",
-                                          "Theory 2"),each=30),5))),
-                   LBin = rep(0:29,20),
-                   Bin = rep(1:30,20),
-                   LCounts = c(dataReco1$Counts[c(1,1:29)],
-                               dataReco2$Counts[c(1,1:29)],
-                               dataReco3$Counts[c(1,1:29)],
-                               mcReco1$Counts[c(1,1:29)]/dmrat,
-                               mcReco2$Counts[c(1,1:29)]/dmrat,
-                               dataTruth1$Counts[c(1,1:29)],
-                               dataTruth2$Counts[c(1,1:29)],
-                               dataTruth3$Counts[c(1,1:29)],
-                               mcTruth1$Counts[c(1,1:29)]/dmrat,
-                               mcTruth2$Counts[c(1,1:29)]/dmrat,
-                               data1_unfolded_mc1[c(1,1:29)],
-                               data1_unfolded_mc2[c(1,1:29)],
-                               data2_unfolded_mc1[c(1,1:29)],
-                               data2_unfolded_mc2[c(1,1:29)],
-                               data3_unfolded_mc1[c(1,1:29)],
-                               data3_unfolded_mc2[c(1,1:29)],
-                               mc1_unfolded_mc1[c(1,1:29)]/dmrat,
-                               mc1_unfolded_mc2[c(1,1:29)]/dmrat,
-                               mc2_unfolded_mc1[c(1,1:29)]/dmrat,
-                               mc2_unfolded_mc2[c(1,1:29)]/dmrat),
-                   Counts = c(dataReco1$Counts[1:30],
-                              dataReco2$Counts[1:30],
-                              dataReco3$Counts[1:30],
-                              mcReco1$Counts[1:30]/dmrat,
-                              mcReco2$Counts[1:30]/dmrat,
-                              dataTruth1$Counts,
-                              dataTruth2$Counts,
-                              dataTruth3$Counts,
-                              mcTruth1$Counts/dmrat,
-                              mcTruth2$Counts/dmrat,
-                              data1_unfolded_mc1,
-                              data1_unfolded_mc2,
-                              data2_unfolded_mc1,
-                              data2_unfolded_mc2,
-                              data3_unfolded_mc1,
-                              data3_unfolded_mc2,
-                              mc1_unfolded_mc1/dmrat,
-                              mc1_unfolded_mc2/dmrat,
-                              mc2_unfolded_mc1/dmrat,
-                              mc2_unfolded_mc2/dmrat),
-                   Treatment = c(rep(c("Reconstructed","Truth"),each=5*30),
-                                 rep("TruthHat",300)),
-                   Source = c(rep("Data",3*30),rep("MC",2*30),
-                              rep("Data",3*30),rep("MC",2*30),
-                              rep("Data",6*30),rep("MC",4*30)),
-                   Name = c(rep("Reconstucted Theory 1 Data",30),
-                            rep("Reconstucted Theory 2 Data",30),
-                            rep("Reconstucted Theory 3  Data",30),
-                            rep("Reconstucted Theory 1  MC",30),
-                            rep("Reconstucted Theory 2  MC",30),
-                            rep("Truth Theory 1 Data",30),
-                            rep("Truth Theory 2 Data",30),
-                            rep("Truth Theory 3 Data",30),
-                            rep("Truth Theory 1 MC",30),
-                            rep("Truth Theory 2 MC",30),
-                            rep("Unfolded Theory 1 Data",60),
-                            rep("Unfolded Theory 2 Data",60),
-                            rep("Unfolded Theory 3 Data",60),
-                            rep("Unfolded Theory 1 MC",60),
-                            rep("Unfolded Theory 2 MC",60)),
-                   Error = c(sqrt(diag(Vnu1))[1:30],
-                             sqrt(diag(Vnu2))[1:30],
-                             rep(0,30),
-                             sqrt(diag(Vmu1)),
-                             sqrt(diag(Vmu2)),
-                             rep(0,11*30),
-                             sqrt(diag(Vmu1)),
-                             sqrt(diag(Vmu2)),
-                             sqrt(diag(Vmu1)),
-                             sqrt(diag(Vmu2))))
-
-bins_hat <- bins_hat %>%
-  mutate(Step = "Counts") %>%
-  rbind(bins_hat %>% 
-          filter(Treatment == "TruthHat") %>%
-          mutate(LCounts = rep(bins_hat %>% 
-                                 filter(Source == "MC" & 
-                                          Treatment == "Truth") %>% 
-                                 pull(LCounts),5) - LCounts,
-                 Counts = rep(bins_hat %>% 
-                                filter(Source == "MC" & 
-                                         Treatment == "Truth") %>% 
-                                pull(Counts),5) - Counts,
-                 Step = "Residuals")) %>%
-  mutate(across(Name, factor, 
-                levels = c("Unfolded Theory 1 Data",
-                           "Unfolded Theory 2 Data",
-                           "Unfolded Theory 3 Data",
-                           "Unfolded Theory 1 MC",
-                           "Unfolded Theory 2 MC")))
-
-
-asinh_trans <- function(){
-  trans_new(name = 'asinh', transform = function(x) asinh(x), 
-            inverse = function(x) sinh(x))
-}
-fancy_scientific <- function(l) {
-     # turn in to character string in scientific notation
-     l <- format(l, scientific = TRUE)
-     # replace 0e+00 with 0
-     l <- gsub("0e\\+00","0",l)
-     # remove + after exponent, if exists. E.g.: (3x10^+2 -> 3x10^2)
-     l <- gsub("e\\+","e",l)
-     # turn the 'e+' into plotmath format
-     l <- gsub("e", "\\10^", l)
-     parse(text=l)
-}
-
-ggplot() + 
-  theme_bw() +
-  geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
-  geom_rect(data = bins_hat %>%
-              filter(Treatment == "TruthHat"&
-                          Step == "Residuals") %>%
-              mutate(Cplus = (Counts + sqrt(rep(c(diag(Vmu1),diag(Vmu2)),5)))/
-                       rep(c(mcTruth1$Counts/dmrat,mcTruth2$Counts/dmrat),5),
-                     Cminus = (Counts - sqrt(rep(c(diag(Vmu1),diag(Vmu2)),5)))/
-                       rep(c(mcTruth1$Counts/dmrat,mcTruth2$Counts/dmrat),5)),
-            mapping = aes(xmin = LBin,
-                          ymin = Cminus,
-                          xmax = Bin,
-                          ymax = Cplus,
-                          fill = `Assumed Theory`),
-            alpha = 0.3) +
-  geom_segment(data = bins_hat %>%
-                 filter(Treatment == "TruthHat"&
-                          Step == "Residuals"),
-               mapping = aes(x = LBin,
-                             y = Counts/rep(c(mcTruth1$Counts/dmrat,
-                                              mcTruth2$Counts/dmrat),5),
-                          xend = Bin,
-                          yend = Counts/rep(c(mcTruth1$Counts/dmrat,
-                                              mcTruth2$Counts/dmrat),5),
-                         color = `Assumed Theory`),
-               alpha = 0.9) +
-  geom_segment(data = bins_hat %>%
-                 filter(Treatment == "TruthHat"&
-                          Step == "Residuals"),
-               mapping = aes(x = LBin,
-                             y = LCounts/rep(c(1,mcTruth1$Counts[-30]/dmrat,
-                                               1,mcTruth2$Counts[-30]/dmrat),5),
-                          xend = LBin,
-                          yend = Counts/rep(c(mcTruth1$Counts/dmrat,
-                                              mcTruth2$Counts/dmrat),5),
-                         color = `Assumed Theory`),
-               alpha = 0.9) +
-  scale_x_continuous(breaks = seq(0,30,by=3), 
-                       limits = c(0,30), 
-                       expand = c(0,0)) +
-  scale_y_continuous(trans="asinh",
-                     breaks = c(-10^(4:1),0,10^(1:4)),
-                     labels = c(-10^(4:1),0,10^(1:4))) +
-  scale_color_manual(labels = c("Theory 1","Theory 2"),
-                     breaks = c("Theory 1","Theory 2"),
-                     values = c("#5e81b5","#e19c24")) +
-  scale_fill_manual(labels = c("Theory 1","Theory 2"),
-                    breaks = c("Theory 1","Theory 2"),
-                    values = c(alpha("#5e81b5",0.3),
-                               alpha("#e19c24",0.3))) +
-  facet_wrap(Name ~ ., ncol = 3) +
-  theme(legend.position = c(0.95, 0.1), legend.justification = c(1, 0),
-        axis.text = element_text(size=8)) +
-  labs(title = 
-         expression(Residuals~of~estimated~true~counts~using~pseudoinverses~
-                      (widehat(mu)==R^paste("+")*~n)), x = "X (Truth)", 
-       y = expression(frac(mu~-~widehat(mu),mu)~~~~~~
-                      paste("Residuals as % of\n Assumed Truth")))
-
-```
-\caption{\emph{\small Plots featuring the ratio of the residuals to the assumed theory's expected truth for the five sets of reconstructed counts when unfolded using response matrices derived from MC simulations for both Theory 1 and Theory 2. Note the log10 scale of the vertical axes, the large uncertainties, and negative estimated counts. The MC results are exact when unfolded under the correct theory for tautological reasons.}}
-  \label{NaiveRes}
-\end{figure}
-
-This degree of failure is disastrous. What is evinced here is that this problem does not satisfy Condition 3 of a well-posed problem as described in Section \ref{intro}. That the inverse calculated here maps $\bm{n}$ to negative counts indicates that the estimate $\bm{\hat\mu}\notin\mathcal{U}$, the space of allowable solutions defined at the beginning of Section \ref{discret}. Recall $\bm{\nu}\in\mathcal{V}$ back to some $\bm{\mu}\in\mathcal{U}$, as  were defined to contain vectors with elements $\geq0$ .
-
-```{r echo = F}
-
-C <- rbind(rep(0,30),cbind(diag(1,29),rep(0,29))) + 
-  rbind(cbind(rep(0,29),diag(1,29)),rep(0,30)) +
-  diag(c(-1,rep(-2,28),-1)) + diag(10^(-3),30)
-
-A1 <- R_mc1 %*% diag(mcTruth1$Counts)
-Ainv1 <- svd(A1)$v %*% solve(diag(svd(A1)$d)) %*% t(svd(A1)$u)
-
-plot(1:30, svd(A1)$d, log="y")
-
-#max(svd(A1)$d)/min(svd(A1)$d)
-
-#svd(A1)$v %*% solve(diag(svd(A1)$d))^2 %*% t(svd(A1)$v)
-
-y1 <- dataReco1$Counts/sqrt(mcReco1$Counts)
-#t(svd(A1)$u) %*% y1
-
-
-B1 <- Vnu1
-Q1 <- svd(B1)$u
-R1 <- diag(svd(B1)$d)
-As1 <- t(t(Q1) %*% solve(R1)) %*% A1
-Xinv1 <- diag(0,30)
-for(j in 1:30){
-  for(k in 1:30){
-    Xinv1[j,k] <- (1/prod(mcTruth1$Counts[c(j,k)]))*sum(As1[,j]*As1[,k])
-  }
-}
-bs1 <- diag(solve(R1)) * (Q1 %*% mcReco1$Counts)
-U1 <- svd(As1 %*% solve(C))$u
-V1 <- svd(As1 %*% solve(C))$v
-d <- t(U1) %*% bs1
-
-plot(1:30, abs(d), log="y")
-abline(h = sqrt(pi)/2, lty = 2)
-
-plot(1:30,rev(cumsum(rev(abs(d)))/(1:30)),log="y")
-abline(h = sqrt(pi)/2, lty = 2)
-
-A2 <- R_mc2 %*% diag(mcTruth2$Counts)
-B2 <- Vnu2
-Q2 <- svd(B2)$u
-R2<- diag(svd(B2)$d)
-
-inv_R_mc1 <- solve(t(R_mc1) %*% solve(Vnu1) %*% R_mc1) %*% t(R_mc1) %*% solve(Vnu1)
-inv_R_mc2 <- solve(t(R_mc2) %*% solve(Vnu2) %*% R_mc2) %*% t(R_mc2) %*% solve(Vnu2)
-
-Vmu1 <- inv_R_mc1 %*% Vnu1 %*% t(inv_R_mc1)
-Vmu2 <- inv_R_mc2 %*% Vnu2 %*% t(inv_R_mc2)
-
-data1_unfolded_mc1 <- inv_R_mc1 %*% dataReco1$Counts
-data1_unfolded_mc2 <- inv_R_mc2 %*% dataReco1$Counts
-data2_unfolded_mc1 <- inv_R_mc1 %*% dataReco2$Counts
-data2_unfolded_mc2 <- inv_R_mc2 %*% dataReco2$Counts
-data3_unfolded_mc1 <- inv_R_mc1 %*% dataReco3$Counts
-data3_unfolded_mc2 <- inv_R_mc2 %*% dataReco3$Counts
-mc1_unfolded_mc1 <- inv_R_mc1 %*% mcReco1$Counts
-mc1_unfolded_mc2 <- inv_R_mc2 %*% mcReco1$Counts
-mc2_unfolded_mc1 <- inv_R_mc1 %*% mcReco2$Counts
-mc2_unfolded_mc2 <- inv_R_mc2 %*% mcReco2$Counts
-```
-
-\section{Algorithm Construction}
-
-Unfolding is ultimately concerned with finding a reliable inverse to the process by which an event occurring in some true bin $i$ maps to an observed bin $j$. In generalizing this a bit we can think in terms of \textit{causes}, $C_i$ ($i=1,\dots,n_C$) and \textit{effects}, $E_j$ ($j=1,\dots,n_E$), representing the true and observed bins respectively. In regard to a single event we are then interested in conditional probabilistic view for causation, $P(C_i\vert E_j,I)\equiv\theta_{ij}$, the probability that we can attribute some cause $C_i$ to an observed effect $E_j$. Using Bayes' theorem we can define this in terms of other probabilities that can be estimated more directly,
-\begin{eqnarray}
-P(C_i\vert E_j,I) & = & \frac{P(E_j\vert C_i,I)\cdot P(C_i\vert I)}{\sum_{i=1}^{n_C}P(E_j\vert C_i,I)\cdot P(C_i\vert I)}\nonumber\\
-\theta_{ij} & = & \frac{\lambda_{ji}\cdot P(C_i\vert I)}{\sum_{i=1}^{n_C}\lambda_{ji}\cdot P(C_i\vert I)},
-\end{eqnarray}
-where the conditional probability regarding inference (effect), $P(E_j\vert C_i,I)\equiv\lambda_{ji}$, is the probability that some effect $E_j$ will result with some cause $C_i$ and $P_o(C_i\vert I)$ is the true probability of an event occurring from cause $C_i$. The term $I$ represents any implicit conditional information regarding the analysis, such as the choice of prior, and is usually apparent when the probabilities are written out as density functions.
-
-At the analysis level we care less about individual events and more about mapping the total number events per effect, $\bm{x}_E=\{x(E_1),\dots,x(E_{n_E})\}$, to the total number of events per cause, $\bm{x}_C=\{x(C_1),\dots,x(C_{n_C})\}$. However, so far this regards only observed events as categorized into the $n_E$ effects, as we cannot expect to observe or select for all effects resulting from some arbitrary cause $C_i$. In light of this, while we can add causes to account for any independent background sources to assume the normalization of $P_o(C_i\vert E_j,I)$ and $P_o(C_i\vert I)$, such that $\sum_{i=1}^{n_C}P_o(C_i\vert E_j, I)=1$ and $\sum_{i=1}^{n_C}P(C_i\vert I)=1$, we cannot say the same for $P(E_j\vert C_i,I)$. A necessarily imperfect effect selection capability results in 
-$$0\leq\sum_{j=1}^{n_E}P(E_j\vert C_i,I)=\sum_{j=1}^{n_E}\lambda_{ji}\equiv\epsilon_i\leq 1,$$ 
-the exact value of which provides for us a definition for $\epsilon_i$, the \textit{efficiency} at which we detect cause $C_i$ from all accounted for observed effects, being also defined and useable as the ratio of observed events resulting from cause $C_i$ to the true number of events resulting from $C_i$, $x^{obs}(C_i)/x(C_i)$.
-
-```{r, echo = FALSE, fig.align='center', fig.cap="\\label{c2elinks}\\emph{Thinking of causes and effects as distinct subsets within one or more dimensional cause and effect phase spaces, this figure shows how events are probabilistically mapped from the subsets used to define our causes to the subsets used to define our effects. The node indicated by $T$ (`trash') represents the event selection inefficiency, and can be thought of as an additional effect $E_{n_E+1}$ that contains an unobserved number of events. Unlike the possibility of alloting independent sources of background to different causes, $E_{n_E+1}$ ($\\:T$) can consist of any number of potentially distinguishable effects depending on how the lost events are distributed across the complement of $\\cup(E_1,E_2,\\dots,E_{n_E})$ in our effect phase space.}"}
-include_graphics("problinks.png", dpi=275)
-```
-
-A visualization of these lost events can be seen in Figure [\ref{c2elinks}], where some collection of undocumented effects resulting from our collection of causes are lumped into a composite effect $E_{n_E+1}$, which should relate to our efficiency regarding cause $C_i$ by $P(E_{n_E+1}\vert C_i,I)=\lambda_{n_E+1,i}=1-\epsilon_i$. Including this new effect with the others results in $\sum_{j=1}^{n_E}\lambda_{ji}=1$, creating normalized basis vectors to define the columns of a \textit{smearing matrix} $\Lambda$, 
-\begin{eqnarray}\Lambda
-&=&\begin{pmatrix}
-  P(E_1\vert C_1,I)       & P(E_1\vert C_2,I)       & \dots  & P(E_1\vert C_{n_C},I)       \\
-  P(E_2\vert C_1,I)       & P(E_2\vert C_2,I)       & \cdots & P(E_2\vert C_{n_C},I)       \\
-  \vdots                  & \vdots                  & \ddots & \vdots                      \\
-  P(E_{n_E}\vert C_1,I) & P(E_{n_E}\vert C_2,I) & \dots  & P(E_{n_E}\vert C_{n_C},I) \\
-  P(E_{n_E+1}\vert C_1,I) & P(E_{n_E+1}\vert C_2,I) & \dots  & P(E_{n_E+1}\vert C_{n_C},I)
-  \end{pmatrix}\\
-&=& (\bm\lambda_1,\bm\lambda_2,\dots,\bm\lambda_{n_c}),\nonumber
-\end{eqnarray}
-where $\bm\lambda_i$ refers to the $i$-th column consisting of $\{\lambda_{1,i},\lambda_{2,i},\dots,\lambda_{n_E+1,i}\}$.
-
-Now that Eq. (2) accounts for lost events we can begin to construct a conditional probability for $\bm{x}_C$ similar to that for Eq. (1) using Bayes' theorem,
-\begin{eqnarray}
-P(\bm{x}_C\vert \bm{x}_E,\Lambda,I)\propto P(\bm{x}_E\vert \bm{x}_C,\Lambda,I)\cdot P(\bm{x}_C\vert I),
-\end{eqnarray}
-and account for uncertainties in $\Lambda$ with
-$$P(\bm{x}_C\vert\bm{x}_E,I)=\int P(\bm{x}_C\vert \bm{x}_E,\Lambda,I)\ f(\Lambda\vert I)\ \text{d}\Lambda.$$
-At this point one should recognize in Eq. (3) $P(\bm{x}_E\vert \bm{x}_C,\Lambda,I)$ as the likelihood and $P(\bm{x}_C\vert I)$ as the prior in the formal calculation of a posterior. Ignoring the prior for now and focusing on the likelihood, for a given cause $C_i$ we can model this expression as a multinomial distribution such that
-\begin{eqnarray}
-P(\bm{x}_E\vert x(C_i),\Lambda,I) &=& \frac{x(C_i)!}{\prod_j^{n_E+1}x(E_j)!}\prod_j^{n_E+1}\lambda_{ji}^{x(E_j)},
-\end{eqnarray}
-which leads us finally to asking how we should estimate our $\lambda_{ji}$'s. Once again, using Bayes' theorem we can see that for a fixed $i$,
-\begin{eqnarray}
-f(\bm{\lambda}_i\vert \bm{x}_E,x(C_i),I) &\propto& P(\bm{x}_E\vert x(C_i),\bm{\lambda}_i,I)\cdot f(\bm{\lambda}_i\vert I).
-\end{eqnarray}
-Previously mentioned properties about $\bm\lambda_i$ make a Dirichlet$(\bm\alpha_{prior_i})$ prior appropriate. A flat prior in which $\bm\alpha_{prior_i}=\{1,\dots,1\}$ is often chosen, and is done so here. Regardless of the choice for $\bm\alpha_{prior_i}$, multiplying by a multinomial distribution results in the posterior
-\begin{eqnarray}
-f(\bm{\lambda}_i\vert \bm{x}_E,x(C_i),I) &\propto& \left[\frac{x(C_i)!}{\prod_j^{n_E+1}x(E_j)!}\prod_j^{n_E+1}\lambda_{ji}^{x(E_j)}\right]\cdot\left[\frac{1}{\text{B}(\bm\alpha_{prior_i})}\prod_{j=1}^{n_E+1}\lambda_{ji}^{\alpha_{prior_{ji}}-1}\right] \nonumber\\
-&\propto&\prod_j^{n_E+1}\lambda_{ji}^{\left(\alpha_{prior_{ji}}+x(E_j)\right)-1} \nonumber\\
-&=& \text{Dirichlet}(\bm\alpha_{prior_i}+\bm{x}_E).
-\end{eqnarray}
-Samples from this distribution informs much of the the uncertainty resulting from the unfolding process, creating distributions for objects fully or partially calculated from them, such as the smearing matrix, efficiency, and inverse probabilities $\theta_{ij}$ once a prior for $P(C_i\vert I)$ is made. These will be necessary, as $P(\bm{x}_C\vert\bm{x}_E,I)$ becomes the sum of independent multinomial distributions, which does not have a closed solution that we can analytically maximize the likelihood of. We have to make the rest of our progress starting from Eq. (1) where the choice around a prior for $P(C_i\vert I)$ is due. The choice of $P(C_i\vert I)=constant$ is considered here, which D’Agostini acknowledges is a strong prior that produces biases that will require iterations to be resolved.
-
-Defining $\bm\theta_{j}=\{\theta_{1,j},\theta_{2,j},\dots,\theta_{n_C,j}\}$, we can model how the $x(E_j)$ observed events with the effect $E_j$ are likely distributed from potential causes by the multinomial distribution
-$$\bm{x}_C\vert_{x(E_j)}\;\sim\;\text{Mult}(x(E_j),\bm\theta_{j}).$$
-Before summing over the effects to get the total observed causes we should acknowledge that each $x(E_j)$ is the result of a Poisson process with an unknown rate parameter $\mu_j$. Using the conjugate prior $\mu_j\;\sim\;\text{Gamma}(c_j,r_j)$, with $c_j=1$ and very small $r_j$ to create a flat prior, we arrive at 
-$$\mu_j\vert_{x(E_j)}\;\sim\;\text{Gamma}(c_j+x(E_j),r_j+1),$$
-which tells us not to use $x(E_j)$, but $\mu_j$. In dealing with fractional values of $\mu_j$ D’Agostini suggests:
-\begin{enumerate}
-  \item Rounding $\mu_j$ to its nearest positive integer $m_j$,
-  \item Sampling from $\bm{x}_C\vert_{m_j}\;\sim\;\text{Mult}(m_j,\bm\theta_{j})$,
-  \item Rescaling by $\bm{x}_C\vert_{\mu_j}=\frac{\mu_j}{m_j}\bm{x}_C\vert_{m_j}$,
-  \item Summing over each effect with $\bm{x}_C\vert_{\bm{x}_E}=\sum_{j=1}^{n_E}\bm{x}_C\vert_{\mu_j}$,
-  \item And applying the inefficiency correction with $\bm{x}_C=\frac{\bm{x}_C\vert_{\bm{x}_E}}{\epsilon_i}$.
-\end{enumerate}
-The drawing of multiple samples from the posteriors is used to form an ensemble of values of $\bm{x}_C$ and estimate credible intervals. The performance of second and later iterations is accomplished by using the previous iteration's posteriors as the new iteration's priors. 
-
-\section{A Basic Example}
-
-In the following example 400,000 random samples are drawn from a Cauchy distribution and then subject to some processes that disperse, bias, and reduce event selection efficiency. The results of these simulations are shown in Figure [\ref{exampleUnfold}]. The migration matrix does a decent job of demonstrating how the true data was smeared. For unaffected data one would see just a diagonal line from the bottom left to the top right. It was with this in mind that instead of choosing the earlier mentioned flat prior for $\bm\alpha_{prior_i}$ I decided to go with 
-\begin{eqnarray}
-  \alpha_{ij} = e^{-\vert x_{truth}-x_{smeared}\vert}\nonumber,
-\end{eqnarray}
-the values of which are represented in Figure [\ref{prior}].
-
-```{r, fig.height=7.5, fig.align='center', fig.width=5, echo=F, fig.cap="\\label{exampleUnfold}\\emph{TOP: The true and smeared distribution of our toy model. BOTTOM: When considering count data, the smearing matrix is often referred to as the response or migration matrix. The bottom row corresponds to the events that were not assigned to an effect.}", eval = F}
-nsim <- 100000
-
-true <- rcauchy(nsim, 0.5, 1)
-eff <-  runif(nsim) > 0.2 + (1.0-0.5)/20*(true+10.0)
-
-predicted <- (true + rnorm(nsim, -2.5, 0.2))[eff]
-step_hist_notfolded <- hist(true[which(true>-10 & true<10)], 
-                           breaks = seq(-10,10,0.5), plot = F)
-step_hist_folded <- hist(predicted[which(predicted>-10 & predicted<10)], 
-                         breaks = seq(-10,10,0.5), plot = F)
-
-
-ymax <- 1.075*max(c(step_hist_folded$density,step_hist_notfolded$density))
-ymax_count <- 1.1*max(c(step_hist_folded$count,step_hist_notfolded$count))
-
-step_hist <- 
-  tibble(binLow = c(step_hist_folded$breaks[-length(step_hist_folded$breaks)],
-                    step_hist_notfolded$breaks[-length(step_hist_notfolded$breaks)]),
-         binHigh = c(step_hist_folded$breaks[-1],step_hist_notfolded$breaks[-1]),
-         CountsL = c(c(0,step_hist_folded$counts[-length(step_hist_folded$counts)]),
-                     c(0,step_hist_notfolded$counts[-length(step_hist_notfolded$counts)])),
-         Counts = c(step_hist_folded$counts,step_hist_notfolded$counts),
-         DensityL = c(c(0,step_hist_folded$density[-length(step_hist_folded$density)]),
-                      c(0,step_hist_notfolded$density[-length(step_hist_notfolded$density)])),
-         Density = c(step_hist_folded$density,step_hist_notfolded$density),
-         Treatment = c(rep("smeared", length(step_hist_folded$density)),
-                       rep("truth", length(step_hist_notfolded$density))))
-
-dists <- ggplot(data = step_hist) + 
-  theme_bw() +
-  geom_segment(mapping = aes(x = binLow,
-                             y = Counts,
-                          xend = binHigh,
-                          yend = Counts,
-                          color = Treatment),
-               alpha=0.6) +
-  geom_segment(mapping = aes(x = binLow,
-                             y = CountsL,
-                          xend = binLow,
-                          yend = Counts,
-                          color = Treatment), 
-               alpha=0.6) +
-  scale_x_continuous(breaks = seq(-10,10,2), 
-                     limits = c(-10,10), 
-                     expand = c(0,0)) +
-  scale_y_continuous("Counts", limits = c(0,ymax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(ymax_count), ceiling(ymax_count/1000)*100)) +
-  labs(x="X", y="", title=element_blank()) +
-  scale_color_manual(values=c("red","blue")) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-
-rf <- colorRampPalette(rev(brewer.pal(11,'Spectral')))
-r <- rf(32)
- 
-smear <- tibble(`True X` = c(true[eff],true[-eff]),
-                `Observed X` = c(predicted,rep(-10.249999999,length(true[-eff]))))
-
-smear_m <- ggplot(filter(smear, `True X` <= 10 & `Observed X` <= 10, `True X` >= -10 & 
-                           (`Observed X` >= -10 | `Observed X` == -10.249999999))) +
-  scale_x_continuous(breaks = seq(-10,10,2), 
-                     limits = c(-10,10), 
-                     expand = c(0,0)) +
-  scale_y_continuous(breaks = seq(-12,10,2), 
-                     limits = c(-10.5,10), 
-                     expand = c(0,0)) +
-  theme_bw() + theme(panel.grid.major = element_blank(), 
-                     panel.grid.minor = element_blank()) +
-  scale_fill_gradientn(colours=r, breaks=seq(0,12000,2000)) +
-  stat_bin2d(mapping=aes(x=`True X`, y=`Observed X`), 
-             breaks = list(x=seq(-10,10,0.5),
-                           y=seq(-10.5,10,0.5))) +
-  geom_abline(slope = 0,intercept = -10,lty=2)
-
-grid.arrange(dists, smear_m, nrow=2)
-```
-
-```{r, fig.height=3.75, fig.align='center', fig.width=4.5, echo=F, fig.cap="\\label{prior}\\emph{Instead of choosing a flat prior Dirichlet($\\bm\\alpha_{prior_i}$) in which $\\bm\\alpha_{prior_i}=\\{1,\\dots,1\\}$, I opted for one that assumed a dominant diagonal signal, corresponding to a max value of alpha along the diagonal that decays exponentially the further you get from the diagonal.}", eval = F}
-test <- tibble(x = rep(seq(-9.5,9.5,1),20),
-               y = rep(seq(-9.5,9.5,1),each=20))
-test$scale <- exp(-abs(test$x-test$y))
-
-rf <- colorRampPalette(rev(brewer.pal(11,'Spectral')))
-r <- rf(40)
-ggplot(test) +
-  scale_x_continuous(breaks = seq(-10,10,2), 
-                     limits = c(-10,10), 
-                     expand = c(0,0)) +
-  scale_y_continuous(breaks = seq(-10,10,2), 
-                     limits = c(-10,10), 
-                     expand = c(0,0)) +
-  theme_bw() + theme(panel.grid.major = element_blank(), 
-                     panel.grid.minor = element_blank()) +
-  labs(x="True X", y="Observed X", title=expression(alpha ~"values for prior")) +
-  scale_fill_gradientn(colours=r, breaks=seq(0,1,0.2)) +
-  geom_tile(mapping=aes(x=x, y=y, fill=scale))
-```
-
-
-```{r, echo = F, eval = F}     
-# Number of "causes" and "effects"
-nc <- ne <-  40
-
-# Get migration counts from stored ggplot and create smearing matrix
-smear_data <- ggplot_build(smear_m)$data[[1]]
-smearing_matrix <- matrix(rep(0,nc*(ne+1)), ncol = nc)
-for( i in 1:nrow(smear_data)){
-  smearing_matrix[cbind(smear_data$xbin, (ne+2)-smear_data$ybin)[i,2],
-                  cbind(smear_data$xbin, (ne+2)-smear_data$ybin)[i,1]] <- smear_data$value[i]
-}
-smearing_matrix_normcols <- smearing_matrix / 
-  matrix(rep(apply(smearing_matrix, MARGIN = 2, sum),ne+1), nrow=ne+1, byrow = T)
-
-# Get observed number of events per effect
-xE1 <- smearing_matrix %*% rep(1,nc)
-
-# Number of samples drawn from each posterior distribution
-nsamp <- 10
-Lamb1 <- theta1 <- invMig1 <- list(NA)
-xC1 <- efficiency1 <- mu1 <- intmu1 <- matrix(rep(NA,nsamp*nc), ncol=nsamp)
-for(i in 1:nsamp){
-  # New smearing matrices sampled from Dirichlet posterior
-  Lamb1[[i]] <- matrix(unlist(map(1:nc, ~ t(rdirichlet(1, exp(-abs(.-1:(ne+1)))+
-                                                             smearing_matrix[,.])))), nrow=ne+1)
-  # Efficiencies calculated for each 
-  efficiency1[,i] <- apply(Lamb1[[i]][-(ne+1),], MARGIN = 2, sum)
-  # Apply Bayes' theorem to get P(C|E)
-  theta1[[i]] <- t(Lamb1[[i]][-(ne+1),]/(matrix(rep(apply(Lamb1[[i]][-(ne+1),],
-                                                          MARGIN = 1, sum), nc), ncol=nc)))
-  mu1[,i] <- map_dbl(xE1[-(ne+1)], ~ rgamma(1,1+.,1))
-  intmu1[,i] <- round(mu1[,i])
-  intmu1[,i][which(intmu1[,i]==0)] <- 1
-  invMig1[[i]] <- matrix(unlist(map(1:ne, ~ rmultinom(n=1,size=intmu1[.,i], 
-                                                     prob=theta1[[i]][,.]))),nrow=ne)
-  xC1[,i] <- (apply(invMig1[[i]],MARGIN=1, sum)/
-                efficiency1[,i])*(mu1[,i]/intmu1[,i])
-}
-
-step_hist$barlow <- rep(0,nc+ne)
-step_hist$barhigh <- rep(0,nc+ne)
-
-step <- filter(step_hist, Treatment == "truth")
-step$Counts <- apply(xC1, MARGIN=1, mean)
-step$CountsL[-1] <- apply(xC1, MARGIN=1, mean)[-nc]
-step$Treatment <- "1 iteration"
-step$Density <- apply(xC1, MARGIN=1, mean)/sum(apply(xC1, MARGIN=1, mean))
-step$DensityL[-1] <- step$Density[-nc]
-step$barlow <- apply(xC1, MARGIN=1, FUN=quantile, probs=0.025)
-step$barhigh <- apply(xC1, MARGIN=1, FUN=quantile, probs=0.975)
-step_hist_iter1 <- rbind(step_hist,step)
-
-ymax_count <- 1.1*max(step_hist_iter1$Counts)
-
-it1 <- ggplot(data = step_hist_iter1) + 
-  theme_bw() +
-  geom_rect(mapping = aes(xmin = binLow,
-                          ymin = barlow,
-                          xmax = binHigh,
-                          ymax = barhigh,
-                          fill = Treatment),
-            alpha=0.2) +
-  geom_segment(mapping = aes(x = binLow,
-                             y = Counts,
-                          xend = binHigh,
-                          yend = Counts,
-                          color = Treatment),
-               alpha=0.7) +
-  geom_segment(mapping = aes(x = binLow,
-                             y = CountsL,
-                          xend = binLow,
-                          yend = Counts,
-                          color = Treatment), 
-               alpha=0.7) +
-  scale_x_continuous(breaks = seq(-10,10,2), 
-                     limits = c(-10,10), 
-                     expand = c(0,0)) +
-  scale_y_continuous("Counts", limits = c(0,ymax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(ymax_count), ceiling(ymax_count/1000)*100)) +
-  labs(x="X", y="", title="1 Iteration") +
-  scale_color_manual(values=c("orange","red","blue")) +
-  scale_fill_manual(values=c("orange","red","blue")) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-```
-
-```{r, echo = F, eval = F}
-# Get observed number of events per effect
-xE2 <- xC1
-
-# Number of samples drawn from posterior distribution
-Lamb2 <- efficiency2 <- theta2 <- invMig2 <- list(NA)
-xC2 <- efficiency2 <- mu2 <- intmu2 <- matrix(rep(NA,nsamp*nsamp*nc), ncol=nsamp*nsamp)
-for(i in 1:nsamp){
-  for(j in 1:nsamp){
-    # New smearing matrices sampled from Dirichlet posterior
-    Lamb2[[(i-1)*nsamp+j]] <- 
-      matrix(unlist(map(1:nc, ~ t(rdirichlet(1,exp(-abs(.-1:(ne+1)))+smearing_matrix[,.]+c(invMig1[[i]][.,],0))))), 
-             nrow=ne+1)
-    # Efficiencies calculated for each 
-    efficiency2[,(i-1)*nsamp+j] <- apply(Lamb2[[(i-1)*nsamp+j]][-(ne+1),],MARGIN=2, sum)
-    # Apply Bayes' theorem to get P(C|E)
-    theta2[[(i-1)*nsamp+j]] <- t((Lamb2[[(i-1)*nsamp+j]][-(ne+1),]*matrix(rep(xC1[,i], nc),byrow=T,ncol=nc))/
-                                (matrix(rep(Lamb2[[(i-1)*nsamp+j]][-(ne+1),] %*% 
-                                              xC1[,i], nc), ncol=nc)))
-  
-    mu2[,(i-1)*nsamp+j] <- map_dbl(1:ne, ~ rgamma(1,1+xE1[.]+xE2[.,j],2))
-    intmu2[,(i-1)*nsamp+j] <- round(mu2[,(i-1)*nsamp+j])
-    intmu2[,(i-1)*nsamp+j][which(intmu2[,(i-1)*nsamp+j]==0)] <- 1
-    invMig2[[(i-1)*nsamp+j]] <- matrix(unlist(map(1:ne,~rmultinom(n=1,size=intmu2[.,(i-1)*nsamp+j], 
-                                                                  prob=theta2[[(i-1)*nsamp+j]][,.]))),nrow=ne)
-    xC2[,(i-1)*nsamp+j] <- (apply(invMig2[[(i-1)*nsamp+j]],MARGIN=1,sum)/efficiency2[,(i-1)*nsamp+j])*
-      (mu2[,(i-1)*nsamp+j]/intmu2[,(i-1)*nsamp+j])
-  }
-}
-
-step <- filter(step_hist, Treatment == "truth")
-step$Counts <- apply(xC2, MARGIN=1, mean)
-step$CountsL[-1] <- apply(xC2, MARGIN=1, mean)[-nc]
-step$Treatment <- "2 iterations"
-step$Density <- apply(xC2, MARGIN=1, mean)/sum(apply(xC2, MARGIN=1, mean))
-step$DensityL[-1] <- step$Density[-nc]
-step$barlow <- apply(xC2, MARGIN=1, FUN=quantile, probs=0.025)
-step$barhigh <- apply(xC2, MARGIN=1, FUN=quantile, probs=0.975)
-step_hist_iter2 <- rbind(step_hist,step)
-
-ymax_count <- 1.1*max(step_hist_iter2$Counts,step_hist_iter2$barhigh)
-
-it2 <- ggplot(data = step_hist_iter2) + 
-  theme_bw() +
-  geom_rect(mapping = aes(xmin = binLow,
-                          ymin = barlow,
-                          xmax = binHigh,
-                          ymax = barhigh,
-                          fill = Treatment),
-            alpha=0.2) +
-  geom_segment(mapping = aes(x = binLow,
-                             y = Counts,
-                          xend = binHigh,
-                          yend = Counts,
-                          color = Treatment),
-               alpha=0.7) +
-  geom_segment(mapping = aes(x = binLow,
-                             y = CountsL,
-                          xend = binLow,
-                          yend = Counts,
-                          color = Treatment), 
-               alpha=0.7) +
-  scale_x_continuous(breaks = seq(-10,10,2), 
-                     limits = c(-10,10), 
-                     expand = c(0,0)) +
-  scale_y_continuous("Counts", limits = c(0,ymax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(ymax_count), ceiling(ymax_count/1000)*100)) +
-  labs(x="X", y="", title="2 Iterations") +
-  scale_color_manual(values=c("orange","red","blue")) +
-  scale_fill_manual(values=c("orange","red","blue")) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-```
-
-```{r, echo = F, warning=F, eval = F}
-# Get observed number of events per effect
-xE3 <- xC2
-
-# Number of samples drawn from posterior distribution
-Lamb3 <- efficiency3 <- theta3 <- invMig3 <- list(NA)
-xC3 <- efficiency3 <- mu3 <- intmu3 <- matrix(rep(NA,nc*nsamp^3), ncol=nsamp^3)
-for(i in 1:nsamp){
-  for(j in 1:nsamp){
-    for(k in 1:nsamp){
-      # New smearing matrices sampled from Dirichlet posterior
-      Lamb3[[(i-1)*nsamp^2+(j-1)*nsamp+k]] <- 
-        matrix(unlist(map(1:nc, ~ t(rdirichlet(1,exp(-abs(.-1:(ne+1)))+smearing_matrix[,.]+
-                                                 c(invMig1[[i]][.,],0)+c(invMig2[[(j-1)*nsamp+k]][.,],0))))), 
-               nrow=ne+1)
-      # Efficiencies calculated for each 
-      efficiency3[,(i-1)*nsamp^2+(j-1)*nsamp+k] <- 
-        apply(Lamb3[[(i-1)*nsamp^2+(j-1)*nsamp+k]][-(ne+1),],MARGIN=2, sum)
-      # Apply Bayes' theorem to get P(C|E)
-      theta3[[(i-1)*nsamp^2+(j-1)*nsamp+k]] <- 
-        t((Lamb3[[(i-1)*nsamp^2+(j-1)*nsamp+k]][-(ne+1),]*
-             matrix(rep(xC3[,(j-1)*nsamp+k], nc),byrow=T,ncol=nc))/
-            (matrix(rep(Lamb3[[(i-1)*nsamp^2+(j-1)*nsamp+k]][-(ne+1),] %*% 
-                          xC3[,(j-1)*nsamp+k], nc), ncol=nc)))
-    
-      mu3[,(i-1)*nsamp^2+(j-1)*nsamp+k] <- 
-        map_dbl(1:ne, ~ rgamma(1,1+xE1[.]+xE2[.,k]+xE3[(j-1)*nsamp+k],3))
-      intmu3[,(i-1)*nsamp^2+(j-1)*nsamp+k] <- 
-        round(mu3[,(i-1)*nsamp^2+(j-1)*nsamp+k])
-      intmu3[,(i-1)*nsamp^2+(j-1)*nsamp+k][which(intmu3[,(i-1)*nsamp^2+(j-1)*nsamp+k]==0)] <- 1
-      invMig3[[(i-1)*nsamp^2+(j-1)*nsamp+k]] <- 
-        matrix(unlist(map(1:ne,~rmultinom(n=1,size=intmu3[.,(i-1)*nsamp^2+(j-1)*nsamp+k], 
-                                          prob=theta2[[(i-1)*nsamp+j]][,.]))),nrow=ne)
-      xC3[,(i-1)*nsamp^2+(j-1)*nsamp+k] <- 
-        (apply(invMig3[[(i-1)*nsamp^2+(j-1)*nsamp+k]],MARGIN=1,sum)/efficiency3[,(i-1)*nsamp^2+(j-1)*nsamp+k])*
-        (mu3[,(i-1)*nsamp^2+(j-1)*nsamp+k]/intmu3[,(i-1)*nsamp^2+(j-1)*nsamp+k])
-    }
-  }
-}
-
-step <- filter(step_hist_iter1, Treatment == "truth")
-step$Counts <- apply(xC3, MARGIN=1, mean)
-step$CountsL[-1] <- apply(xC3, MARGIN=1, mean)[-nc]
-step$Treatment <- "3 iterations"
-step$Density <- apply(xC3, MARGIN=1, mean)/sum(apply(xC3, MARGIN=1, mean))
-step$DensityL[-1] <- step$Density[-nc]
-step$barlow <- apply(xC3, MARGIN=1, FUN=quantile, probs=0.025)
-step$barhigh <- apply(xC3, MARGIN=1, FUN=quantile, probs=0.975)
-step_hist_iter3 <- rbind(step_hist,step)
-
-ymax_count <- 1.1*max(step_hist_iter3$Counts,step_hist_iter2$barhigh)
-
-it3 <- ggplot(data = step_hist_iter3) + 
-  theme_bw() +
-  geom_rect(mapping = aes(xmin = binLow,
-                          ymin = barlow,
-                          xmax = binHigh,
-                          ymax = barhigh,
-                          fill = Treatment),
-            alpha=0.2) +
-  geom_segment(mapping = aes(x = binLow,
-                             y = Counts,
-                          xend = binHigh,
-                          yend = Counts,
-                          color = Treatment),
-               alpha=0.7) +
-  geom_segment(mapping = aes(x = binLow,
-                             y = CountsL,
-                          xend = binLow,
-                          yend = Counts,
-                          color = Treatment), 
-               alpha=0.7) +
-  scale_x_continuous(breaks = seq(-10,10,2), 
-                     limits = c(-10,10), 
-                     expand = c(0,0)) +
-  scale_y_continuous("Counts", limits = c(0,ymax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(ymax_count), ceiling(ymax_count/1000)*100)) +
-  labs(x="X", y="", title="3 Iterations") +
-  scale_color_manual(values=c("orange","red","blue")) +
-  scale_fill_manual(values=c("orange","red","blue")) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-```
-\section{Discussion of Results and Conclusion}
-The results of my unfolding are shown below in Figure [\ref{iterations}]. The iterations get off to an okay start, but instead of converging they begin to behave erratically. The tails blowing up clearly comes from using random samples from a posterior distribution as basis for new priors, embedding events in places where there were zero before. I attempted to remedy this with a prior that disfavored events occurring far from the diagonal, as mentioned previously in the context of Figure [\ref{prior}]. It kept these tails from blowing up for at least the first iteration. In the future I will look more into options relating to this issue.
-
-There is almost certainly an error in the code governing the 3rd iteration, resulting in a vastly larger confidence band. Instead of trying to fix this issue I think it would be better use of my time to study some similar working examples \cite{Burgard2021}.
-
-```{r, fig.height=8, fig.align='center', warning=F, fig.width=4.5, echo=F, fig.cap="\\label{iterations}\\emph{The first iteration looks like itd heading the right direction. It is my belief that I have an error somehwere in my work.}", eval = F}
-grid.arrange(it1,it2,it3, nrow=3)
-```
-
-\newpage
-
-\appendix
-
-\section{Supplementary Mathematical Definitions and Derivations}
-
-\subsection{Hilbert Spaces}\label{appHilbert}
-
-Hilbert spaces are a major structural component of the field of functional analysis. They see significant application in partial differential equations, quantum mechanics, and signal processing, where they are commonly implemented in the performance of Fourier analysis. Mathematically they represent an extension beyond the real and complex geometric-like vector spaces developed by earlier generalizations of Euclidean spaces in the 19th century. Developments in real analysis at the beginning of the 20th century lead the spaces of functions and sequences to being conceptualized as linear spaces in their own right.
-
-As extensions of previously understood spaces they necessarily exist at the intersection of several other important spaces that aught to be understood beforehand. With that said, the following definitions come from Rudin in \cite{Rudin1991}. 
-To start, a \textbf{vector space}, as defined here, consists of a set $X$ of vectors for which addition and scalar multiplication are defined such that for all $x,y,z\in X$ and any complex number $\alpha\in\mathbb{C}$
-\begin{enumerate}
-  \item there exists a vector in $X$ such that
-    \begin{enumerate}
-      \item addition is commutative: $x+y=y+x$,
-      \item addition is associative: $x+(y+z)=(x+y)+z$,
-    \end{enumerate}
-  \item $\alpha x$ exists in $X$ such that $1x=x$, $0x=0$ (the zero vector), and multiplication is distributive:
-    \begin{enumerate}
-      \item $\alpha(\beta x)=(\alpha\beta x)$,
-      \item $\alpha(x+y)=\alpha x+\alpha y$, and
-      \item $(\alpha +\beta)x=\alpha x+\beta x$.
-    \end{enumerate}
-\end{enumerate}
-The range of $\alpha$ above describes a complex vector space. If $\alpha$ is restricted to the reals $\mathbb{R}$, then $X$ is considered a real vector space. Note that vector spaces include more than just traditional coordinate-style vectors, but also include function spaces such as the vector space of all polynomials with degree of at most $n$, which has the basis $\{1,x,x^2,\dots,x^{n-1},x^n\}$.
-
-Typically associated in applications, metric spaces form a another relevant set of spaces that has some significant overlap with the vector spaces. A space $X$ is said to be a \textbf{metric space} if for all $x,y\in X$ there exists an operator $d(x,y)$ that maps them to a nonnegative real number that defines their distance from each other within $X$. The properties of this operator are
-\begin{enumerate}
-  \item $0\leq d(x,y)<\infty$ for all $x$ and $y\in X$,
-  \item $d(x,y)=0$ iff $x=y$,
-  \item $d(x,y)=d(y,x)$ for all $x$ and $y\in X$,
-  \item $d(x,z)\leq d(x,y)+d(y,z)$ for all $x$, $y$, $z\in X$.
-\end{enumerate}
-For a metric space $X$, the distance operator $d$ is referred to as the metric on $X$. The intersection of the vector and metric spaces form the set of normed spaces. As an extension of the conditions thus far, a space $X$ is a \textbf{normed space} if $\forall x\in X$ there exists a nonnegative real number $\vert\vert x\vert\vert$, called the \textbf{norm} of $x$ such that
-\begin{enumerate}
-  \item $\vert\vert x+y\vert\vert\leq\vert\vert x\vert\vert+\vert\vert y\vert\vert\;\forall x,y\in X$,
-  \item $\vert\vert\alpha x\vert\vert = \vert\alpha\vert\,\vert\vert x\vert\vert$ if $x\in X$ and $\alpha$ is a scalar,
-  \item $\vert\vert x\vert\vert>0$ if $x\neq 0$.
-\end{enumerate} 
-Such a set is said to be \textbf{complete} if every \textbf{Cauchy sequence} in $X$ converges to a point in $X$. A Cauchy sequence in a metric space $X$ is any sequence $\{x_n\}$ that $\forall\varepsilon>0$ there exists an integer $N$ such that $d(x_m,x_n)<\varepsilon$ when $m>N$ and $n>N$. A quick example of this is the sequence defined by $x_n=\sqrt{n}$. For some starting $x_m$ and $x_n$ where $m-n=\delta$, we have
-\begin{align}
-d(x_m,x_n)
-  &=\sqrt{m}-\sqrt{n}\nonumber\\
-  &=\sqrt{n+\delta}-\sqrt{n}\nonumber\\
-  &=(\sqrt{n+\delta}-\sqrt{n})\frac{\sqrt{n+\delta}+\sqrt{n}}{\sqrt{n+\delta}+\sqrt{n}}\nonumber\\
-  &=\frac{n+\delta-n}{\sqrt{n+\delta}+\sqrt{n}}\nonumber\\
-  &=\frac{\delta}{\sqrt{n}(\sqrt{1+\delta/n}+\sqrt{1})}\nonumber\\
-  &<\frac{1}{\sqrt{n}}\left(\frac{\delta}{2}\right)<\varepsilon\nonumber\\
-  \implies n &> \left(\frac{\delta}{2\varepsilon}\right)^2.\nonumber
-\end{align}
-Noting that for constant $\delta$ the limit of $\frac{1}{\sqrt{n}}\left(\frac{\delta}{2}\right)$ as $n\longrightarrow\infty$ is the zero vector (the point of convergence) would also be sufficient to show that $x_n=\sqrt{n}$ is a Cauchy sequence.
-
-\begin{wrapfigure}{r}{0.55\textwidth}
-  \centering
-```{r, echo=F, fig.height=3.6, fig.width=3.6, fig.align='center'}
-venndiagram <- tibble(X0 = c( 0.0,0.0,
-                             -1.3,0.9),
-                      Y0 = c(-0.75, 0.75,
-                              0.00,-1.05),
-                      R = c(4.50,4.5,
-                            2.75,2.3),
-                      space = c("Vector Space",
-                                "Metric Space",
-                                "Inner Product Space",
-                                "Banach Space")) %>%
-  mutate(across(space, factor, 
-                levels = c("Vector Space",
-                           "Metric Space",
-                           "Inner Product Space",
-                           "Banach Space")))
-venntext <- tibble(X = c(0.0, 1.90,
-                         0.0,-2.25,
-                         1.7, 0.00),
-                   Y = c( 4.45, 2.10,
-                         -4.45, 0.75,
-                         -1.70,-0.60),
-                   theta = c( 0,-35,
-                              0, 50,
-                             55,  0),
-                   text = c("Vector Space\n(vectors)",
-                            "Normed Space\n(length)",
-                            "Metric Space\n(distance)", 
-                            "Inner Product\nSpace\n(angle/orthogonality)",
-                            "Banach Space\n(completeness)",
-                            "Hilbert\nSpace"))
-                           
-
-ggplot() +
-  coord_fixed() + theme_void() +
-  geom_circle(data = venndiagram,
-              mapping = aes(x0 = X0, y0 = Y0, r = R,
-                            fill = space)) +
-  geom_text(data = venntext,
-            mapping = aes(x = X, y = Y, angle = theta,
-                          label = text), size = 3.5) +
-  theme(legend.position = "none") +
-  scale_fill_manual(values = c(alpha("#b91500",0.35),
-                               alpha("#45a500",0.35),
-                               alpha("#ef6800",0.25),
-                               alpha("#0000e0",0.25)))
-  
-```
-  \caption{\emph{A Venn diagram representing the intersection and nesting of the spaces described in Appendix \ref{appHilbert}.}}
-  \label{spaceVenn}
-  \vspace{-30pt}
-\end{wrapfigure}
-Incidentally, a normed vector space that is complete as defined here meets the definition of a \textbf{Banach space}. An additional subset of the normed vector spaces consists of those spaces in which for all $x,y\in X$ there exists a real or complex number $\langle x,y\rangle$ defined by an operator called the \textbf{inner product}. For all $x,y,z\in X$ this operation must satisfy
-\begin{enumerate}
-  \item $\langle x,y\rangle=\langle y,x\rangle^*$ (where the ${}^*$ represents the complex conjugate),
-  \item $\langle x+y,z\rangle=\langle x,z\rangle+\langle y,z\rangle$,
-  \item $\langle \alpha x,y\rangle=\alpha\langle x,y\rangle$ (for $\alpha\in\mathbb{C}$),
-  \item $\langle x,x\rangle\geq0$, and
-  \item $\langle x,x\rangle=0$ iff $x=0$.
-\end{enumerate}
-A space that satisfies these requirements forms an \textbf{inner product space}, and the inner product defined in such a space relates to the form of its norm, such that $\vert\vert x\vert\vert=\langle x,x\rangle^{1/2}$. Finally, at the intersection of Banach spaces and inner product spaces are the Hilbert spaces. I.e. a \textbf{Hilbert space} is a complete vector space with an inner product defined by its norm.
-
-A commonly presented example is the $L^2$ function space, which consists of functions that are square integrable, i.e. if $f(x)\in L^2\implies \vert\vert f(x)\vert\vert^2=\int_\chi\vert  f(x)\vert^2dx<\infty$, where $\chi$ is the domain of $x$. The subset $L^2[-\pi,\pi]$, where $\chi=[-\pi,\pi]$, has the well known Fourier series as a basis, which is commonly written such that for $f(x)\in L^2[-\pi,\pi]$
-\begin{align}
-  f(x)=\frac{a_0}{2} + \sum_{n=1}^\infty\left[a_n\cos(nx)+b_n\sin(nx)\right],\nonumber
-\end{align}
-where
-$$\begin{matrix}
-  a_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\cos(nx)dx \\ \text{and} \\ b_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\sin(nx)dx.
-\end{matrix}$$
-Verification that this basis meets all the requirements laid out so far is beyond the scope of this paper.
 
 \section{R Code}
