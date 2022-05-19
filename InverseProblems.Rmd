@@ -334,11 +334,9 @@ Consider the following three sets of i.i.d. random variables from separate Cauch
   X_{2,i}&\sim \text{Cauchy}(x_0^{(2)},\gamma_2)\nonumber\\
   X_{3,i}&\sim \text{Cauchy}(x_0^{(3)},\gamma_3)\nonumber
 \end{align} 
-Current models predict that some class of physics events observed in past detectors are solely coming from the first two processes, such that for $n$ events the number coming from the first process is an i.i.d. random variable from the binomial distribution $B(n,p)$. Meanwhile, a new model has been developed that suggests that the third process has been occurring this whole time but has been incorrectly categorized as one or the other of the first two. Napkin math has estimated a contribution rate that is reflective of some probability $p_3$, such that the binomial distribution is actually a multinomial distribution with probabilities $\bm p=\{p_1,p_2,p_3\}$.
+Current models predict that some class of physics events observed in past detectors are solely coming from the first two processes (Theory 1), such that for $n$ events the number coming from the first process is an i.i.d. random variable from the binomial distribution $B(n,p)$. Meanwhile, a new model (Theory 2) has been developed that suggests that the third process has been occurring this whole time but has been incorrectly categorized as one or the other of the first two. Napkin math has estimated a contribution rate that is reflective of some probability $p_3$, such that the binomial distribution is actually a multinomial distribution with probabilities $\bm p=\{p_1,p_2,p_3\}$.
 
-A new experiment is being designed and funded to test this new theory, on top of many others, and simulations are being performed to give analyzers plenty of opportunities to develop their collaboration's analysis framework, perform calibrations, and make ready a myriad of studies that hope to shed light on many an unanswered question. The corresponding MC simulations performed during this time include such simulations for the physics events of interest, but also for the detector. The purposes of this paper a relatively simple set of simulations have been performed, leading to 400,000 simulated events per theory that are meant to represent the MC simulations, as well as a set of 20,000 simulated events for each theory the are meant to represent hypothetical data as they might be produced. 
-
-Please see Appendix \ref{simuApp} for information regarding the simulations performed. Please see Figure
+A new experiment is being designed and funded to test this new theory, on top of many others, and simulations are being performed to give analyzers plenty of opportunities to develop their collaboration's analysis framework, perform calibrations, and make ready a myriad of studies that hope to shed light on many an unanswered question. The corresponding MC simulations performed during this time include such simulations for the physics events of interest, but also for the detector. Fpr the purposes of this paper a relatively simple set of simulations have been performed, leading to 400,000 simulated events per theory that are meant to represent the MC simulations, as well as a set of 20,000 simulated events for each theory that are meant to represent hypothetical detector data.
 
 ```{r, echo = F}
 set.seed(12321)
@@ -353,11 +351,9 @@ scale <- c(4,4,5)
 p <- 0.25
 p1 <- c(0.3,0.7)
 p2 <- c((1-p)*p1[1],(1-p)*p1[2],p)
-p3 <- p2 + c(-0.04,0.03,0.01)
 
 events_data1 <- c(rmultinom(1, nsim_data, p1))
 events_data2 <- c(rmultinom(1, nsim_data, p2))
-events_data3 <- c(rmultinom(1, nsim_data, p3))
 
 events_mc1 <- c(rmultinom(1, nsim_mc, p1))
 events_mc2 <- c(rmultinom(1, nsim_mc, p2))
@@ -367,9 +363,6 @@ x2_data1 <- rcauchy(events_data1[2], location = loctn[2], scale = scale[2])
 x1_data2 <- rcauchy(events_data2[1], location = loctn[1], scale = scale[1])
 x2_data2 <- rcauchy(events_data2[2], location = loctn[2], scale = scale[2])
 x3_data2 <- rcauchy(events_data2[3], location = loctn[3], scale = scale[3])
-x1_data3 <- rcauchy(events_data3[1], location = loctn[1], scale = scale[1])
-x2_data3 <- rcauchy(events_data3[2], location = loctn[2], scale = scale[2])
-x3_data3 <- rcauchy(events_data3[3], location = loctn[3], scale = scale[3])
 x1_mc1 <- rcauchy(events_mc1[1], location = loctn[1], scale = scale[1])
 x2_mc1 <- rcauchy(events_mc1[2], location = loctn[2], scale = scale[2])
 x1_mc2 <- rcauchy(events_mc2[1], location = loctn[1], scale = scale[1])
@@ -377,8 +370,7 @@ x2_mc2 <- rcauchy(events_mc2[2], location = loctn[2], scale = scale[2])
 x3_mc2 <- rcauchy(events_mc2[3], location = loctn[3], scale = scale[3])
 
 x_data <- c(x1_data1,x2_data1,
-            x1_data2,x2_data2,x3_data2,
-            x1_data3,x2_data3,x3_data3)
+            x1_data2,x2_data2,x3_data2)
 x_mc <- c(x1_mc1,x2_mc1,
           x1_mc2,x2_mc2,x3_mc2)
 
@@ -389,23 +381,15 @@ xdetected_mc <- rbernoulli(nsim_mc,1-exp(-sqrt(abs(x_mc))/4)) == 1
 # Add Smearing
 err_mu_data <- -abs(x_data)^(1/4)
 err_sd_data <- log((abs(x_data)+10)/4)
-y_data <- x_data + rnorm(3*nsim_data, mean = err_mu_data, sd = err_sd_data)
+y_data <- x_data + rnorm(2*nsim_data, mean = err_mu_data, sd = err_sd_data)
 
 err_mu_mc <- -abs(x_mc)^(1/4)
 err_sd_mc <- log((abs(x_mc)+10)/4)
 y_mc <- x_mc + rnorm(2*nsim_mc, mean = err_mu_mc, sd = err_sd_mc)
 
 # Binned representation
-xymin <- 2
-xymax <- 27
-xystep <- 3
-dxy <- 2
-xyaxes <- c(xymin-dxy,xymin,
-            seq(xymin+xystep,xymax-xystep,xystep),
-            xymax,xymax+dxy)
-
 sims_data <- tibble("Theory" = 
-                      rep(c("Theory 1","Theory 2","Theory 3"),
+                      rep(c("Theory 1","Theory 2"),
                           each = nsim_data),
                     "Truth" = x_data,
                     "Reconstructed" = y_data,
@@ -430,13 +414,8 @@ bins_data <- sims_data %>%
   mutate(LBin = Bin-1,
          LCounts = cbind(
            rbind(diag(rep(1,62))[c(3,4,3:58,61,62),-c(1,2)],
-                 diag(0,60),
                  diag(0,60)),
            rbind(diag(0,60),
-                 diag(rep(1,62))[c(3,4,3:58,61,62),-c(1,2)],
-                 diag(0,60)),
-           rbind(diag(0,60),
-                 diag(0,60),
                  diag(rep(1,62))[c(3,4,3:58,61,62),-c(1,2)])) %*% 
            Counts) %>%
   mutate(Density = Counts/nsim_data,
@@ -463,9 +442,9 @@ bins_mc <- sims_mc %>%
   select(Theory,Treatment,LBin,Bin,LCounts,Counts,LDensity,Density)
 
 bins_all <- rbind(bins_data,bins_mc) %>%
-  mutate(Source = c(rep("Data",180),rep("MC",120)),
-         LCounts = LCounts/c(rep(1,180),rep(dmrat,120)),
-         Counts = Counts/c(rep(1,180),rep(dmrat,120))) %>%
+  mutate(Source = c(rep("Data",120),rep("MC",120)),
+         LCounts = LCounts/c(rep(1,120),rep(dmrat,120)),
+         Counts = Counts/c(rep(1,120),rep(dmrat,120))) %>%
   mutate(Name = paste(Treatment,Source)) %>%
   filter(Source == "MC" | Treatment == "Reconstructed")
 
@@ -526,51 +505,6 @@ fmax_count <- 1.05*max(c(bins_data$Counts,bins_mc$Counts/dmrat,
 ```
 
 ```{r, fig.height=7, fig.width=7.5, fig.align='center', echo = F}
-# Plotting
-continuous1 <- ggplot() + 
-  theme_bw() +
-  geom_line(data = filter(rbind(fpx_truth1,fpx_truth2),
-                            X >= xymin-dxy &
-                            X <= xymax+dxy),
-            mapping = aes(x = X, 
-                          y = nsim_data*Density,
-                      color = Process,
-                   linetype = Theory)) +
-  scale_color_manual(name = NA,
-                     labels = c("Process 1",
-                                "Process 2",
-                                "Process 3"),
-                     breaks = c("Process 1",
-                                "Process 2",
-                                "Process 3"),
-                     values = c("Process 1" = "#5e81b5",#alpha("#009E73",0.6),
-                                "Process 2" = "#e19c24",#alpha("#0072B2",0.6),
-                                "Process 3" = "#8fb032")) +#alpha("#0072B2",1))) +
-  scale_linetype_manual(name = NA,
-                        labels = c("Theory 1",
-                                   "Theory 2"),
-                        breaks = c("Theory 1",
-                                   "Theory 2"),
-                        values = c("Theory 1" = "solid",
-                                   "Theory 2" = "solid")) +
-  scale_x_continuous("X (Truth)",
-                     breaks = xyaxes, 
-                     limits = c(xymin-dxy,xymax+dxy), 
-                     expand = c(0,0)) +
-  scale_y_continuous("Counts",
-                     limits = c(0,fmax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(fmax_count),100))+
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        plot.margin = margin(0.15, 0.16, 0.12, 0.1, "cm"),
-        legend.text = element_text(size = 7),
-        legend.title = element_blank(),
-        legend.position = c(.99, 0.99),
-        legend.justification = c("right", "top"),
-        legend.box.just = "left",
-        legend.key.height = unit(10,"points"),
-        legend.margin = margin(1,5,5,5,"pt"))
-
 continuous2 <- ggplot() + 
   theme_bw() +
   geom_line(data = rbind(fx_truth1,fx_truth2,
@@ -588,7 +522,7 @@ continuous2 <- ggplot() +
                    linetype = Treatment),
             color = rep(c("#8fb032","#eb6235"), each=nx),
             alpha = 0.7) +
-  scale_color_manual(name = NA,
+  scale_color_manual(name = "Theory 2 MC",
                      labels = c("Truth",
                                 "Reconstructed"),
                      breaks = c("Truth",
@@ -602,7 +536,7 @@ continuous2 <- ggplot() +
                                    "Reconstructed"),
                         values = c("Truth" = "solid",
                                    "Reconstructed" = "solid")) +
-  guides(color = guide_legend(title = "Theory 1", order = 1, 
+  guides(color = guide_legend(title = "Theory 1 MC", order = 1, 
                               override.aes = list(shape = NA,
                                                   alpha = 0.7),
                               title.vjust = unit(-0.2, "pt")),
@@ -628,248 +562,6 @@ continuous2 <- ggplot() +
         aspect.ratio = 1,
         axis.title.y = element_blank())
 
-# eb6235
-# 8fb032
-
-```
-
-```{r, fig.height=7, fig.width=7.5, fig.align='center', echo = F, eval = F}
-discrete_exp <- ggplot() + 
-  theme_bw() +
-  geom_segment(data = filter(bins_expected1, 
-                             Treatment == "Truth" &
-                                  LBin >= xymin-dxy &
-                                   Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = Counts,
-                          xend = Bin,
-                          yend = Counts,
-                         color = "E[Theory 1 Truth]",
-                      linetype = "E[Theory 1 Truth]")) +
-  geom_segment(data = filter(bins_expected1, 
-                             Treatment == "Truth" &
-                                  LBin >= xymin-dxy &
-                                   Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = LCounts,
-                          xend = LBin,
-                          yend = Counts,
-                         color = "E[Theory 1 Truth]",
-                      linetype = "E[Theory 1 Truth]")) +
-  geom_segment(data = filter(bins_expected1, 
-                             Treatment == "Reconstructed" &
-                                  LBin >= xymin-dxy &
-                                   Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = Counts,
-                          xend = Bin,
-                          yend = Counts,
-                         color = "E[Theory 1 Reconstructed]",
-                      linetype = "E[Theory 1 Reconstructed]")) +
-  geom_segment(data = filter(bins_expected1, 
-                             Treatment == "Reconstructed" &
-                                  LBin >= xymin-dxy &
-                                   Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = LCounts,
-                          xend = LBin,
-                          yend = Counts,
-                         color = "E[Theory 1 Reconstructed]",
-                      linetype = "E[Theory 1 Reconstructed]")) +
-  geom_segment(data = filter(bins_expected2, 
-                             Treatment == "Truth" &
-                                  LBin >= xymin-dxy &
-                                   Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = Counts,
-                          xend = Bin,
-                          yend = Counts,
-                         color = "E[Theory 2 Truth]",
-                      linetype = "E[Theory 2 Truth]")) +
-  geom_segment(data = filter(bins_expected2, 
-                             Treatment == "Truth" &
-                                  LBin >= xymin-dxy &
-                                   Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = LCounts,
-                          xend = LBin,
-                          yend = Counts,
-                         color = "E[Theory 2 Truth]",
-                      linetype = "E[Theory 2 Truth]")) +
-  geom_segment(data = filter(bins_expected2, 
-                             Treatment == "Reconstructed" &
-                                  LBin >= xymin-dxy &
-                                   Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = Counts,
-                          xend = Bin,
-                          yend = Counts,
-                         color = "E[Theory 2 Reconstructed]",
-                      linetype = "E[Theory 2 Reconstructed]")) +
-  geom_segment(data = filter(bins_expected2, 
-                             Treatment == "Reconstructed" &
-                                  LBin >= xymin-dxy &
-                                   Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = LCounts,
-                          xend = LBin,
-                          yend = Counts,
-                         color = "E[Theory 2 Reconstructed]",
-                      linetype = "E[Theory 2 Reconstructed]")) +
-  scale_x_continuous("X (Truth), Y (Reconstructed)",
-                     breaks = xyaxes, 
-                     limits = c(xymin-dxy,xymax+dxy), 
-                     expand = c(0,0)) +
-  scale_y_continuous("Counts",
-                     limits = c(0,fmax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(fmax_count),
-                                  floor(fmax_count/1000)*200)) +
-  scale_color_manual(name = NA,
-                     labels = c("E[Theory 1 Truth]",
-                                "E[Theory 2 Truth]",
-                                "E[Theory 1 Reconstructed]",
-                                "E[Theory 2 Reconstructed]"),
-                     breaks = c("E[Theory 1 Truth]",
-                                "E[Theory 2 Truth]",
-                                "E[Theory 1 Reconstructed]",
-                                "E[Theory 2 Reconstructed]"),
-                     values = c("E[Theory 1 Truth]" = alpha("#5e81b5",1),#alpha("#009E73",0.6),
-                                "E[Theory 2 Truth]" = alpha("#5e81b5",1),#alpha("#009E73",1),
-                                "E[Theory 1 Reconstructed]" = alpha("#e19c24",1),#alpha("#0072B2",0.6),
-                                "E[Theory 2 Reconstructed]" = alpha("#e19c24",1))) +#alpha("#0072B2",1))) +
-  scale_linetype_manual(name = NA,
-                        labels = c("E[Theory 1 Truth]",
-                                   "E[Theory 2 Truth]",
-                                   "E[Theory 1 Reconstructed]",
-                                   "E[Theory 2 Reconstructed]"),
-                        breaks = c("E[Theory 1 Truth]",
-                                   "E[Theory 2 Truth]",
-                                   "E[Theory 1 Reconstructed]",
-                                   "E[Theory 2 Reconstructed]"),
-                        values = c("E[Theory 1 Truth]" = "solid",
-                                   "E[Theory 2 Truth]" = "dashed",
-                                   "E[Theory 1 Reconstructed]" = "solid",
-                                   "E[Theory 2 Reconstructed]" = "dashed")) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        plot.margin = margin(0.15, 0.16, 0.12, 0.1, "cm"),
-        legend.text = element_text(size = 7),
-        legend.title = element_blank(),
-        legend.position = c(.01, 0.99),
-        legend.justification = c("left", "top"),
-        legend.box.just = "left",
-        legend.key.height = unit(10,"points"),
-        legend.margin = margin(1,5,5,5,"pt"),
-        axis.title.x = element_blank()) +
-  guides(color = guide_legend(override.aes = list(alpha = c(1,1,1,1))))
-
-discrete_theory1 <- ggplot() + 
-  theme_bw() +
-  geom_segment(data = filter(bins_all,
-                               Theory == "Theory 1" &
-                               LBin >= xymin-dxy &
-                               Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = Counts,
-                          xend = Bin,
-                          yend = Counts,
-                         color = Name)) +
-  geom_segment(data = filter(bins_all, 
-                               Theory == "Theory 1" &
-                               LBin >= xymin-dxy &
-                               Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = LCounts,
-                          xend = LBin,
-                          yend = Counts,
-                         color = Name)) +
-  scale_x_continuous("X (Truth), Y (Reconstructed)",
-                     breaks = xyaxes, 
-                     limits = c(xymin-dxy,xymax+dxy), 
-                     expand = c(0,0)) +
-  scale_y_continuous("Counts",
-                     limits = c(0,fmax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(fmax_count),
-                                  floor(fmax_count/1000)*200)) +
-  scale_color_manual(name = "Theory 1",
-                     labels = c("MC Truth",
-                                "Data Truth",
-                                "MC Reconstructed",
-                                "Data Reconstructed"),
-                     breaks = c("MC Truth",
-                                "Data Truth",
-                                "MC Reconstructed",
-                                "Data Reconstructed"),
-                     values = c("MC Truth" = alpha("#5e81b5",1),#alpha("#009E73",0.6),
-                                "Data Truth" = alpha("#e19c24",1),#alpha("#009E73",1),
-                                "MC Reconstructed" = alpha("#8fb032",1),#alpha("#0072B2",0.6),
-                                "Data Reconstructed" = alpha("#eb6235",1))) +#alpha("#0072B2",1))) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        plot.margin = margin(0.15, 0.16, 0.12, 0.1, "cm"),
-        legend.text = element_text(size = 8),
-        legend.title = element_blank(),
-        legend.position = c(.01, 0.99),
-        legend.justification = c("left", "top"),
-        legend.box.just = "left",
-        legend.key.height = unit(10,"points"),
-        legend.margin = margin(1,5,5,5,"pt"),
-        axis.title.x = element_blank()) +
-  guides(color = guide_legend(override.aes = list(alpha = c(1,1,1,1))))
-
-discrete_theory2 <- ggplot() + 
-  theme_bw() +
-  geom_segment(data = filter(bins_all,
-                               Theory == "Theory 2" &
-                               LBin >= xymin-dxy &
-                               Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = Counts,
-                          xend = Bin,
-                          yend = Counts,
-                         color = Name)) +
-  geom_segment(data = filter(bins_all, 
-                               Theory == "Theory 2" &
-                               LBin >= xymin-dxy &
-                               Bin <= xymax+dxy),
-               mapping = aes(x = LBin,
-                             y = LCounts,
-                          xend = LBin,
-                          yend = Counts,
-                         color = Name)) +
-  scale_x_continuous("X (Truth), Y (Reconstructed)",
-                     breaks = xyaxes, 
-                     limits = c(xymin-dxy,xymax+dxy), 
-                     expand = c(0,0)) +
-  scale_y_continuous("Counts",
-                     limits = c(0,fmax_count), expand = c(0,0),
-                     breaks = seq(0,ceiling(fmax_count),
-                                  floor(fmax_count/1000)*200)) +
-  scale_color_manual(name = "Theory 2",
-                     labels = c("MC Truth",
-                                "Data Truth",
-                                "MC Reconstructed",
-                                "Data Reconstructed"),
-                     breaks = c("MC Truth",
-                                "Data Truth",
-                                "MC Reconstructed",
-                                "Data Reconstructed"),
-                     values = c("MC Truth" = alpha("#5e81b5",1),#alpha("#009E73",0.6),
-                                "Data Truth" = alpha("#e19c24",1),#alpha("#009E73",1),
-                                "MC Reconstructed" = alpha("#8fb032",1),#alpha("#0072B2",0.6),
-                                "Data Reconstructed" = alpha("#eb6235",1))) +#alpha("#0072B2",1))) +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), 
-        plot.margin = margin(0.15, 0.16, 0.12, 0.1, "cm"),
-        legend.text = element_text(size = 8),
-        legend.title = element_blank(),
-        legend.position = c(.01, 0.99),
-        legend.justification = c("left", "top"),
-        legend.box.just = "left",
-        legend.key.height = unit(10,"points"),
-        legend.margin = margin(1,5,5,5,"pt"),
-        axis.title.x = element_blank()) +
-  guides(color = guide_legend(override.aes = list(alpha = c(1,1,1,1))))
 ```
 
 ```{r, fig.height=4, fig.width=7.5, fig.align='center', echo = F}
@@ -953,15 +645,17 @@ discrete_DataMC <- ggplot() +
                                    "Reconstructed MC"),
                         values = c("Truth MC" = "solid",
                                    "Reconstructed MC" = "solid")) +
-  guides(color = guide_legend(title = "Theory 1", order = 1, 
+  guides(color = guide_legend(title = "Theory 1 MC", order = 1, 
                               override.aes = list(shape = NA,
                                                   alpha = 0.7),
                               title.vjust = unit(-0.5, "pt")),
-         linetype = guide_legend(title = "Theory 2", order = 2, 
-                                 override.aes = list(color = c("#eb6235","#8fb032"),
-                                                     alpha = 0.7),
+         linetype = guide_legend(title = "Theory 2 MC", order = 2, 
+                                 override.aes = 
+                                   list(color = c("#eb6235","#8fb032"),
+                                        alpha = 0.7),
                                  title.vjust = unit(-0.5, "pt")),
-         fill = guide_legend(title = "Data", order = 3, title.vjust = unit(-0.5, "pt"))) +
+         fill = guide_legend(title = "Data", order = 3, 
+                             title.vjust = unit(-0.5, "pt"))) +
   labs(title = "MC Simulations and ''Data''") +
   theme(legend.title = element_text(size = 9),
         legend.text = element_text(size = 8),
@@ -974,7 +668,32 @@ discrete_DataMC <- ggplot() +
         axis.title.y = element_blank())
 ```
 
-```{r, fig.align='center', echo = F, fig.height=3.5}
+\begin{figure}[!ht]
+    \centering
+```{r, fig.height=3, fig.width=7.5, fig.align='center', echo = F}
+plot1 <- ggplotGrob(continuous2 + theme(legend.position = "none",
+                                        axis.title.x = element_blank()))
+plot2 <- ggplotGrob(discrete_DataMC + theme(legend.position = "none",
+                                        axis.title.x = element_blank()))
+
+
+egg::ggarrange(continuous2 + 
+                 theme(legend.position = "none", 
+                       axis.title.x = element_blank()), 
+               discrete_DataMC + 
+                 theme(axis.title.x = element_blank()), nrow = 1,
+               left = textGrob("Counts", rot = 90, vjust = 0.25),
+               bottom = textGrob("X (Truth), Y (Reconstructed)", hjust = 0.8))
+```
+  \caption{\emph{\small The distinguishing characteristics between Theory 1 and Theory 2 become greatly diminished as their respective distributions are smeared and diffused by shared phenomenon. Ignoring the knowledge granted in this figure's legend, one would be hardpressed to predict which Truth distribution a particular Reconstructed distribution came from.}}
+  \label{plots1}
+\end{figure}
+
+Please see Appendix \ref{simuApp} for more specific information about the performed simulations. Referring to Figure \ref{plots1}, the blue and red colored plots correspond to the true distributions of Theory 1 and Theory 2 respectively. The colored lines represent the MC simulations. They have been rescaled to represent the same number of possible events as the experimental data. The impact of the third contributing Cauchy process in Theory 2 can be seen by way of the notably diminished peak and the partial filling of the dividing indent between the two processes of Theory 1. While it is clear for both the continuous and discrete representations that the two larger distributions are distinct, less can be said about them once imperfect detector efficiency and resolution have had their effects.
+
+\begin{figure}[!ht]
+    \centering
+```{r, fig.align='center', echo = F, fig.height=3.5, fig.align='center'}
 ########## MIGRATION ###########################################################
 
 migration <- sims_mc %>%
@@ -1013,36 +732,13 @@ migration <- migration +
                                                ticks.colour = "black",
                                                title = "Counts"))
 
-
 migration
 ```
-
-
-\begin{figure}[!ht]
-    \centering
-    \hrulefill
-```{r, fig.height=3, fig.width=7.5, fig.align='center', echo = F}
-plot1 <- ggplotGrob(continuous2 + theme(legend.position = "none",
-                                        axis.title.x = element_blank()))
-plot2 <- ggplotGrob(discrete_DataMC + theme(legend.position = "none",
-                                        axis.title.x = element_blank()))
-#list(plot1$widths,plot2$widths)
-
-#plot1$widths[3] <- plot2$widths[9]
-#plot1$widths[6] <- plot2$widths[6]
-
-egg::ggarrange(continuous2 + 
-                 theme(legend.position = "none", 
-                       axis.title.x = element_blank()), 
-               discrete_DataMC + 
-                 theme(axis.title.x = element_blank()), nrow = 1,
-               left = textGrob("Counts", rot = 90, vjust = 0.25),
-               bottom = textGrob("X (Truth), Y (Reconstructed)", hjust = 0.8))
-```
-  \caption{\emph{\small The above plots feature two bimodal gamma distributions depicting events before and after after detector effects. (Top Left) The two continuous distributions correspond to the theoretical PDFs of the two distributions rescaled to correspond with the counts from 20,000 events. The histograms are calculated from the PDFs and correspond to the expected event counts from 20,000 simulated events. (Bottom Left) These four histograms consist of the same expected event counts as well as one instance of actual counts resulting from 20,000 simulated events. (Right) A visual study of simulated detector efficiency is provided by a side-by-side comparison of two heat maps that demonstrate the skewness and dispersion added by a simulated measurement process for detected and undetected events. This study is not intended to meaningfully represent a hypothetical distribution of undetected events in any real detector. Actual detector efficiencies are almost certainly governed by much more complicated collections of parameters.}}
-  \label{BasicExample}
-  \hrulefill
+  \caption{\emph{\small The added dimensional perspective offered by this migration heat map reveals additional structure and dependencies concerning the smearing process.}}
+  \label{plots2}
 \end{figure}
+
+Figure \ref{plots2} provides an alternative perspective to Figure \ref{plots1} by providing a visual representation of the two theories' migration matrices. The red dashed lines indicate where events would live if there were no skewing or smearing processes. Note that the Reconstructed axis extends past points covered by the Truth axis, providing insight into the behavior with which events produced in the primary region of interest ends up measured or reconstructed outside this so-called \textbf{fiducial volume}.
 
 
 ```{r, echo=F}
@@ -1087,29 +783,6 @@ dataReco2 <- dataReco2 %>%
 
 dataTruth2 <- sims_data %>%
   filter(Theory == "Theory 2" &
-           Truth <= 30 & Truth >= 0) %>%
-  mutate(Bin = ceiling(Truth)) %>%
-  count(Bin, name = "Counts") %>%
-  select(Bin, Counts)
-
-### Data 3
-dataReco3 <- sims_data %>%
-  filter(Theory == "Theory 3" &
-           Truth <= 30 & Truth >= 0 &
-           Detected == TRUE) %>%
-  mutate(Bin = ceiling(Reconstructed)) %>%
-  count(Bin, name = "Counts") %>%
-  select(Bin, Counts)
-sidedata3 <- dataReco3 %>%
-  filter(Bin < 1 | Bin > 30) %>% pull(Bin)
-dataReco3 <- dataReco3 %>%
-  filter(Bin >= 1 & Bin <= 30) %>%
-  rbind(dataReco2 %>% filter(Bin < 1 | Bin > 30) %>%
-          mutate(Counts = sum(Counts)) %>% 
-          filter(Bin == 31))
-
-dataTruth3 <- sims_data %>%
-  filter(Theory == "Theory 3" &
            Truth <= 30 & Truth >= 0) %>%
   mutate(Bin = ceiling(Truth)) %>%
   count(Bin, name = "Counts") %>%
@@ -1176,7 +849,7 @@ mcTruth2 <- sims_mc %>%
 
 \section{Unfolding in particle physics}
 
-Intro to section 2
+The international particle physics community is inherently collaborative
 
 \subsection{Inverting the Response Matrix}
 
@@ -1200,7 +873,7 @@ yields \begin{align}\min_{\bm\mu}\nabla_{\bm\mu}\bm\chi^2(\bm{\mu})
   \implies\bm{\hat\mu}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}=\bm{R}^{+}\bm{n}\label{eq:naivemu}\\
   \implies\bm{R}^{+}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1},\label{eq:penrose}
 \end{align} where $\bm{R}^{+}$ is the Moore-Penrose generalized inverse
-(or pseudo-inverse) \cite{Blobel2013}, and it is assumed that
+(or pseudo-inverse) \cite{Blobel2013} of $\bm{R}$. It is assumed that
 $\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}$ is not singular. The
 corresponding covariance matrix is more quickly calculated by way of
 \begin{align}
@@ -1253,8 +926,6 @@ data1_unfolded_mc1 <- inv_R_mc1 %*% dataReco1$Counts
 data1_unfolded_mc2 <- inv_R_mc2 %*% dataReco1$Counts
 data2_unfolded_mc1 <- inv_R_mc1 %*% dataReco2$Counts
 data2_unfolded_mc2 <- inv_R_mc2 %*% dataReco2$Counts
-data3_unfolded_mc1 <- inv_R_mc1 %*% dataReco3$Counts
-data3_unfolded_mc2 <- inv_R_mc2 %*% dataReco3$Counts
 mc1_unfolded_mc1 <- inv_R_mc1 %*% mcReco1$Counts
 mc1_unfolded_mc2 <- inv_R_mc2 %*% mcReco1$Counts
 mc2_unfolded_mc1 <- inv_R_mc1 %*% mcReco2$Counts
@@ -1503,8 +1174,6 @@ data1_unfolded_mc1 <- inv_R_mc1 %*% dataReco1$Counts
 data1_unfolded_mc2 <- inv_R_mc2 %*% dataReco1$Counts
 data2_unfolded_mc1 <- inv_R_mc1 %*% dataReco2$Counts
 data2_unfolded_mc2 <- inv_R_mc2 %*% dataReco2$Counts
-data3_unfolded_mc1 <- inv_R_mc1 %*% dataReco3$Counts
-data3_unfolded_mc2 <- inv_R_mc2 %*% dataReco3$Counts
 mc1_unfolded_mc1 <- inv_R_mc1 %*% mcReco1$Counts
 mc1_unfolded_mc2 <- inv_R_mc2 %*% mcReco1$Counts
 mc2_unfolded_mc1 <- inv_R_mc1 %*% mcReco2$Counts
@@ -1515,9 +1184,7 @@ mc2_unfolded_mc2 <- inv_R_mc2 %*% mcReco2$Counts
 
 \appendix
 
-\section{Supplementary Mathematical Definitions and Derivations}
-
-\subsection{Hilbert Spaces}\label{appHilbert}
+\section{Hilbert Spaces}\label{appHilbert}
 
 Hilbert spaces are a prominent feature in the field of
 functional analysis. They see significant application in partial
@@ -1718,7 +1385,7 @@ detection rate (when $\epsilon_i=1$) is a function of the form
   p(X_i=x)=1-e^{-\sqrt{x}/4}.\nonumber
 \end{align}
 
-\section{Bin-by-bin}
+\section{Bin-by-bin unfolding}
 
 In this approach a multiplicative \textbf{correction factor} $C_i$ is
 applied to the observed number of signal events $n_i$ for each bin to
@@ -1903,7 +1570,9 @@ ggplot() +
                      breaks = c("Theory 1 Data","Theory 2 Data"),
                      values = c(alpha("#5e81b5",0.3),
                                 alpha("#e19c24",0.3))) +
-  guides(fill = guide_legend("Data", override.aes = list(fill=c(alpha("#5e81b5",0.2),alpha("#e19c24",0.2)))),
+  guides(fill = guide_legend("Data", override.aes = 
+                               list(fill=c(alpha("#5e81b5",0.2),
+                                           alpha("#e19c24",0.2)))),
          color = guide_legend("Data")) +
   facet_wrap(`Assumed Theory` ~ ., ncol = 2, dir = "v")
 ```
