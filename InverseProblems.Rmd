@@ -235,7 +235,10 @@ an event produced in bin $\mu_j$ has some probability $\geq 0$ of being
 measured in each of the $N$ bins of $\bm\nu$, and that each bin count
 $\nu_i$ receives potential contributions from each of the $M$ bins in
 $\bm\mu$, i.e.
-\begin{align}\nu_i = \sum_{j=1}^MR_{ij}\mu_j.\label{eq:bini}\end{align}
+\begin{align}
+  \nu_i &= \sum_{j=1}^MR_{ij}\mu_j\;\text{     and}\label{eq:bini}\\
+  R_{ij}&=\frac{\partial\nu_i}{\partial\mu_j}\label{dnudmu}.
+\end{align}
 The number of bins are typically set such that $M\leq N$, with the
 convention $N=M+1$ being common. A higher number of bins in the measured
 distribution reflects that the measuring process is expected to map some
@@ -288,19 +291,23 @@ $\bm\nu$ as a collection of $N$ separate and independent Poisson
 processes. That is to say the observed counts $n_i$ in bin $i$ are
 treated as i.i.d. random variables with the probability mass function
 \begin{align}P(n_i\vert\nu_i)=\frac{\nu_i^{n_i}e^{-\nu_i}}{n_i!}.\label{eq:pois}\end{align}
-The counts $n_i$ would in theory then form the estimate $\hat\nu_i$ of
+As such counts $n_i$ form the estimate $\hat\nu_i$ of
 the expected counts $\nu_i$ by
-\begin{align}\nu_i&=\text{E}[\hat\nu_i]=\text{E}[n_i]\nonumber\\&=\text{Var}[\hat\nu_i]=\text{Var}[n_i].\nonumber\end{align}
+\begin{align}\nu_i&=\text{E}[\hat\nu_i]=\text{E}[n_i]\nonumber\\&=\text{Cov}[\hat\nu_i]=\text{Cov}[n_i].\nonumber\end{align}
 Understanding the probability distribution of $\bm{n}$ allows for
 unfolding methods that involve the use of maximum likelihood estimation.
-For methods based on least squares it becomes necessary to find the
-covariance matrix $\bm{\Sigma}^{\nu}$ of the observations, which for
+It will be convenient, and necessary for methods based on least squares, to estimate the
+covariance matrix $\bm{\hat\Sigma}_{\nu}$ (written $\hat\Sigma^{\nu}_{ij}$ when referring to components) of the observations, which for
 independent Poisson processes has components of the form
-\begin{align}\Sigma^{\nu}_{ij}&=\text{Cov}[n_i,n_j]\nonumber\\&=\delta_{ij}\nu_i,\label{eq:cov}\end{align}
+\begin{align}
+  \hat\Sigma^{\nu}_{ij}
+      &=\text{Cov}[\hat\nu_i,\hat\nu_j]\nonumber\\
+      &=\text{Cov}[n_i,n_j]\nonumber\\
+      &=\delta_{ij}n_i,\label{eq:cov}\end{align}
 where $\delta_{ij}$ is the Kronecker
 delta\footnote{The Kronecker delta $\delta_{ij}$ is a piecewise function of variables $i$ and $j$ defined by $\delta_{ij}=\begin{cases}0\;\;\;\text{if }i\neq j\\1\;\;\;\text{if }i=j\end{cases}.$}.
-The path to the covariance matrix of the estimated true distribution
-$\bm{\hat\mu}$ can be considered briefly by considering the maximum
+The path to an estimated covariance matrix of the estimated true distribution
+$\bm{\hat\mu}$, itself a function of $\bm{n}$ and $\bm{\nu}$ (or its estimate), can be considered briefly by considering the maximum
 log-likelihood, where it can be shown \begin{align}
   \log L(\bm\mu)
     &=\sum_{i=1}^N\log\left(\frac{\nu_i^{n_i}e^{-\nu_i}}{n_i!}\right)\nonumber\\
@@ -308,16 +315,16 @@ log-likelihood, where it can be shown \begin{align}
   \frac{\partial\log L}{\partial\mu_k}
     &=\sum_{i=1}^N\frac{\partial\log L}{\partial\nu_i}\frac{\partial\nu_i}{\partial\mu_k}\nonumber\\
     &=\sum_{i=1}^N\left(\frac{n_i}{\nu_i}-1\right)R_{ik}=0.\nonumber
-\end{align} Some minor algebra here reproduces the estimate
-$\bm{\hat\nu}=\bm{n}$, which has been assumed up until now. Continuing
+\end{align} Some minor algebra here thankfully reproduces the estimate
+$\bm{\hat\nu}=\bm{n}$, as expected from an earlier observation about $n_i$. Continuing
 with an additional derivative shows 
 \begin{align}
   \frac{\partial^2\log L}{\partial\mu_k\partial\mu_l}
     &=-\sum_{i=1}^N\left(\frac{n_i}{\nu_i^2}\frac{\partial\nu_i}{\partial\mu_l}\right) R_{ik}\nonumber\\
     &=-\sum_{i=1}^N\frac{n_i R_{il}R_{ik}}{\nu_i^2},\nonumber
-\end{align} the negative of the expectation value of which is the Fisher information. The Fisher information's relationship with the Cram$\acute{\text{e}}$r-Rao lower bound can, as its name implies, create a lower bound on the covariance matrix of an unbiased estimator of $\bm{\mu}$. For such an unbiased estimator $\bm{\hat T}_{\mu\text{nbiased}}$ we have
+\end{align} the negative of the expectation value of which is the Fisher information matrix $\bm{\mathcal{I}}(\bm\mu)$. Since the Fisher information's relationship with the Cram$\acute{\text{e}}$r-Rao lower bound can, as its name implies, be used to determine the lower bound on the covariance matrix of an estimator of $\bm{\mu}$, one can show for one such \emph{unbiased} estimator, say $\bm{T}(\bm{n})$, that
 \begin{align}
-  \text{Cov}\left(\bm{\hat T}_{\mu\text{nbiased}}\right)\geq \bm{I}(\bm{\mu})^{-1}
+  \text{Cov}_{\!\bm{\mu}}\!\left[\bm{T}(\bm{n})\right]\geq \bm{\mathcal{I}}(\bm{\mu})^{-1}
     &=\left(-E\left[\frac{\partial^2\log L}{\partial\mu_k\partial\mu_l}\right]\right)^{-1}\nonumber\\
     &=\left(\sum_{i=1}^N\frac{E[n_i] R_{il}R_{ik}}{\nu_i^2}\right)^{-1}\nonumber\\
     &=\left(\sum_{i=1}^N\frac{R_{il}R_{ik}}{\nu_i}\right)^{-1}\nonumber\\
@@ -334,7 +341,7 @@ Consider the following three sets of i.i.d. random variables from separate Cauch
   X_{2,i}&\sim \text{Cauchy}(x_0^{(2)},\gamma_2)\nonumber\\
   X_{3,i}&\sim \text{Cauchy}(x_0^{(3)},\gamma_3)\nonumber
 \end{align} 
-Current models predict that some class of physics events observed in past detectors are solely coming from the first two processes (Theory 1), such that for $n$ events the number coming from the first process is an i.i.d. random variable from the binomial distribution $B(n,p)$. Meanwhile, a new model (Theory 2) has been developed that suggests that the third process has been occurring this whole time but has been incorrectly categorized as one or the other of the first two. Napkin math has estimated a contribution rate that is reflective of some probability $p_3$, such that the binomial distribution is actually a multinomial distribution with probabilities $\bm p=\{p_1,p_2,p_3\}$.
+Current models predict that some class of physics events observed in past detectors are solely coming from the first two processes (Model 1), such that for $n$ events the number coming from the first process is an i.i.d. random variable from the binomial distribution $B(n,p)$. Meanwhile, a new model (Model 2) has been developed that suggests that the third process has been occurring this whole time but has been incorrectly categorized as one or the other of the first two. Napkin math has estimated a contribution rate that is reflective of some probability $p_3$, such that the binomial distribution is actually a multinomial distribution with probabilities $\bm p=\{p_1,p_2,p_3\}$.
 
 A new experiment is being designed and funded to test this new theory, on top of many others, and simulations are being performed to give analyzers plenty of opportunities to develop their collaboration's analysis framework, perform calibrations, and make ready a myriad of studies that hope to shed light on many an unanswered question. The corresponding MC simulations performed during this time include such simulations for the physics events of interest, but also for the detector. Fpr the purposes of this paper a relatively simple set of simulations have been performed, leading to 400,000 simulated events per theory that are meant to represent the MC simulations, as well as a set of 20,000 simulated events for each theory that are meant to represent hypothetical detector data.
 
@@ -388,14 +395,14 @@ err_sd_mc <- log((abs(x_mc)+10)/4)
 y_mc <- x_mc + rnorm(2*nsim_mc, mean = err_mu_mc, sd = err_sd_mc)
 
 # Binned representation
-sims_data <- tibble("Theory" = 
-                      rep(c("Theory 1","Theory 2"),
+sims_data <- tibble("Model" = 
+                      rep(c("Model 1","Model 2"),
                           each = nsim_data),
                     "Truth" = x_data,
                     "Reconstructed" = y_data,
                     "Detected" = xdetected_data)
-sims_mc <- tibble("Theory" = 
-                    rep(c("Theory 1","Theory 2"),
+sims_mc <- tibble("Model" = 
+                    rep(c("Model 1","Model 2"),
                         each = nsim_mc),
                   "Truth" = x_mc,
                   "Reconstructed" = y_mc,
@@ -409,8 +416,8 @@ bins_data <- sims_data %>%
   mutate(Bin = ceiling(Bin)) %>%
   filter(Bin <= 30 & Bin >= 1) %>%
   filter((Treatment == "Reconstructed" & Detected == TRUE) | Treatment == "Truth") %>%
-  count(Theory, Bin, Treatment, name = "Counts") %>%
-  complete(Theory, Bin=1:30, Treatment, fill = list(Counts=0)) %>%
+  count(Model, Bin, Treatment, name = "Counts") %>%
+  complete(Model, Bin=1:30, Treatment, fill = list(Counts=0)) %>%
   mutate(LBin = Bin-1,
          LCounts = cbind(
            rbind(diag(rep(1,62))[c(3,4,3:58,61,62),-c(1,2)],
@@ -420,7 +427,7 @@ bins_data <- sims_data %>%
            Counts) %>%
   mutate(Density = Counts/nsim_data,
          LDensity = LCounts/nsim_data) %>%
-  select(Theory, Treatment,LBin,Bin,LCounts,Counts,LDensity,Density)
+  select(Model, Treatment,LBin,Bin,LCounts,Counts,LDensity,Density)
 
 bins_mc <- sims_mc %>%
   filter(Truth <= 30 & Truth >= 0) %>%
@@ -430,8 +437,8 @@ bins_mc <- sims_mc %>%
   mutate(Bin = ceiling(Bin)) %>%
   filter(Bin <= 30 & Bin >= 1) %>%
   filter((Treatment == "Reconstructed" & Detected == TRUE) | Treatment == "Truth") %>%
-  count(Theory, Bin, Treatment, name = "Counts") %>%
-  complete(Theory, Bin=1:30,  Treatment, fill = list(Counts=0)) %>%
+  count(Model, Bin, Treatment, name = "Counts") %>%
+  complete(Model, Bin=1:30,  Treatment, fill = list(Counts=0)) %>%
   mutate(LBin = Bin-1,
          LCounts = cbind(
            rbind(diag(rep(1,62))[c(3,4,3:58,61,62),-c(1,2)],diag(0,60)),
@@ -439,7 +446,7 @@ bins_mc <- sims_mc %>%
            Counts) %>%
   mutate(Density = Counts/nsim_data,
          LDensity = LCounts/nsim_data) %>%
-  select(Theory,Treatment,LBin,Bin,LCounts,Counts,LDensity,Density)
+  select(Model,Treatment,LBin,Bin,LCounts,Counts,LDensity,Density)
 
 bins_all <- rbind(bins_data,bins_mc) %>%
   mutate(Source = c(rep("Data",120),rep("MC",120)),
@@ -466,18 +473,18 @@ fp3x <- dcauchy(X, location = loctn[3], scale = scale[3])
 
 fpx_truth1 <- tibble(X = rep(X,2), Density = c(p1[1]*fp1x,p1[2]*fp2x), 
                      Process = rep(c("Process 1","Process 2"), each = nx),
-                     Theory = rep("Theory 1",2*nx))
+                     Model = rep("Model 1",2*nx))
 fpx_truth2 <- tibble(X = rep(X,3), Density = c(p2[1]*fp1x,p2[2]*fp2x,p2[3]*fp3x), 
                      Process = rep(c("Process 1","Process 2","Process 3"), each = nx),
-                     Theory = rep("Theory 2",3*nx))
+                     Model = rep("Model 2",3*nx))
 fx_truth1 <- tibble(X = X, Density = p1[1]*fp1x + p1[2]*fp2x, 
-                    Theory = rep("Theory 1",nx),Treatment = rep("Truth",nx))
+                    Model = rep("Model 1",nx),Treatment = rep("Truth",nx))
 fx_truth2 <- tibble(X = X, Density = p2[1]*fp1x + p2[2]*fp2x + p2[3]*fp3x,
-                    Theory = rep("Theory 2",nx),Treatment = rep("Truth",nx))
+                    Model = rep("Model 2",nx),Treatment = rep("Truth",nx))
 fy_truth1 <- read.csv("f1yEstimate.csv") %>% 
-  mutate(Theory = "Theory 1", Treatment = "Reconstructed")
+  mutate(Model = "Model 1", Treatment = "Reconstructed")
 fy_truth2 <- read.csv("f2yEstimate.csv") %>% 
-  mutate(Theory = "Theory 2", Treatment = "Reconstructed")
+  mutate(Model = "Model 2", Treatment = "Reconstructed")
 names(fy_truth1)[1] <- names(fx_truth1)[1] <- 
   names(fy_truth2)[1] <- names(fx_truth2)[1] <- "XY"
 
@@ -509,20 +516,20 @@ continuous2 <- ggplot() +
   theme_bw() +
   geom_line(data = rbind(fx_truth1,fx_truth2,
                          fy_truth1,fy_truth2) %>%
-              filter(Theory == "Theory 1"),
+              filter(Model == "Model 1"),
             mapping = aes(x = XY, 
                           y = nsim_data*Density,
                       color = Treatment),
             alpha = 0.7) +
   geom_line(data = rbind(fx_truth1,fx_truth2,
                          fy_truth1,fy_truth2) %>%
-              filter(Theory == "Theory 2"),
+              filter(Model == "Model 2"),
             mapping = aes(x = XY, 
                           y = nsim_data*Density,
                    linetype = Treatment),
             color = rep(c("#8fb032","#eb6235"), each=nx),
             alpha = 0.7) +
-  scale_color_manual(name = "Theory 2 MC",
+  scale_color_manual(name = "Model 2 MC",
                      labels = c("Truth",
                                 "Reconstructed"),
                      breaks = c("Truth",
@@ -536,11 +543,11 @@ continuous2 <- ggplot() +
                                    "Reconstructed"),
                         values = c("Truth" = "solid",
                                    "Reconstructed" = "solid")) +
-  guides(color = guide_legend(title = "Theory 1 MC", order = 1, 
+  guides(color = guide_legend(title = "Model 1 MC", order = 1, 
                               override.aes = list(shape = NA,
                                                   alpha = 0.7),
                               title.vjust = unit(-0.2, "pt")),
-         linetype = guide_legend(title = "Theory 2", order = 2, 
+         linetype = guide_legend(title = "Model 2", order = 2, 
                                  override.aes = list(color = c("#8fb032","#eb6235"),
                                                      alpha = c(0.8,0.8)),
                                  title.vjust = unit(-0.2, "pt"))) +
@@ -573,7 +580,7 @@ discrete_DataMC <- ggplot() +
                                LBin >= 0 &
                                Bin <= 30 &
                                Source == "MC" &
-                               Theory == "Theory 1"),
+                               Model == "Model 1"),
                mapping = aes(x = LBin,
                              y = Counts,
                           xend = Bin,
@@ -584,7 +591,7 @@ discrete_DataMC <- ggplot() +
                                LBin >= 0 &
                                Bin <= 30 &
                                Source == "MC" &
-                               Theory == "Theory 1"),
+                               Model == "Model 1"),
                mapping = aes(x = LBin,
                              y = LCounts,
                           xend = LBin,
@@ -595,7 +602,7 @@ discrete_DataMC <- ggplot() +
                  filter(LBin >= 0 &
                           Bin <= 30 &
                           Source == "MC" &
-                          Theory == "Theory 2") %>%
+                          Model == "Model 2") %>%
                  arrange(desc(Treatment)),
                mapping = aes(x = LBin,
                              y = Counts,
@@ -608,7 +615,7 @@ discrete_DataMC <- ggplot() +
                  filter(LBin >= 0 &
                           Bin <= 30 &
                           Source == "MC" &
-                          Theory == "Theory 2") %>% 
+                          Model == "Model 2") %>% 
                  arrange(desc(Treatment)),
                mapping = aes(x = LBin,
                              y = LCounts,
@@ -619,7 +626,7 @@ discrete_DataMC <- ggplot() +
                alpha = 0.7) +
   geom_point(data = bins_all %>% 
                filter(LBin >= 0 & Bin <= 30 &
-                        Source == "Data" & Theory == "Theory 2"),
+                        Source == "Data" & Model == "Model 2"),
              mapping = aes(x = LBin+0.5,
                            y = Counts,
                            fill = "Reconstructed"),
@@ -645,11 +652,11 @@ discrete_DataMC <- ggplot() +
                                    "Reconstructed MC"),
                         values = c("Truth MC" = "solid",
                                    "Reconstructed MC" = "solid")) +
-  guides(color = guide_legend(title = "Theory 1 MC", order = 1, 
+  guides(color = guide_legend(title = "Model 1 MC", order = 1, 
                               override.aes = list(shape = NA,
                                                   alpha = 0.7),
                               title.vjust = unit(-0.5, "pt")),
-         linetype = guide_legend(title = "Theory 2 MC", order = 2, 
+         linetype = guide_legend(title = "Model 2 MC", order = 2, 
                                  override.aes = 
                                    list(color = c("#eb6235","#8fb032"),
                                         alpha = 0.7),
@@ -670,7 +677,7 @@ discrete_DataMC <- ggplot() +
 
 \begin{figure}[!ht]
     \centering
-```{r, fig.height=3, fig.width=7.5, fig.align='center', echo = F}
+```{r, fig.height=2.5, fig.width=7.5, fig.align='center', echo = F}
 plot1 <- ggplotGrob(continuous2 + theme(legend.position = "none",
                                         axis.title.x = element_blank()))
 plot2 <- ggplotGrob(discrete_DataMC + theme(legend.position = "none",
@@ -685,15 +692,15 @@ egg::ggarrange(continuous2 +
                left = textGrob("Counts", rot = 90, vjust = 0.25),
                bottom = textGrob("X (Truth), Y (Reconstructed)", hjust = 0.8))
 ```
-  \caption{\emph{\small The distinguishing characteristics between Theory 1 and Theory 2 become greatly diminished as their respective distributions are smeared and diffused by shared phenomenon. Ignoring the knowledge granted in this figure's legend, one would be hardpressed to predict which Truth distribution a particular Reconstructed distribution came from.}}
+  \caption{\emph{\small The distinguishing characteristics between Model 1 and Model 2 become greatly diminished as their respective distributions are smeared and diffused by mechanisms common to both. Ignoring the knowledge granted in this figure's legend, one would be hardpressed to predict which Truth distribution a particular Reconstructed distribution came from.}}
   \label{plots1}
 \end{figure}
 
-Please see Appendix \ref{simuApp} for more specific information about the performed simulations. Referring to Figure \ref{plots1}, the blue and red colored plots correspond to the true distributions of Theory 1 and Theory 2 respectively. The colored lines represent the MC simulations. They have been rescaled to represent the same number of possible events as the experimental data. The impact of the third contributing Cauchy process in Theory 2 can be seen by way of the notably diminished peak and the partial filling of the dividing indent between the two processes of Theory 1. While it is clear for both the continuous and discrete representations that the two larger distributions are distinct, less can be said about them once imperfect detector efficiency and resolution have had their effects.
+Please see Appendix \ref{simuApp} for more specific information about the performed simulations. Referring to Figure \ref{plots1}, the blue and red colored plots correspond to the true distributions of Model 1 and Model 2 respectively. The colored lines represent the MC simulations. They have been rescaled to represent the same number of possible events as the experimental data. The impact of the third contributing Cauchy process in Model 2 can be seen by way of the notably diminished peak and the partial filling of the dividing indent between the two processes of Model 1. While it is clear for both the continuous and discrete representations that the two larger distributions are distinct, less can be said about them once finite detector resolutions and other inefficiencies have had their effects, as one can see in the similarities between their yellow and green reconstructed distributions.
 
 \begin{figure}[!ht]
     \centering
-```{r, fig.align='center', echo = F, fig.height=3.5, fig.align='center'}
+```{r, fig.align='center', echo = F, fig.height=3, fig.align='center'}
 ########## MIGRATION ###########################################################
 
 migration <- sims_mc %>%
@@ -715,7 +722,7 @@ migration <- sims_mc %>%
     labs(x = "Y (Reconstructed)", y = "X (Truth)",
          title = "MC Event Migration") +
     geom_abline(intercept=0,slope=1,lty="dashed",col="red") +
-    facet_grid(~Theory) + coord_equal(ratio = 1)
+    facet_grid(~Model) + coord_equal(ratio = 1)
 
 gradient_max <- max(ggplot_build(migration)$data[[1]]$count)
 gmins <- abs(floor(gradient_max/10^(floor(log10(gradient_max))-1))/
@@ -738,13 +745,13 @@ migration
   \label{plots2}
 \end{figure}
 
-Figure \ref{plots2} provides an alternative perspective to Figure \ref{plots1} by providing a visual representation of the two theories' migration matrices. The red dashed lines indicate where events would live if there were no skewing or smearing processes. Note that the Reconstructed axis extends past points covered by the Truth axis, providing insight into the behavior with which events produced in the primary region of interest ends up measured or reconstructed outside this so-called \textbf{fiducial volume}.
+Figure \ref{plots2} provides an alternative perspective to Figure \ref{plots1} by providing a visual representation of the two models' migration matrices. The red dashed lines indicate where events would live if there were no skewing or smearing processes. Note that the Reconstructed axis extends past points covered by the Truth axis, providing insight into the behavior with which events produced in the region of interest ($X\in(0,30)$ here) end up measured or reconstructed outside of it, but still in a detector's \textbf{fiducial volume}, which represents the reliable, central region of the detector or other relevant region of the events' \textbf{phase space}, which is the space of all possible states.
 
 
 ```{r, echo=F}
 ### Data 1
 dataReco1 <- sims_data %>%
-  filter(Theory == "Theory 1" &
+  filter(Model == "Model 1" &
            Truth <= 30 & Truth >= 0 &
            Detected == TRUE) %>%
   mutate(Bin = ceiling(Reconstructed)) %>%
@@ -759,7 +766,7 @@ dataReco1 <- dataReco1 %>%
           filter(Bin == 31))
 
 dataTruth1 <- sims_data %>%
-  filter(Theory == "Theory 1" &
+  filter(Model == "Model 1" &
            Truth <= 30 & Truth >= 0) %>%
   mutate(Bin = ceiling(Truth)) %>%
   count(Bin, name = "Counts") %>%
@@ -767,7 +774,7 @@ dataTruth1 <- sims_data %>%
 
 ### Data 2
 dataReco2 <- sims_data %>%
-  filter(Theory == "Theory 2" &
+  filter(Model == "Model 2" &
            Truth <= 30 & Truth >= 0 &
            Detected == TRUE) %>%
   mutate(Bin = ceiling(Reconstructed)) %>%
@@ -782,7 +789,7 @@ dataReco2 <- dataReco2 %>%
           filter(Bin == 31))
 
 dataTruth2 <- sims_data %>%
-  filter(Theory == "Theory 2" &
+  filter(Model == "Model 2" &
            Truth <= 30 & Truth >= 0) %>%
   mutate(Bin = ceiling(Truth)) %>%
   count(Bin, name = "Counts") %>%
@@ -790,7 +797,7 @@ dataTruth2 <- sims_data %>%
 
 ### MC 1
 mcReco1 <- sims_mc %>%
-  filter(Theory == "Theory 1" &
+  filter(Model == "Model 1" &
            Truth <= 30 & Truth >= 0 &
            Detected == TRUE) %>%
   mutate(Bin = ceiling(Reconstructed)) %>%
@@ -810,7 +817,7 @@ mcReco1 <- mcReco1 %>%
           filter(Bin == 31))
 
 mcTruth1 <- sims_mc %>%
-  filter(Theory == "Theory 1" &
+  filter(Model == "Model 1" &
            Truth <= 30 & Truth >= 0) %>%
   mutate(Bin = ceiling(Truth)) %>%
   count(Bin, name = "Counts") %>%
@@ -818,7 +825,7 @@ mcTruth1 <- sims_mc %>%
 
 ### MC 2
 mcReco2 <- sims_mc %>%
-  filter(Theory == "Theory 2" &
+  filter(Model == "Model 2" &
            Truth <= 30 & Truth >= 0 &
            Detected == TRUE) %>%
   mutate(Bin = ceiling(Reconstructed)) %>%
@@ -838,7 +845,7 @@ mcReco2 <- mcReco2 %>%
           filter(Bin == 31))
 
 mcTruth2 <- sims_mc %>%
-  filter(Theory == "Theory 2" &
+  filter(Model == "Model 2" &
            Truth <= 30 & Truth >= 0) %>%
   mutate(Bin = ceiling(Truth)) %>%
   count(Bin, name = "Counts") %>%
@@ -849,21 +856,21 @@ mcTruth2 <- sims_mc %>%
 
 \section{Unfolding in particle physics}
 
-The international particle physics community is inherently collaborative
+The international particle physics community is highly collaborative. Most of this is likely due to necessity, as advances in the field are requiring larger and more expensive experiments that rely on pooled resources of talent, labor, and capital. This extends to digital resources as well. ROOT \cite{Brun1997} is an open-source data analysis framework developed and used primarily by people doing particle physics. Analyses incorporating its resources are primarily written in some combination of Python and C++. While it does contain a strong base level of classes, objects, and methods within its default toolkit, including some for unfolding, extended frameworks are typically built on top of it to meet the needs of specific experiments or to facilitate expanded capabilities that would bloatware for most users. The RooUnfold framework \cite{Adye2011} is one such example. Two methods from the RooUnfold framework will be covered in this section. One is considered naive, as will be shown. The other finds ways past the issues brought up in the first.
 
 \subsection{Inverting the Response Matrix}
 
 In the event of Equation \eqref{eq:mat} being well-posed the obvious
 approach would be to construct the unique inverse of the response matrix
-$\bm{R}^{-1}$ and map the reconstructed counts back to an estimate of
+$\bm{R}^{-1}$, as estimated from MC simulations, and map the reconstructed counts back to an estimate of
 the true counts via \begin{align}
   \bm{\hat\mu}=\bm{R}^{-1}\bm{n}.\label{eq:naiveInv}
 \end{align} A statistical justification for this comes from performing
 generalized least squares \cite{Johnson2007} fit to estimate $\bm\mu$,
 which relies on approximating bin count $n_i$ as normally distributed
 with mean $\nu_i$ and variance $1/\nu_i$. Minimizing the sums of squares
-yields \begin{align}\min_{\bm\mu}\nabla_{\bm\mu}\bm\chi^2(\bm{\mu})
-  &=\nabla_{\bm\mu}(\bm{R}\bm{\mu}-\bm{n})^T\bm{\Sigma}_{\nu}^{-1}(\bm{R}\bm{\mu}-\bm{n})\nonumber\\
+yields \begin{align}\min_{\bm\mu}\nabla_{\!\bm\mu}\bm\chi^2(\bm{\mu})
+  &=\nabla_{\bm\mu}(\bm{R}\bm{\mu}-\bm{n})^T\bm{\Sigma}_{\nu}^{-1}(\bm{R}\bm{\mu}-\bm{n})\label{eq:leastsq}\\
   &=\nabla_{\bm\mu}(\bm{\mu}^T\bm{R}^T-\bm{n}^T)\bm{\Sigma}_{\nu}^{-1}(\bm{R}\bm{\mu}-\bm{n})\nonumber\\
   &=\nabla_{\bm\mu}(\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{n}^{-1}\bm{R}\bm{\mu}-\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}-\bm{n}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}+\bm{n}^T\bm{\Sigma}_{\nu}^{-1}\bm{n})\nonumber\\
   &=\nabla_{\bm\mu}(\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{n}^{-1}\bm{R}\bm{\mu}-2\bm{\mu}^T\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}+\bm{n}^T\bm{\Sigma}_{\nu}^{-1}\bm{n})\nonumber\\
@@ -873,21 +880,17 @@ yields \begin{align}\min_{\bm\mu}\nabla_{\bm\mu}\bm\chi^2(\bm{\mu})
   \implies\bm{\hat\mu}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}=\bm{R}^{+}\bm{n}\label{eq:naivemu}\\
   \implies\bm{R}^{+}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1},\label{eq:penrose}
 \end{align} where $\bm{R}^{+}$ is the Moore-Penrose generalized inverse
-(or pseudo-inverse) \cite{Blobel2013} of $\bm{R}$. It is assumed that
-$\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}$ is not singular. The
-corresponding covariance matrix is more quickly calculated by way of
+(or pseudo-inverse) \cite{Blobel2013} of $\bm{R}$. If $\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}$ is singular this approach will not work, as its inverse corresponds to the estimated true counts' covariance matrix, as shown below.
 \begin{align}
-  \bm{\Sigma}_\mu&=\text{Cov}[\bm{\hat\mu},\bm{\hat\mu}]=\text{Cov}[\bm{R}^{+}\bm{n},\bm{R}^{+}\bm{n}]=\bm{R}^{+}\text{Cov}[\bm{n},\bm{n}]\bm{R}^{+^T}=\bm{R}^{+}\bm{\Sigma}_\nu\bm{R}^{+^T}\nonumber.
-\end{align} One such inverse matrix was calculated from each of the MC
-Theory simulations and both were applied to every set of the
-Reconstructed counts. The residuals of these unfolding calculations are
-paired with a $1 \sigma$ uncertainty from the estimated Truth counts.
-They are then scaled by the expected Truth for the assumed theory and
-plotted on a log10 scale in Figure \ref{NaiveRes}.
+  \bm{\Sigma}_\mu&=\text{Cov}[\bm{\hat\mu}]=\text{Cov}[\bm{R}^{+}\bm{n}]=\bm{R}^{+}\text{Cov}[\bm{n}]\bm{R}^{+^T}=\bm{R}^{+}\bm{\Sigma}_\nu\bm{R}^{+^T}\nonumber.
+\end{align} 
+This is the same covariance matrix shown in Figure \eqref{CRlb}, which indicates that $\bm{R}^{+}$ is an unbiased estimator that should have lowest possible variances among unbiased estimators. For the simulations one such inverse matrix was calculated from the response matrix of each MC Model simulation, and was used to form an estimate of $\bm{\Sigma}_\mu$ for each MC-Data combination using each Data model's estimated covariance matrix. 
+
+The resulting true counts estimates, with their $\pm1$ estimated standard deviations, are plotted below in  \ref{NaiveRes}. The rescaled true distribution for each MC simulation was provided for comparison. They are in separate plots as their structure is not visible at the scales necessary to show the unfolded Data. The color of the lines indicate the true model behind the simulation and the shaded regions, which represent the calculated uncertainty, are colored to indicate the MC model of the response matrix.
 
 ```{r, echo=F, fig.height=3}
 R_mc1 <- sims_mc %>%
-  filter(Theory == "Theory 1" &
+  filter(Model == "Model 1" &
            Detected == TRUE &
            Truth <= 30 & Truth >= 0) %>%
   mutate(Truth = ceiling(Truth),
@@ -899,7 +902,7 @@ R_mc1 <- sims_mc %>%
   t() %*% mcmat1 %>% t() * matrix(rep(1/mcTruth1$Counts,each=31),ncol=30)
 
 R_mc2 <- sims_mc %>%
-  filter(Theory == "Theory 2" &
+  filter(Model == "Model 2" &
            Detected == TRUE &
            Truth <= 30 & Truth >= 0) %>%
   mutate(Truth = ceiling(Truth),
@@ -911,47 +914,48 @@ R_mc2 <- sims_mc %>%
   t() %*% mcmat2 %>% t() * matrix(rep(1/mcTruth2$Counts,each=31),ncol=30)
 
 
-Vnu1 <- diag(mcReco1$Counts/dmrat)
-Vnu2 <- diag(mcReco2$Counts/dmrat)
+#Vnu1 <- diag(mcReco1$Counts/dmrat)
+#Vnu2 <- diag(mcReco2$Counts/dmrat)
+Vnu1 <- diag(dataReco1$Counts)
+Vnu2 <- diag(dataReco2$Counts)
 
-inv_R_mc1 <- solve(t(R_mc1) %*% solve(Vnu1) %*% R_mc1) %*% 
+inv_R_mc1data1 <- solve(t(R_mc1) %*% solve(Vnu1) %*% R_mc1) %*% 
   t(R_mc1) %*% solve(Vnu1)
-inv_R_mc2 <- solve(t(R_mc2) %*% solve(Vnu2) %*% R_mc2) %*% 
+inv_R_mc1data2 <- solve(t(R_mc1) %*% solve(Vnu2) %*% R_mc1) %*% 
+  t(R_mc1) %*% solve(Vnu2)
+inv_R_mc2data1 <- solve(t(R_mc2) %*% solve(Vnu1) %*% R_mc2) %*% 
+  t(R_mc2) %*% solve(Vnu1)
+inv_R_mc2data2 <- solve(t(R_mc2) %*% solve(Vnu2) %*% R_mc2) %*% 
   t(R_mc2) %*% solve(Vnu2)
 
-Vmu1 <- inv_R_mc1 %*% Vnu1 %*% t(inv_R_mc1)
-Vmu2 <- inv_R_mc2 %*% Vnu2 %*% t(inv_R_mc2)
+Vmu1data1 <- inv_R_mc1data1 %*% Vnu1 %*% t(inv_R_mc1data1)
+Vmu1data2 <- inv_R_mc1data2 %*% Vnu2 %*% t(inv_R_mc1data2)
+Vmu2data1 <- inv_R_mc2data1 %*% Vnu1 %*% t(inv_R_mc2data1)
+Vmu2data2 <- inv_R_mc2data2 %*% Vnu2 %*% t(inv_R_mc2data2)
 
-data1_unfolded_mc1 <- inv_R_mc1 %*% dataReco1$Counts
-data1_unfolded_mc2 <- inv_R_mc2 %*% dataReco1$Counts
-data2_unfolded_mc1 <- inv_R_mc1 %*% dataReco2$Counts
-data2_unfolded_mc2 <- inv_R_mc2 %*% dataReco2$Counts
-mc1_unfolded_mc1 <- inv_R_mc1 %*% mcReco1$Counts
-mc1_unfolded_mc2 <- inv_R_mc2 %*% mcReco1$Counts
-mc2_unfolded_mc1 <- inv_R_mc1 %*% mcReco2$Counts
-mc2_unfolded_mc2 <- inv_R_mc2 %*% mcReco2$Counts
+data1_unfolded_mc1 <- inv_R_mc1data1 %*% dataReco1$Counts
+data1_unfolded_mc2 <- inv_R_mc2data1 %*% dataReco1$Counts
+data2_unfolded_mc1 <- inv_R_mc1data2 %*% dataReco2$Counts
+data2_unfolded_mc2 <- inv_R_mc2data2 %*% dataReco2$Counts
 ```
-
 
 \begin{figure}[!ht]
     \centering
 ```{r, echo=F,fig.height=3.5, fig.align='center'}
-bins_hat <- tibble(Theory = c(rep(c(rep(c("Theory 1",
-                                          "Theory 2"),each=30),
-                                    rep(c("Theory 1",
-                                          "Theory 2"),each=30)),2),
-                              c(rep(c("Theory 1",
-                                      "Theory 2"),each=60),
-                                  rep(c("Theory 1",
-                                        "Theory 2"),each=60))),
-                   `Assumed Theory` = c(rep(c(rep(c("Theory 1",
-                                                    "Theory 2"),each=30),
-                                    rep(c("Theory 1",
-                                          "Theory 2"),each=30)),2),
-                              c(rep(rep(c("Theory 1",
-                                          "Theory 2"),each=30),4))),
-                   LBin = rep(0:29,16),
-                   Bin = rep(1:30,16),
+bins_hat <- tibble(Model = c(rep(c(rep(c("Model 1",
+                                         "Model 2"),each=30),
+                                   rep(c("Model 1",
+                                         "Model 2"),each=30)),2),
+                             rep(c("Model 1",
+                                   "Model 2"),each=60)),
+                   `Assumed Model` = c(rep(c(rep(c("Model 1",
+                                                   "Model 2"),each=30),
+                                             rep(c("Model 1",
+                                                   "Model 2"),each=30)),2),
+                                       rep(rep(c("Model 1",
+                                                 "Model 2"),each=30),2)),
+                   LBin = rep(0:29,12),
+                   Bin = rep(1:30,12),
                    LCounts = c(dataReco1$Counts[c(1,1:29)],
                                dataReco2$Counts[c(1,1:29)],
                                mcReco1$Counts[c(1,1:29)]/dmrat,
@@ -963,11 +967,7 @@ bins_hat <- tibble(Theory = c(rep(c(rep(c("Theory 1",
                                data1_unfolded_mc1[c(1,1:29)],
                                data1_unfolded_mc2[c(1,1:29)],
                                data2_unfolded_mc1[c(1,1:29)],
-                               data2_unfolded_mc2[c(1,1:29)],
-                               mc1_unfolded_mc1[c(1,1:29)]/dmrat,
-                               mc1_unfolded_mc2[c(1,1:29)]/dmrat,
-                               mc2_unfolded_mc1[c(1,1:29)]/dmrat,
-                               mc2_unfolded_mc2[c(1,1:29)]/dmrat),
+                               data2_unfolded_mc2[c(1,1:29)]),
                    Counts = c(dataReco1$Counts[1:30],
                               dataReco2$Counts[1:30],
                               mcReco1$Counts[1:30]/dmrat,
@@ -979,57 +979,33 @@ bins_hat <- tibble(Theory = c(rep(c(rep(c("Theory 1",
                               data1_unfolded_mc1,
                               data1_unfolded_mc2,
                               data2_unfolded_mc1,
-                              data2_unfolded_mc2,
-                              mc1_unfolded_mc1/dmrat,
-                              mc1_unfolded_mc2/dmrat,
-                              mc2_unfolded_mc1/dmrat,
-                              mc2_unfolded_mc2/dmrat),
+                              data2_unfolded_mc2),
                    Treatment = c(rep(c("Reconstructed","Truth"),each=4*30),
-                                 rep("TruthHat",240)),
+                                 rep("TruthHat",120)),
                    Source = c(rep("Data",2*30),rep("MC",2*30),
                               rep("Data",2*30),rep("MC",2*30),
-                              rep("Data",4*30),rep("MC",4*30)),
-                   Name = c(rep("Reconstucted Theory 1 Data",30),
-                            rep("Reconstucted Theory 2 Data",30),
-                            rep("Reconstucted Theory 1  MC",30),
-                            rep("Reconstucted Theory 2  MC",30),
-                            rep("Truth Theory 1 Data",30),
-                            rep("Truth Theory 2 Data",30),
-                            rep("Truth Theory 1 MC",30),
-                            rep("Truth Theory 2 MC",30),
-                            rep("Unfolded Theory 1 Data",60),
-                            rep("Unfolded Theory 2 Data",60),
-                            rep("Unfolded Theory 1 MC",60),
-                            rep("Unfolded Theory 2 MC",60)),
+                              rep("Data",4*30)),
+                   Name = c(rep("Reconstucted Model 1 Data",30),
+                            rep("Reconstucted Model 2 Data",30),
+                            rep("Reconstucted Model 1  MC",30),
+                            rep("Reconstucted Model 2  MC",30),
+                            rep("Truth Model 1 Data",30),
+                            rep("Truth Model 2 Data",30),
+                            rep("MC: Model 1\n   Truth",30),
+                            rep("MC: Model 2\n   Truth",30),
+                            rep("  MC: Model 1\nData: Model 1",30),
+                            rep("  MC: Model 2\nData: Model 1",30),
+                            rep("  MC: Model 1\nData: Model 2",30),
+                            rep("  MC: Model 2\nData: Model 2",30)),
                    Error = c(sqrt(diag(Vnu1))[1:30],
                              sqrt(diag(Vnu2))[1:30],
-                             rep(0,20),
-                             sqrt(diag(Vmu1)),
-                             sqrt(diag(Vmu2)),
-                             rep(0,11*20),
-                             sqrt(diag(Vmu1)),
-                             sqrt(diag(Vmu2)),
-                             sqrt(diag(Vmu1)),
-                             sqrt(diag(Vmu2))))
-
-bins_hat <- bins_hat %>%
-  mutate(Step = "Counts") %>%
-  rbind(bins_hat %>% 
-          filter(Treatment == "TruthHat") %>%
-          mutate(LCounts = rep(bins_hat %>% 
-                                 filter(Source == "MC" & 
-                                          Treatment == "Truth") %>% 
-                                 pull(LCounts),3) - LCounts,
-                 Counts = rep(bins_hat %>% 
-                                filter(Source == "MC" & 
-                                         Treatment == "Truth") %>% 
-                                pull(Counts),3) - Counts,
-                 Step = "Residuals")) %>%
-  mutate(across(Name, factor, 
-                levels = c("Unfolded Theory 1 Data",
-                           "Unfolded Theory 2 Data",NA,
-                           "Unfolded Theory 1 MC",
-                           "Unfolded Theory 2 MC",NA)))
+                             sqrt(mcReco1$Counts[1:30]/dmrat),
+                             sqrt(mcReco2$Counts[1:30]/dmrat),
+                             rep(0,30*4),
+                             sqrt(diag(Vmu1data1)),
+                             sqrt(diag(Vmu1data2)),
+                             sqrt(diag(Vmu2data1)),
+                             sqrt(diag(Vmu2data2))))
 
 
 asinh_trans <- function(){
@@ -1052,72 +1028,60 @@ ggplot() +
   theme_bw() +
   geom_hline(yintercept = 0, linetype = "dashed", alpha = 0.5) +
   geom_rect(data = bins_hat %>%
-              filter(Treatment == "TruthHat" &
-                          Step == "Residuals") %>%
-              mutate(Cplus = (Counts + sqrt(rep(c(diag(Vmu1),diag(Vmu2)),3)))/
-                       rep(c(mcTruth1$Counts/dmrat,mcTruth2$Counts/dmrat),3),
-                     Cminus = (Counts - sqrt(rep(c(diag(Vmu1),diag(Vmu2)),3)))/
-                       rep(c(mcTruth1$Counts/dmrat,mcTruth2$Counts/dmrat),3)),
+              filter(Treatment == "TruthHat"),
             mapping = aes(xmin = LBin,
-                          ymin = Cminus,
+                          ymin = (Counts-Error),
                           xmax = Bin,
-                          ymax = Cplus,
-                          fill = `Assumed Theory`),
+                          ymax = (Counts+Error),
+                          fill = `Assumed Model`),
             alpha = 0.3) +
   geom_segment(data = bins_hat %>%
-                 filter(Treatment == "TruthHat"&
-                          Step == "Residuals"),
+                 filter(Treatment == "TruthHat" |
+                       (Treatment == "Truth" & Source == "MC")),
                mapping = aes(x = LBin,
-                             y = Counts/rep(c(mcTruth1$Counts/dmrat,
-                                              mcTruth2$Counts/dmrat),3),
+                             y = Counts,
                           xend = Bin,
-                          yend = Counts/rep(c(mcTruth1$Counts/dmrat,
-                                              mcTruth2$Counts/dmrat),3),
-                         color = `Assumed Theory`),
+                          yend = Counts,
+                         color = Model),
                alpha = 0.9) +
   geom_segment(data = bins_hat %>%
-                 filter(Treatment == "TruthHat"&
-                          Step == "Residuals"),
+                 filter(Treatment == "TruthHat" |
+                       (Treatment == "Truth" & Source == "MC")),
                mapping = aes(x = LBin,
-                             y = LCounts/rep(c(1,mcTruth1$Counts[-30]/dmrat,
-                                               1,mcTruth2$Counts[-30]/dmrat),3),
+                             y = LCounts,
                           xend = LBin,
-                          yend = Counts/rep(c(mcTruth1$Counts/dmrat,
-                                              mcTruth2$Counts/dmrat),3),
-                         color = `Assumed Theory`),
+                          yend = Counts,
+                         color = `Model`),
                alpha = 0.9) +
   scale_x_continuous(breaks = seq(0,30,by=3), 
                        limits = c(0,30), 
                        expand = c(0,0)) +
-  scale_y_continuous(trans="asinh",
-                     breaks = c(-10^(4:1),0,10^(1:4)),
-                     labels = c(-10^(4:1),0,10^(1:4))) +
-  scale_color_manual(labels = c("Theory 1","Theory 2"),
-                     breaks = c("Theory 1","Theory 2"),
+  scale_color_manual(labels = c("Model 1","Model 2"),
+                     breaks = c("Model 1","Model 2"),
                      values = c("#5e81b5","#e19c24")) +
-  scale_fill_manual(labels = c("Theory 1","Theory 2"),
-                    breaks = c("Theory 1","Theory 2"),
+  scale_fill_manual(labels = c("Model 1","Model 2"),
+                    breaks = c("Model 1","Model 2"),
                     values = c(alpha("#5e81b5",0.3),
                                alpha("#e19c24",0.3))) +
-  facet_wrap(~Name, drop = F, ncol = 3) +
-  theme(legend.position = c(0.95, 0.1), legend.justification = c(1, 0),
-        axis.text = element_text(size=8)) +
-  labs(title = 
-         expression(Residuals~of~estimated~true~counts~using~
-                      (widehat(mu)==R^paste("+")*~n)), x = "X (Truth)", 
-       y = expression(frac(mu~-~widehat(mu),mu)~~~~~~
-                      paste("Residuals as % of\n Assumed Truth")))
+  facet_wrap(~Name, ncol = 3, scales = "free", dir="v") +
+  theme(axis.text = element_text(size=8),
+        legend.position = "none") +
+  labs(title = "Unfolded Data and MC Truth: Response Matrix Inverse", 
+       x = "X (Truth)", 
+       y = "Counts")
 ```
-\caption{\emph{\small Plots featuring the ratio of the residuals to the assumed theory's expected truth for the five sets of reconstructed counts when unfolded using response matrices derived from MC simulations for both Theory 1 and Theory 2. Note the log10 scale of the vertical axes, the large uncertainties, and negative estimated counts. The MC results are exact when unfolded under the correct theory for tautological reasons.}}
+\caption{\emph{\small Plots comparing the unfolded reconstructed data under both model assumptions to the true MC distributions. Note the large uncertainties and the rapidly oscillating positive and negative estimated counts.}}
   \label{NaiveRes}
 \end{figure}
 
-This degree of failure is disastrous, but one thing to notice here is that this
-problem does not satisfy Condition 3 of a well-posed problem as
-described in Section \ref{intro}. That the inverse calculated here maps
-$\bm{n}$ to negative counts indicates that the estimate
-$\bm{\hat\mu}\notin\mathcal{U}$, the space of allowable solutions
-defined at the beginning of Section \ref{discret}.
+The massive, rapid oscillations and large uncertainties indicate that these are not very good results, regardless of whether or not the Data and the MC came from the same Model. The unfolding process used here cannot account for even small random variation in Reconstructed space because it has been over-fitted by the MC results. In search of an unbiased estimator we have unwittingly created a minimum variance that is simply too large be in any way useful. Some degree of bias must be allowed to balance it. In order to accomplish this an estimated $\bm{\hat\mu}$ must be chosen to probe the region around the minimum least-squares of Equation \eqref{eq:leastsq} (or equivalent maximum log-likelihood) to find an alternative solution that can actually be used on other data. This is done by including an extra term in these equations through a process called \emph{Regularization}.
+
+\subsection{Regularization}
+
+This section reviews a method of regularized unfolding that is unfortunately only really referred to in particle physics as just \emph{Singular Value Decomposition} \cite{Adye2011}\cite{Blobel2013}\ref{Cowan1998}, which is also a matrix factorization method in linear algebra. To be fair, this unfolding method does prominently use it. As such, singular value decomposition (SVD) involves the factorization of an $N\times M$ matrix $\bm{A}$ into
+\begin{align}
+  \bm{A}=\bm{USV}^T\label{SVD}
+\end{align}
 
 ```{r echo = F}
 
@@ -1126,58 +1090,193 @@ C <- rbind(rep(0,30),cbind(diag(1,29),rep(0,29))) +
   diag(c(-1,rep(-2,28),-1)) + diag(10^(-3),30)
 
 A1 <- R_mc1 %*% diag(mcTruth1$Counts)
-Ainv1 <- svd(A1)$v %*% solve(diag(svd(A1)$d)) %*% t(svd(A1)$u)
-
-plot(1:30, svd(A1)$d, log="y")
-
-#max(svd(A1)$d)/min(svd(A1)$d)
-
-#svd(A1)$v %*% solve(diag(svd(A1)$d))^2 %*% t(svd(A1)$v)
-
-y1 <- dataReco1$Counts/sqrt(mcReco1$Counts)
-#t(svd(A1)$u) %*% y1
-
-
-B1 <- Vnu1
-Q1 <- svd(B1)$u
-R1 <- diag(svd(B1)$d)
-As1 <- t(t(Q1) %*% solve(R1)) %*% A1
-Xinv1 <- diag(0,30)
-for(j in 1:30){
-  for(k in 1:30){
-    Xinv1[j,k] <- (1/prod(mcTruth1$Counts[c(j,k)]))*sum(As1[,j]*As1[,k])
-  }
-}
-bs1 <- diag(solve(R1)) * (Q1 %*% mcReco1$Counts)
-U1 <- svd(As1 %*% solve(C))$u
-V1 <- svd(As1 %*% solve(C))$v
-d <- t(U1) %*% bs1
-
-plot(1:30, abs(d), log="y")
-abline(h = sqrt(pi)/2, lty = 2)
-
-plot(1:30,rev(cumsum(rev(abs(d)))/(1:30)),log="y")
-abline(h = sqrt(pi)/2, lty = 2)
-
 A2 <- R_mc2 %*% diag(mcTruth2$Counts)
-B2 <- Vnu2
+
+#B1 <- Vnu1
+#B2 <- Vnu2
+B1 <- diag(dataReco1$Counts)
+B2 <- diag(dataReco2$Counts)
+
+b1 <- dataReco1$Counts
+b2 <- dataReco2$Counts
+
+Q1 <- svd(B1)$u
 Q2 <- svd(B2)$u
-R2<- diag(svd(B2)$d)
+R1 <- diag(svd(B1)$d)
+R2 <- diag(svd(B2)$d)
 
-inv_R_mc1 <- solve(t(R_mc1) %*% solve(Vnu1) %*% R_mc1) %*% t(R_mc1) %*% solve(Vnu1)
-inv_R_mc2 <- solve(t(R_mc2) %*% solve(Vnu2) %*% R_mc2) %*% t(R_mc2) %*% solve(Vnu2)
+As1 <- t(t(Q1 %*% A1) %*% solve(R1))
+As2 <- t(t(Q2 %*% A2) %*% solve(R2))
 
-Vmu1 <- inv_R_mc1 %*% Vnu1 %*% t(inv_R_mc1)
-Vmu2 <- inv_R_mc2 %*% Vnu2 %*% t(inv_R_mc2)
+bs11 <- t(t(Q1 %*% b1) %*% solve(R1))
+bs12 <- t(t(Q1 %*% b2) %*% solve(R1))
+bs21 <- t(t(Q2 %*% b1) %*% solve(R2))
+bs22 <- t(t(Q2 %*% b2) %*% solve(R2))
 
-data1_unfolded_mc1 <- inv_R_mc1 %*% dataReco1$Counts
-data1_unfolded_mc2 <- inv_R_mc2 %*% dataReco1$Counts
-data2_unfolded_mc1 <- inv_R_mc1 %*% dataReco2$Counts
-data2_unfolded_mc2 <- inv_R_mc2 %*% dataReco2$Counts
-mc1_unfolded_mc1 <- inv_R_mc1 %*% mcReco1$Counts
-mc1_unfolded_mc2 <- inv_R_mc2 %*% mcReco1$Counts
-mc2_unfolded_mc1 <- inv_R_mc1 %*% mcReco2$Counts
-mc2_unfolded_mc2 <- inv_R_mc2 %*% mcReco2$Counts
+Us1 <- svd(As1 %*% solve(C))$u
+Us2 <- svd(As2 %*% solve(C))$u
+Vs1 <- svd(As1 %*% solve(C))$v
+Vs2 <- svd(As2 %*% solve(C))$v
+Ss1 <- diag(svd(As1 %*% solve(C))$d)
+Ss2 <- diag(svd(As2 %*% solve(C))$d)
+s1 <- diag(Ss1)
+s2 <- diag(Ss2)
+
+d11 <- t(Us1) %*% bs11
+d12 <- t(Us1) %*% bs12
+d21 <- t(Us2) %*% bs21
+d22 <- t(Us2) %*% bs22
+
+taus <- 0:10
+
+mu11hats <- map(taus,~(solve(C)%*%Vs1%*%(d11*(s1/(s1^2+.))))*mcTruth1$Counts)
+mu12hats <- map(taus,~(solve(C)%*%Vs1%*%(d12*(s1/(s1^2+.))))*mcTruth1$Counts)
+mu21hats <- map(taus,~(solve(C)%*%Vs2%*%(d21*(s2/(s2^2+.))))*mcTruth2$Counts)
+mu22hats <- map(taus,~(solve(C)%*%Vs2%*%(d22*(s2/(s2^2+.))))*mcTruth2$Counts)
+
+W1s <- map(taus, ~solve(C)%*%Vs1%*%diag(s1^2/(s1^2+.))
+           %*%t(Vs1)%*%solve(t(C)))
+W2s <- map(taus, ~solve(C)%*%Vs2%*%diag(s2^2/(s2^2+.))
+           %*%t(Vs2)%*%solve(t(C)))
+
+mu1 <- mcTruth1$Counts
+mu2 <- mcTruth2$Counts
+
+X1s <- matrix(map2_dbl(rep(1:30,each=30),rep(1:30,30),
+                       ~(As1[,.x]%*%As1[,.y])/(mu1[.x]*mu1[.y])),
+              nrow = 30,byrow = T)
+X2s <- matrix(map2_dbl(rep(1:30,each=30),rep(1:30,30),
+                       ~(As2[,.x]%*%As2[,.y])/(mu2[.x]*mu2[.y])),
+              nrow = 30,byrow = T)
+
+chi11s <-map_dbl(1:length(taus), ~ t(mu11hats[[.]] - mu1/dmrat) 
+                 %*% X1s %*%( mu11hats[[.]] - mu1/dmrat))
+chi12s <-map_dbl(1:length(taus), ~ t(mu12hats[[.]] - mu1/dmrat) 
+                 %*% X1s %*%( mu12hats[[.]] - mu1/dmrat))
+chi21s <-map_dbl(1:length(taus), ~ t(mu21hats[[.]] - mu2/dmrat) 
+                 %*% X1s %*%( mu21hats[[.]] - mu2/dmrat))
+chi22s <-map_dbl(1:length(taus), ~ t(mu22hats[[.]] - mu2/dmrat) 
+                 %*% X1s %*%( mu22hats[[.]] - mu2/dmrat))
+
+compareChis <- 
+  tibble(tau = rep(taus,4), 
+         Chi2 = c(chi11s,chi12s,chi21s,chi22s),
+         col=rep(c("MC1 Data1","MC1 Data2",
+                   "MC2 Data1","MC2 Data2"),each=length(taus)))
+
+ggplot(compareChis, aes(x=tau, y=Chi2, color=col)) +
+  geom_point() + theme_bw() + geom_line() +
+  scale_y_continuous(expand=c(0,1),
+                     name = expression(Chi^2),
+                     limits=c(0,max(compareChis$Chi2)),
+                     breaks=seq(0,40,5)) +
+  scale_x_continuous(name = expression(tau),
+                     limits = c(0,10),
+                     breaks = 0:10,
+                     expand = c(0,0.1)) +
+  scale_color_discrete(name = "Pairings")
+
+compareMuHats <- tibble(x=c(rep(c(0,rep(1:29,each=2),30),2),
+                            rep(seq(0.5,29.5,1),4),
+                            rep(seq(0.5,29.5,1)+0.000001,2),
+                            rep(c(0,rep(1:29,each=2),30),2),
+                            rep(seq(0.5,29.5,1),4),
+                            rep(seq(0.5,29.5,1)+0.000001,2)),
+                        y=c(rep(mu1/dmrat,each=2),
+                            rep(dataTruth1$Counts,each=2),
+                            c(mu11hats[[2]]),c(mu11hats[[11]]),
+                            c(mu12hats[[2]]),c(mu12hats[[11]]),
+                            c(mu12hats[[2]]),c(mu12hats[[11]]),
+                            rep(mu2/dmrat,each=2),
+                            rep(dataTruth2$Counts,each=2),
+                            c(mu21hats[[2]]),c(mu21hats[[11]]),
+                            c(mu22hats[[2]]),c(mu22hats[[11]]),
+                            c(mu22hats[[2]]),c(mu22hats[[11]])),
+                        col=c(rep("MC1",60),rep("Data1",60),
+                              rep(c("MC1 Data1","MC1 Data2",
+                                    "Incorrect Model"),each=(30*2)),
+                              rep("MC2",60),rep("Data2",60),
+                              rep(c("MC2 Data1","MC2 Data2",
+                                  "Incorrect Model"),each=(30*2))))
+
+ggplot() +
+  geom_line(data = compareMuHats %>%
+              filter(col == "MC1" | col == "MC2" |
+                      col == "Data1" | col == "Data2"),
+            mapping = aes(x=x, y=y, color=col)) +
+  geom_point(data = compareMuHats %>%
+                 filter(col == "MC1 Data1" | col == "MC1 Data2" |
+                          col == "MC2 Data1" | col == "MC2 Data2" |
+                          col == "Incorrect Model"),
+             mapping = aes(x=x, y=y, fill=col, shape=col),
+             size=2) + 
+  scale_color_manual(name = "True Distribution",
+                     breaks = c("MC1","MC2","Data1","Data2"),
+                     labels = c("MC1"="MC Model 1",
+                                "MC2"="MC Model 2",
+                                "Data1"="Data Model 1",
+                                "Data2"="Data Model 2"),
+                     values = c("MC1"="#000000",
+                                "MC2"="555555",
+                                "Data1"="#5e81b5",
+                                "Data2"="#e19c24")) +
+  scale_fill_manual(name = "Models",
+                    breaks = c("MC1 Data1","MC1 Data2",
+                               "MC2 Data1","MC2 Data2",
+                               "Incorrect Model"),
+                    labels = c("MC1 Data1"="Model 1",
+                               "MC1 Data2"="Model 2",
+                               "MC2 Data1"="Model 1",
+                               "MC2 Data2"="Model 2",
+                               "Incorrect Model"="Incorrect Model"),
+                    values = c("MC1 Data1"="#5e81b5",
+                               "MC1 Data2"="#e19c24",
+                               "MC2 Data1"="#5e81b5",
+                               "MC2 Data2"="#e19c24",
+                               "Incorrect Model"="#FFFFFF")) +
+  scale_shape_manual(name = "Models",
+                    breaks = c("MC1 Data1","MC1 Data2",
+                               "MC2 Data1","MC2 Data2",
+                               "Incorrect Model"),
+                    labels = c("MC1 Data1"="Model 1",
+                               "MC1 Data2"="Model 2",
+                               "MC2 Data1"="Model 1",
+                               "MC2 Data2"="Model 2",
+                               "Incorrect Model"="Incorrect Model"),
+                    values = c("MC1 Data1"=21,
+                               "MC1 Data2"=21,
+                               "MC2 Data1"=21,
+                               "MC2 Data2"=21,
+                               "Incorrect Model"=13)) +
+  scale_y_continuous(expand=c(0,0),
+                     limits = c(0,1600),
+                     name = "counts") +
+  scale_x_continuous(expand=c(0,0),
+                     name = expression(tau))
+
+ggplot(data = tibble(x=c(2,4,6,4.000001,6.000001),y=rep(1,5)),
+       mapping = aes(x=x,y=y,shape=as.factor(x),
+                     fill=as.factor(y),size=as.factor(y))) +
+  geom_point() + theme_bw() +
+  scale_shape_manual(labels = c(2,4,6,4,6),
+                     breaks = c(2,4,6,4.000001,6.000001),
+                     values = c(21,21,21,4,13)) +
+  scale_size_manual(values = 3)
+
+```
+
+```{r, echo = FALSE}
+MC1toData1 <- tibble(x=rep(1:30-0.5,12),
+                     y=c(mu1/dmrat,unlist(mu11hats)),
+                     shape=c(rep(20,30),rep(1,30*11)),
+                     alpha=c(rep(1,30),rep((1:30)/30,each=11)))
+ggplot(MC1toData1, aes(x=x,y=y,shape=as.factor(shape),alpha=alpha,
+                       color=as.factor(shape))) +
+  geom_point() +
+  scale_shape_manual(values = c(1,20)) +
+  scale_color_manual(values = c("red","black")) +
+  scale_y_continuous(limits = c(0,1500))
+
 ```
 
 \newpage
@@ -1363,7 +1462,7 @@ The Cauchy processes specifically are of the form
   X_{2,i}&\sim \text{Cauchy}(18,4)\nonumber\\
   X_{3,i}&\sim \text{Cauchy}(14,5)\nonumber
 \end{align} 
-The probabilities under Theory 1 (in which only the first two processes take place) is $\bm{p}=\{0.3,0.7\}$. The probabilities governing Theory 2 are generated from $\bm{p}$ by
+The probabilities under Model 1 (in which only the first two processes take place) is $\bm{p}=\{0.3,0.7\}$. The probabilities governing Model 2 are generated from $\bm{p}$ by
 \begin{align}
   \bm{p'}
     &=\bm{\Lambda}\bm{p}
@@ -1421,9 +1520,9 @@ easily enough as well, and with it the bias
 \end{align}
 
 ```{r, echo = F, fig.align='center',fig.height=3}
-BinByBin_bins <- tibble(Theory = c(rep(c("Theory 1","Theory 2"),each=60),
-                              rep(c("Theory 1","Theory 2"),each=30)),
-                   `Assumed Theory` = rep(rep(c("Theory 1","Theory 2"),
+BinByBin_bins <- tibble(Model = c(rep(c("Model 1","Model 2"),each=60),
+                              rep(c("Model 1","Model 2"),each=30)),
+                   `Assumed Model` = rep(rep(c("Model 1","Model 2"),
                                               each=30),3),
                    LBin = rep(0:29,6), Bin = rep(1:30,6),
                    LCounts = c(((mcTruth1$Counts/mcReco1$Counts[1:30])*
@@ -1446,16 +1545,16 @@ BinByBin_bins <- tibble(Theory = c(rep(c("Theory 1","Theory 2"),each=60),
                                 dataReco2$Counts[1:30],
                               mcTruth1$Counts/dmrat,
                               mcTruth2$Counts/dmrat),
-                   Name = c(rep(c("Theory 1 Data",
-                                  "Theory 2 Data"),each=60),
+                   Name = c(rep(c("Model 1 Data",
+                                  "Model 2 Data"),each=60),
                             rep("MC",60)))
 
 
 
 BinByBin_bins_res <- BinByBin_bins %>% 
-  filter(Name == "Theory 1 Data" | Name == "Theory 2 Data") %>%
-  mutate(`Assumed Theory` = rep(rep(c("Theory 1 Residuals",
-                                      "Theory 2 Residuals"),each=30),2),
+  filter(Name == "Model 1 Data" | Name == "Model 2 Data") %>%
+  mutate(`Assumed Model` = rep(rep(c("Model 1 Residuals",
+                                      "Model 2 Residuals"),each=30),2),
          LCounts = (rep(c(0,mcTruth1$Counts[1:29]/dmrat,
                           0,mcTruth2$Counts[1:29]/dmrat),2) - LCounts),
          Counts = rep(c(mcTruth1$Counts/dmrat,
@@ -1495,7 +1594,7 @@ ggplot() +
                           xmax=xmax,ymax=ymax,
                           fill=Name),alpha=0.2) +
   geom_segment(data = BinByBin_bins %>% 
-                 filter(Name == "Theory 1 Data" | Name == "Theory 2 Data"),
+                 filter(Name == "Model 1 Data" | Name == "Model 2 Data"),
                mapping = aes(x = LBin,
                              y = Counts,
                           xend = Bin,
@@ -1503,7 +1602,7 @@ ggplot() +
                          color = Name),
                alpha = 0.7) +
   geom_segment(data = BinByBin_bins %>% 
-                 filter(Name == "Theory 1 Data" | Name == "Theory 2 Data"),
+                 filter(Name == "Model 1 Data" | Name == "Model 2 Data"),
                mapping = aes(x = LBin,
                              y = LCounts,
                           xend = LBin,
@@ -1514,16 +1613,16 @@ ggplot() +
                      breaks = seq(0,30,by=3), 
                        limits = c(0,30), 
                        expand = c(0,0)) +
-  scale_color_manual(labels = c("Theory 1","Theory 2"),
-                     breaks = c("Theory 1 Data","Theory 2 Data"),
+  scale_color_manual(labels = c("Model 1","Model 2"),
+                     breaks = c("Model 1 Data","Model 2 Data"),
                      values = c("#5e81b5","#e19c24")) +
-  scale_fill_manual(labels = c("Theory 1","Theory 2"),
-                     breaks = c("Theory 1 Data","Theory 2 Data"),
+  scale_fill_manual(labels = c("Model 1","Model 2"),
+                     breaks = c("Model 1 Data","Model 2 Data"),
                      values = c(alpha("#5e81b5",0.2),
                                 alpha("#e19c24",0.2),NA)) +
   guides(fill = guide_legend("Data", override.aes = list(fill=c(alpha("#5e81b5",0.2),alpha("#e19c24",0.2)))),
          color = guide_legend("Data")) +
-  facet_wrap(`Assumed Theory` ~ ., ncol = 2, dir = "v")
+  facet_wrap(`Assumed Model` ~ ., ncol = 2, dir = "v")
 ```
 
 ```{r, echo = F, fig.align='center',fig.height=3}
@@ -1563,18 +1662,18 @@ ggplot() +
                      breaks = seq(0,30,by=3), 
                        limits = c(0,30), 
                        expand = c(0,0)) +
-  scale_color_manual(labels = c("Theory 1","Theory 2"),
-                     breaks = c("Theory 1 Data","Theory 2 Data"),
+  scale_color_manual(labels = c("Model 1","Model 2"),
+                     breaks = c("Model 1 Data","Model 2 Data"),
                      values = c("#5e81b5","#e19c24")) +
-  scale_fill_manual(labels = c("Theory 1","Theory 2"),
-                     breaks = c("Theory 1 Data","Theory 2 Data"),
+  scale_fill_manual(labels = c("Model 1","Model 2"),
+                     breaks = c("Model 1 Data","Model 2 Data"),
                      values = c(alpha("#5e81b5",0.3),
                                 alpha("#e19c24",0.3))) +
   guides(fill = guide_legend("Data", override.aes = 
                                list(fill=c(alpha("#5e81b5",0.2),
                                            alpha("#e19c24",0.2)))),
          color = guide_legend("Data")) +
-  facet_wrap(`Assumed Theory` ~ ., ncol = 2, dir = "v")
+  facet_wrap(`Assumed Model` ~ ., ncol = 2, dir = "v")
 ```
 
 ```{r, echo = F, fig.align='center',fig.height=3}
@@ -1656,14 +1755,14 @@ BinByBin_bias <- tibble(x = c(rep(c(0,rep(1:29,each=2),30,
                                rep(biases[120:91]-biasSD[120:91],each=2),
                                rep(biases[1:120],each=2)),
                          `Expectation Value` = 
-                           c(rep("Theory 1\nExpectation Value",240),
-                             rep("Theory 2\nExpectation Value",240),
-                             rep("Theory 1\nExpectation Value",120),
-                             rep("Theory 2\nExpectation Value",120)),
-                         `MC Truth` = c(rep(c(rep("Theory 1",120),
-                                              rep("Theory 2",120)),2),
-                                        rep(c(rep("Theory 1",60),
-                                              rep("Theory 2",60)),2)),
+                           c(rep("Model 1\nExpectation Value",240),
+                             rep("Model 2\nExpectation Value",240),
+                             rep("Model 1\nExpectation Value",120),
+                             rep("Model 2\nExpectation Value",120)),
+                         `MC Truth` = c(rep(c(rep("Model 1",120),
+                                              rep("Model 2",120)),2),
+                                        rep(c(rep("Model 1",60),
+                                              rep("Model 2",60)),2)),
                          MCiEXPj = c(rep(c("MC1EXP1","MC2EXP1",
                                            "MC1EXP2","MC2EXP2"),each=120),
                                      rep(c("MC1EXP1","MC2EXP1",
