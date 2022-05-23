@@ -73,13 +73,6 @@ these conditions are not met, the problem is said to be
 \textbf{ill-posed}, and some of the consequences of assuming otherwise
 should hopefully become clear in the coming pages.
 
-In Section \ref{deconvolution} the convolution and deconvolution are
-briefly discussed in the capacity of continuously distributed data. They
-are then generalized in Section \ref{general}, and discretization
-introduced in Section \ref{discret} establishes a data structure that
-makes accessible to analysts a host of rigorous statistical and
-computational methods. This comes in handy as Section \ref{simulation} presents a number of simulated
-
 Entire books have been written on this subject that do not begin to cover the full scope
 of the methods developed to deal with ill-posed problems. With that in mind the hope for this short paper is for it to serve as an introduction to ill-posed problems while providing some degree of direction for those who would like to know more.
 
@@ -296,7 +289,7 @@ the expected counts $\nu_i$ by
 \begin{align}\nu_i&=\text{E}[\hat\nu_i]=\text{E}[n_i]\nonumber\\&=\text{Cov}[\hat\nu_i]=\text{Cov}[n_i].\nonumber\end{align}
 Understanding the probability distribution of $\bm{n}$ allows for
 unfolding methods that involve the use of maximum likelihood estimation.
-It will be convenient, and necessary for methods based on least squares, to estimate the
+It will be convenient, and necessary for methods based on leaste-squares, to estimate the
 covariance matrix $\bm{\hat\Sigma}_{\nu}$ (written $\hat\Sigma^{\nu}_{ij}$ when referring to components) of the observations, which for
 independent Poisson processes has components of the form
 \begin{align}
@@ -329,7 +322,7 @@ with an additional derivative shows
     &=\left(\sum_{i=1}^N\frac{E[n_i] R_{il}R_{ik}}{\nu_i^2}\right)^{-1}\nonumber\\
     &=\left(\sum_{i=1}^N\frac{R_{il}R_{ik}}{\nu_i}\right)^{-1}\nonumber\\
     &=\left(\bm{R}^T\bm{\Sigma}_\nu^{-1}\bm{R}\right)^{-1}\nonumber\\
-    &=\bm{R}^{-1}\bm{\Sigma}_\nu\bm{R}^{-1^{T}}.\label{CRlb}
+    &=\bm{R}^{-1}\bm{\Sigma}_\nu(\bm{R}^{-1})^{T}.\label{CRlb}
 \end{align}
 Indeed, this matrix must then be lower bound for the covariance matrix of any unbiased estimator of $\bm{\mu}$. This is some good insight to have before getting into the weeds of working on actual data.
 
@@ -576,6 +569,13 @@ continuous2 <- ggplot() +
 
 discrete_DataMC <- ggplot() + 
   theme_bw() +
+  geom_point(data = bins_all %>% 
+               filter(LBin >= 0 & Bin <= 30 &
+                        Source == "Data" & Model == "Model 2"),
+             mapping = aes(x = LBin+0.5,
+                           y = Counts,
+                           fill = "Reconstructed"),
+             shape = 20, color = "black") +
   geom_segment(data = filter(bins_all,
                                LBin >= 0 &
                                Bin <= 30 &
@@ -624,13 +624,6 @@ discrete_DataMC <- ggplot() +
                       linetype = Name),
                          color = rep(c("#eb6235","#8fb032"),each=30),
                alpha = 0.7) +
-  geom_point(data = bins_all %>% 
-               filter(LBin >= 0 & Bin <= 30 &
-                        Source == "Data" & Model == "Model 2"),
-             mapping = aes(x = LBin+0.5,
-                           y = Counts,
-                           fill = "Reconstructed"),
-             shape = 20, color = "black") +
   scale_x_continuous("X (Truth), Y (Reconstructed)",
                      breaks = seq(0,30,3), 
                      limits = c(0,30), 
@@ -677,7 +670,7 @@ discrete_DataMC <- ggplot() +
 
 \begin{figure}[!ht]
     \centering
-```{r, fig.height=2.5, fig.width=7.5, fig.align='center', echo = F}
+```{r, fig.height=3, fig.width=8, fig.align='center', echo = F}
 plot1 <- ggplotGrob(continuous2 + theme(legend.position = "none",
                                         axis.title.x = element_blank()))
 plot2 <- ggplotGrob(discrete_DataMC + theme(legend.position = "none",
@@ -866,7 +859,7 @@ $\bm{R}^{-1}$, as estimated from MC simulations, and map the reconstructed count
 the true counts via \begin{align}
   \bm{\hat\mu}=\bm{R}^{-1}\bm{n}.\label{eq:naiveInv}
 \end{align} A statistical justification for this comes from performing
-generalized least squares \cite{Johnson2007} fit to estimate $\bm\mu$,
+generalized leaste-squares \cite{Johnson2007} fit to estimate $\bm\mu$,
 which relies on approximating bin count $n_i$ as normally distributed
 with mean $\nu_i$ and variance $1/\nu_i$. Minimizing the sums of squares
 yields \begin{align}\min_{\bm\mu}\nabla_{\!\bm\mu}\bm\chi^2(\bm{\mu})
@@ -877,14 +870,14 @@ yields \begin{align}\min_{\bm\mu}\nabla_{\!\bm\mu}\bm\chi^2(\bm{\mu})
   &=2\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}-2\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}\nonumber\\
   &=0\nonumber\\
   \implies\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}&=\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}\nonumber\\
-  \implies\bm{\hat\mu}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}=\bm{R}^{+}\bm{n}\label{eq:naivemu}\\
-  \implies\bm{R}^{+}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1},\label{eq:penrose}
-\end{align} where $\bm{R}^{+}$ is the Moore-Penrose generalized inverse
-(or pseudo-inverse) \cite{Blobel2013} of $\bm{R}$. If $\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}$ is singular this approach will not work, as its inverse corresponds to the estimated true counts' covariance matrix, as shown below.
+  \implies\bm{\hat\mu}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}\\
+  &=\bm{R}^{+}\bm{n},\label{eq:naivemu}
+\end{align} where $\bm{R}^{+}=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1}$ is the Moore-Penrose generalized inverse
+(or pseudo-inverse) \cite{Blobel2013} of $\bm{R}$. Note that multiplying $\bm{R}$ to the left side of $\bm{R}^{+}$ as calculated here fits the form of the hat matrix $\bm{H}$ of ordinary regression, such that $\bm{\hat\nu}=\bm{H}\bm{\nu}$. This has all so far just been basic regression using generalized leaste-squares. As such the inverse of $\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}$, using the Moore-Penrose generalized inverse, corresponds to the estimated true counts' covariance matrix:
 \begin{align}
-  \bm{\Sigma}_\mu&=\text{Cov}[\bm{\hat\mu}]=\text{Cov}[\bm{R}^{+}\bm{n}]=\bm{R}^{+}\text{Cov}[\bm{n}]\bm{R}^{+^T}=\bm{R}^{+}\bm{\Sigma}_\nu\bm{R}^{+^T}\nonumber.
+  (\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R})^{-1}=\bm{R}^{+}\bm{\Sigma}_\nu\bm{R}^{+^T}=\bm{R}^{+}\text{Cov}[\bm{n}]\bm{R}^{+^T}=\text{Cov}[\bm{R}^{+}\bm{n}]=\text{Cov}[\bm{\hat\mu}]=\bm{\hat\Sigma}_\mu\nonumber.
 \end{align} 
-This is the same covariance matrix shown in Figure \eqref{CRlb}, which indicates that $\bm{R}^{+}$ is an unbiased estimator that should have lowest possible variances among unbiased estimators. For the simulations one such inverse matrix was calculated from the response matrix of each MC Model simulation, and was used to form an estimate of $\bm{\Sigma}_\mu$ for each MC-Data combination using each Data model's estimated covariance matrix. 
+This is the same lower bound covariance matrix calculated in Equation \eqref{CRlb}, which indicates that $\bm{R}^{+}$ is indeed an unbiased estimator with the lowest possible variances among unbiased estimators. For the simulations one such inverse matrix was calculated from the response matrix of each MC Model simulation, and were used to form estimates of their respective $\bm{\Sigma}_\mu$ for each MC-Data combination using each Data model's estimated covariance matrix.
 
 The resulting true counts estimates, with their $\pm1$ estimated standard deviations, are plotted below in  \ref{NaiveRes}. The rescaled true distribution for each MC simulation was provided for comparison. They are in separate plots as their structure is not visible at the scales necessary to show the unfolded Data. The color of the lines indicate the true model behind the simulation and the shaded regions, which represent the calculated uncertainty, are colored to indicate the MC model of the response matrix.
 
@@ -937,6 +930,12 @@ data1_unfolded_mc1 <- inv_R_mc1data1 %*% dataReco1$Counts
 data1_unfolded_mc2 <- inv_R_mc2data1 %*% dataReco1$Counts
 data2_unfolded_mc1 <- inv_R_mc1data2 %*% dataReco2$Counts
 data2_unfolded_mc2 <- inv_R_mc2data2 %*% dataReco2$Counts
+
+#min(diag(R_mc1 %*%inv_R_mc1data1))/max(diag(R_mc1 %*%inv_R_mc1data1))
+#dRm1d1 <- as.data.frame(cbind(dataReco1$Counts,R_mc1))
+#summary(lm(V1 ~ . - 1, data = dRm1d1))
+#cbind(sqrt(diag(Vmu1data1)),summary(lm(V1 ~ . - 1, data = dRm1d1))$coef[,2])
+#cbind(as.vector(lm(V1 ~ .-1, data = dRm1d1)$coef),data1_unfolded_mc1)
 ```
 
 \begin{figure}[!ht]
@@ -1054,8 +1053,8 @@ ggplot() +
                          color = `Model`),
                alpha = 0.9) +
   scale_x_continuous(breaks = seq(0,30,by=3), 
-                       limits = c(0,30), 
-                       expand = c(0,0)) +
+                     limits = c(0,30), 
+                     expand = c(0,0)) +
   scale_color_manual(labels = c("Model 1","Model 2"),
                      breaks = c("Model 1","Model 2"),
                      values = c("#5e81b5","#e19c24")) +
@@ -1074,108 +1073,422 @@ ggplot() +
   \label{NaiveRes}
 \end{figure}
 
-The massive, rapid oscillations and large uncertainties indicate that these are not very good results, regardless of whether or not the Data and the MC came from the same Model. The unfolding process used here cannot account for even small random variation in Reconstructed space because it has been over-fitted by the MC results. In search of an unbiased estimator we have unwittingly created a minimum variance that is simply too large be in any way useful. Some degree of bias must be allowed to balance it. In order to accomplish this an estimated $\bm{\hat\mu}$ must be chosen to probe the region around the minimum least-squares of Equation \eqref{eq:leastsq} (or equivalent maximum log-likelihood) to find an alternative solution that can actually be used on other data. This is done by including an extra term in these equations through a process called \emph{Regularization}.
+The massive, rapid oscillations and large uncertainties indicate that these are not very good results, regardless of whether or not the Data and the MC came from the same Model. The unfolding process used here cannot account for even small random variations in Reconstructed space because it has been over-fitted by the MC results. In search of an unbiased estimator we have unwittingly created a minimum variance that is simply too large to be in any way useful. Some degree of bias in estimating $\bm{\hat\mu}$ will be needed to probe the neighborhood around the unbiased estimate resulting from minimizing the least-squares of Equation \eqref{eq:leastsq} (or equivalent maximum log-likelihood) to find an alternative solution that can actually be used elsewhere. This is done by including an extra term in these equations through a process called \textbf{Regularization}.
 
 \subsection{Regularization}
 
-This section reviews a method of regularized unfolding that is unfortunately only really referred to in particle physics as just \emph{Singular Value Decomposition} \cite{Adye2011}\cite{Blobel2013}\ref{Cowan1998}, which is also a matrix factorization method in linear algebra. To be fair, this unfolding method does prominently use it. As such, singular value decomposition (SVD) involves the factorization of an $N\times M$ matrix $\bm{A}$ into
+This section reviews a method of unfolding that utilizes a form of \textbf{Tikhonov regularization}. Tikhonov regularization as discussed here can be described as a form of \textbf{regularized ridge regression} with weighted least-squares, and using a ridge penalty known by some as the \textbf{ridge fused penalty} \cite{vanwieringen2021}. This method is referred to in particle physics as \textbf{Singular Value Decomposition} (SVD) \cite{Adye2011}\cite{Blobel2013}\cite{Cowan1998}, which unfortunately hides much of the underlying concepts. In general, SVD is a matrix factorization method in linear algebra which, to be fair, is featured prominently in this unfolding method. Please refer to Appendix \ref{app:svd} for a brief description of SVD.
+
+As directed in H$\ddot{\text{o}}$cker and Kartvelishvili's seminal paper \cite{Hocker1995} one should shift the location of event count information on the right-hand side of equation \eqref{eq:mat} from the $\bm{\mu}$ to $\bm{R}$, such that its elements are the actual number of corresponding events, much like Figure \ref{plots2}. This new matrix will be referred to by $\bm{X}$. Next, redefine $\bm{\mu}$ by its ratio to the MC true counts $\bm{\mu}^{\text{MC}}$ to produce instead $\bm{\beta}$ such that
 \begin{align}
-  \bm{A}=\bm{USV}^T\label{SVD}
+  \beta_i=\mu_i/\mu_i^{\text{MC}}.\nonumber
+\end{align}
+This naturally requires an inverse rescaling of any estimated $\bm{\hat\beta}$ to get $\bm{\hat\mu}$. The substitution $\bm{Y}=\bm{n}$ will also be used to facilitate broader notation conventions on discussion of this subject. The weighted sum of squares with these changes comes out to be
+\begin{align}
+  \chi^2(\bm{\beta})=\left(\bm{Y}-\bm{X}\bm{\beta}\right)^T\bm{\hat\Sigma}_\nu^{-1}\left(\bm{Y}-\bm{X}\bm{\beta}\right)\label{regSq}
+\end{align}
+After rescaling singular value decomposition is then applied to the reconstructed covariance matrix $\bm{\hat\Sigma}_\nu$ which, being symmetric and containing only positive elements, will result in something of the form
+\begin{align}
+  \bm{\hat\Sigma}_\nu=\bm{QTQ}^T,\;\;\;\;\;\text{ where }\;\;\;\;\;\bm{\hat\Sigma}_\nu^{-1}=\bm{Q}\bm{T}^{-1}\bm{Q}^T\text.
+\end{align}
+The elements of the diagonal matrix $\bm{T}$ are to be written $T_{ij}=t_i^2\delta_{ij}$. Substituting the inverse of this SVD of $\bm{\hat\Sigma}_\nu$ into Equation \eqref{regSq} the weighted sum of squares becomes an unweighted sum of squares, such that
+\begin{align}
+  \chi^2(\bm{\beta})=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right),
+\end{align}
+where
+\begin{align}
+  \tilde{X}_{ij}=\frac{1}{t_i}\sum_{k=1}^NQ_{ik}X_{kj}\;\;\;\;\;\;\;\text{and}\;\;\;\;\;\;\tilde{Y}_i=\frac{1}{t_i}\sum_{k=1}^NQ_{ik}Y_{k}.
+\end{align}
+The bias introduced by regularizing the sum of squares exists by way of the addition of a weighted functional $\tau\,\bm{\Omega}(\bm{\beta})$. As an operator it acts on $\bm{\beta}$ in a fixed way as determined be the needs of the analyst, and $\tau$ (or $\alpha$) is varied to shift the location of the minimum least-squares \cite{Tikh1977}. In this circumstance we are most concerned with reducing the oscillations in our final estimate by encouraging smoothness in the estimated distribution. The general practice is to use an estimate of the second derivative between the ordered elements of $\bm{\beta}$ by way of a matrix operator $\bm{C}$, with the overall goal of minimizing
+\begin{align}
+  \left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)+\tau (\bm{C}\bm{\beta})^T\bm{C}\bm{\beta}.\label{eq:regular}
+\end{align}
+The matrix $\bm{C}$ by default assumes a uniform bin width, but if that is not the case the bins can be weighted accordingly by a diagonal matrix $\bm{B}$ whose element $B_{ii}$ equals the width of bin $i$. Plugged in, this changes the regularizing expression in Equation \eqref{eq:regular} to
+\begin{align}
+  \tau\left(\bm{B}^{1/2}\bm{C}\bm{\beta}\right)^T\bm{B}^{1/2}\bm{C}\bm{\beta}\;\;=\;\;\tau\bm{\beta}^T\left(\bm{C}^T\bm{B}\bm{C}\right)\bm{\beta},\nonumber
+\end{align}
+where \cite{Cowan1998},
+\begin{align}
+  \begin{matrix}
+    \bm{C}=\begin{pmatrix}
+      -1&1&0&\dots&\\
+      1&-2&1&\dots&&\\
+      0&1&-2&\ddots&\\
+      \vdots&\vdots&\vdots&\ddots&\vdots&\vdots\\
+      &&&\dots&-2&1\\
+      &&&\dots&1&-1
+    \end{pmatrix}&
+    \text{and}&
+    \bm{B}=\begin{pmatrix}
+      \Delta x_1&0&\dots&&\\
+      0&\Delta x_2 &\dots&&\\
+      \vdots&\vdots&\ddots&\vdots&\vdots\\
+      &&\dots&\Delta x_{M-1}&0\\
+      &&\dots&0&\Delta x_M
+    \end{pmatrix}.
+  \end{matrix}\nonumber
+\end{align}
+H$\ddot{\text{o}}$cker and Kartvelishvili work with this to conceptualize an equivalent to Equation \eqref{eq:mat} that involves stacking $N\times M$ matrix $\sqrt{\tau}\,\bm{C}$ below the response matrix and lengthening the Reconstructed vector by $N$ zeros, such that
+\begin{align}
+  \begin{bmatrix}
+    \bm{\tilde{X}}\\\sqrt{\tau}\,\bm{C}
+  \end{bmatrix}\bm{\beta} = 
+  \begin{bmatrix}
+    \bm{\tilde{Y}}\\
+    \bm{0}_N
+  \end{bmatrix},\nonumber
+\end{align}
+From here they implement the method of \textbf{damped least squares} to express the solution for $\tau>0$ in terms of the solution for $\tau=0$. They start with absorbing the matrix $\bm{C}$ into $\bm{\beta}$ to get $\begin{bmatrix}\bm{\tilde{X}}\bm{C}^{-1}\\\sqrt{\tau}\,\bm{I}_{N\times M}\end{bmatrix}\bm{C}\bm{\beta}$. The matrix $\bm{C}$ is notably singular, so $\bm{C}^{-1}$ does not exist. The writers work around this by adding a negligible value to its diagonal elements and creating the invertable matrix $\bm{\tilde{C}}=\bm{C}+\xi\bm{I}$, where typically $\xi=10^{-3}$ or $10^{-4}$.
+
+Setting $\tau=0$ and applying singular value decomposition to the remaining matrix on the left-hand, such that $\bm{\tilde{X}\tilde{C}}^{-1}=\bm{USV}^T$, modifies the least-squares equation to 
+\begin{align}\chi^2
+  &=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)\nonumber\\
+  &=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\tilde{C}}^{-1}\bm{\tilde{C}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\tilde{C}}^{-1}\bm{\tilde{C}}\bm{\beta}\right)\nonumber\\
+  &=\left(\bm{\tilde{Y}}-\bm{USV}^T\bm{\tilde{C}\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{USV}^T\bm{\tilde{C}\beta}\right)\nonumber\\
+  &=\left(\bm{\tilde{Y}}-\bm{USb}\right)^T\left(\bm{\tilde{Y}}-\bm{USb}\right)\nonumber\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\{\bm{b}=\bm{V}^T\bm{\tilde{C}\beta}\}\\
+  &=\left(\bm{\tilde{Y}}^T-\bm{b}^T\bm{S}^T\bm{U}^T\right)\left(\bm{\tilde{Y}}-\bm{USb}\right)\nonumber\\
+  &=\bm{\tilde{Y}}^T\bm{UU}^T\bm{\tilde{Y}}-\bm{b}^T\bm{S}^T\bm{U}^T\bm{\tilde{Y}}-\bm{\tilde{Y}}^T\bm{USb}+\bm{b}^T\bm{S}^T\bm{U}^T\bm{USb}\;\;\;\;\;\;\{\bm{UU}^T=\bm{U}^T\bm{U}=\bm{I}_{N\times N}\}\nonumber\\
+  &=\bm{y}^T\bm{y}-\bm{b}^T\bm{S}^T\bm{y}-\bm{y}^T\bm{Sb}+\bm{b}^T\bm{S}^T\bm{S}\bm{b}\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\{\bm{y}=\bm{U}^T\bm{Y}\}\nonumber\\
+  &=(\bm{y}-\bm{Sb})^T(\bm{y}-\bm{Sb}).\nonumber
+\end{align}
+Since $\bm{S}$ is a diagonal matrix with elements $S_{ii}=s_i>0$ the solution can be found easily enough to be 
+\begin{align}
+  \hat{b}_i^{(0)}=\frac{y_i}{s_i}\;\;\;\;\text{followed by}\;\;\;\;\bm{\hat\beta}^{(0)}=\bm{\tilde{C}}^{-1}\bm{V\hat{b}}^{(0)}.
+\end{align}
+The estimated Truth counts would then come from reweighting $\bm{\hat\beta}$ such that $\hat\mu_i=\hat\beta_i\mu_i^{\text{MC}}$. Now since $\tau=0$ in this case there is yet no regularization. H$\ddot{\text{o}}$cker and Kartvelishvili provide a source regarding this part of damped least-squares that explains that introducing $\tau>0$ is accomplished just by modifying the non-regularized result to
+\begin{align}
+  y_i^{(\tau)}&=y_i^{(0)}\frac{s_i^2}{s_i^2+\tau}\nonumber\\
+  \implies \hat{b}_i^{(\tau)}&=\frac{y_i^{(0)}s_i}{s_i^2+\tau},\nonumber
+\end{align}
+and so forth for $\bm{\hat\mu}$. The description of this last equation as a low-pass filter is fairly apt, as the extreme influence of small singular values, represented by diagonals $\{s_i\}$ in the diagonal matrix from the SVD of $\bm{\tilde{X}\tilde{C}}^{-1}$, are muffled by the presence of a nonzero $\tau$.
+
+The analysts work out the resulting covariance matrices for these estimates, which are dependent on the value of $\tau$ such that
+\begin{align}
+  \hat\Sigma_{ij}^{b}&=\frac{s_i^2}{(s_i^2+\tau)^2}\delta_{ij},\nonumber\\
+  \bm{\hat\Sigma}_{\beta}&=\bm{C}^{-1}\bm{V}\bm{\hat\Sigma}_b\bm{V}^T(\bm{C}^{-1})^T,\;\;\text{ and}\nonumber\\
+  \hat\Sigma_{ij}^{\mu}&=\mu_i^{\text{MC}}\hat\Sigma_{ij}^\beta\mu_j^{\text{MC}}.\nonumber
 \end{align}
 
-```{r echo = F}
+As far as selecting a value of $\tau$, H$\ddot{\text{o}}$cker and Kartvelishvili recommend first plotting $\vert y_i\vert$ with respect to $i$. They point at that $\bm{y}$ makes up the coefficients of the decomposition of the reconstructed counts $\bm{n}$ ($\bm{Y}$ above), with an orthogonal basis given by the columns of $\bm{U}$. It is expected that $\vert d_i\vert$ will decay exponentially with $i$ until some critical value $i=k$ in which all following coefficients will be indistinguishable from random samples from an $N(0,1)$ distribution. Once that value of $k$ has been identified set $\tau=s_k^2$.
 
+```{r, echo = F}
 C <- rbind(rep(0,30),cbind(diag(1,29),rep(0,29))) + 
   rbind(cbind(rep(0,29),diag(1,29)),rep(0,30)) +
-  diag(c(-1,rep(-2,28),-1)) + diag(10^(-3),30)
+  diag(c(-1,rep(-2,28),-1))
 
-A1 <- R_mc1 %*% diag(mcTruth1$Counts)
-A2 <- R_mc2 %*% diag(mcTruth2$Counts)
+tC <- C + diag(10^(-3),30)
 
-#B1 <- Vnu1
-#B2 <- Vnu2
-B1 <- diag(dataReco1$Counts)
-B2 <- diag(dataReco2$Counts)
+X1 <- R_mc1 %*% diag(mcTruth1$Counts/dmrat)
+X2 <- R_mc2 %*% diag(mcTruth2$Counts/dmrat)
 
-b1 <- dataReco1$Counts
-b2 <- dataReco2$Counts
+SigNu1 <- diag(dataReco1$Counts)
+SigNu2 <- diag(dataReco2$Counts)
 
-Q1 <- svd(B1)$u
-Q2 <- svd(B2)$u
-R1 <- diag(svd(B1)$d)
-R2 <- diag(svd(B2)$d)
+Y1 <- dataReco1$Counts
+Y2 <- dataReco2$Counts
 
-As1 <- t(t(Q1 %*% A1) %*% solve(R1))
-As2 <- t(t(Q2 %*% A2) %*% solve(R2))
+Q1 <- svd(SigNu1)$u
+Q2 <- svd(SigNu2)$u
+T1 <- diag(svd(SigNu1)$d)
+T2 <- diag(svd(SigNu1)$d)
 
-bs11 <- t(t(Q1 %*% b1) %*% solve(R1))
-bs12 <- t(t(Q1 %*% b2) %*% solve(R1))
-bs21 <- t(t(Q2 %*% b1) %*% solve(R2))
-bs22 <- t(t(Q2 %*% b2) %*% solve(R2))
+#tXm1d1 <- sqrt(solve(T1)) %*% t(Q1) %*% X1
+#tXm1d2 <- sqrt(solve(T2)) %*% t(Q2) %*% X1
+#tXm2d1 <- sqrt(solve(T1)) %*% t(Q1) %*% X2
+#tXm2d2 <- sqrt(solve(T2)) %*% t(Q2) %*% X2
 
-Us1 <- svd(As1 %*% solve(C))$u
-Us2 <- svd(As2 %*% solve(C))$u
-Vs1 <- svd(As1 %*% solve(C))$v
-Vs2 <- svd(As2 %*% solve(C))$v
-Ss1 <- diag(svd(As1 %*% solve(C))$d)
-Ss2 <- diag(svd(As2 %*% solve(C))$d)
-s1 <- diag(Ss1)
-s2 <- diag(Ss2)
+tXm1d1 <- tXm1d2 <- tXm2d1 <- tXm2d2 <- matrix(0,nrow=31,ncol=30)
+tY1 <- tY2 <- rep(0,31)
+for(i in 1:31){
+  for(j in 1:30){
+    tXm1d1[i,j] <- (Q1[i,] %*% X1[,j])/sqrt(T1[i,i])
+    tXm1d2[i,j] <- (Q2[i,] %*% X1[,j])/sqrt(T2[i,i])
+    tXm2d1[i,j] <- (Q1[i,] %*% X2[,j])/sqrt(T1[i,i])
+    tXm2d2[i,j] <- (Q2[i,] %*% X2[,j])/sqrt(T2[i,i])
+  }
+  tY1[i] <- (Q1[i,] %*% Y1)/sqrt(T1[i,i])
+  tY2[i] <- (Q2[i,] %*% Y2)/sqrt(T2[i,i])
+}
 
-d11 <- t(Us1) %*% bs11
-d12 <- t(Us1) %*% bs12
-d21 <- t(Us2) %*% bs21
-d22 <- t(Us2) %*% bs22
+#tY1 <- sqrt(solve(T1)) %*% t(Q1) %*% Y1
+#tY2 <- sqrt(solve(T2)) %*% t(Q2) %*% Y2
 
-taus <- 0:10
+Um1d1 <- svd(tXm1d1 %*% solve(tC))$u
+Um1d2 <- svd(tXm1d2 %*% solve(tC))$u
+Um2d1 <- svd(tXm2d1 %*% solve(tC))$u
+Um2d2 <- svd(tXm2d2 %*% solve(tC))$u
+Vm1d1 <- svd(tXm1d1 %*% solve(tC))$v
+Vm1d2 <- svd(tXm1d2 %*% solve(tC))$v
+Vm2d1 <- svd(tXm2d1 %*% solve(tC))$v
+Vm2d2 <- svd(tXm2d2 %*% solve(tC))$v
+Sm1d1 <- diag(svd(tXm1d1 %*% solve(tC))$d)
+Sm1d2 <- diag(svd(tXm1d2 %*% solve(tC))$d)
+Sm2d1 <- diag(svd(tXm2d1 %*% solve(tC))$d)
+Sm2d2 <- diag(svd(tXm2d2 %*% solve(tC))$d)
 
-mu11hats <- map(taus,~(solve(C)%*%Vs1%*%(d11*(s1/(s1^2+.))))*mcTruth1$Counts)
-mu12hats <- map(taus,~(solve(C)%*%Vs1%*%(d12*(s1/(s1^2+.))))*mcTruth1$Counts)
-mu21hats <- map(taus,~(solve(C)%*%Vs2%*%(d21*(s2/(s2^2+.))))*mcTruth2$Counts)
-mu22hats <- map(taus,~(solve(C)%*%Vs2%*%(d22*(s2/(s2^2+.))))*mcTruth2$Counts)
+s11 <- diag(Sm1d1)
+s12 <- diag(Sm1d2)
+s21 <- diag(Sm2d1)
+s22 <- diag(Sm2d2)
 
-W1s <- map(taus, ~solve(C)%*%Vs1%*%diag(s1^2/(s1^2+.))
-           %*%t(Vs1)%*%solve(t(C)))
-W2s <- map(taus, ~solve(C)%*%Vs2%*%diag(s2^2/(s2^2+.))
-           %*%t(Vs2)%*%solve(t(C)))
+y11 <- t(Um1d1) %*% tY1
+y12 <- t(Um1d2) %*% tY2
+y21 <- t(Um2d1) %*% tY1
+y22 <- t(Um2d2) %*% tY2
+```
+
+```{r, echo = FALSE, fig.height=5}
+findTau <- tibble(x = rep(c(0,rep(1:29,each=2),30),4),
+                  mag_y = abs(rep(c(y11,y12,y21,y22),each=2)),
+                  label = c(rep("  MC: Model 1\nData: Model 1",60),
+                            rep("  MC: Model 1\nData: Model 2",60),
+                            rep("  MC: Model 2\nData: Model 1",60),
+                            rep("  MC: Model 2\nData: Model 2",60)))
+
+sTau <- rep(c(s11,s12,s21,s22)^2,each=2)/
+  (rep(c(s11,s12,s21,s22)^2,each=2) + 
+     rep(c(s11[2],s12[11],s21[11],s22[11])^2,each=60))
+
+findTau <- rbind(findTau,
+                 findTau %>% mutate(mag_y = mag_y*sTau)) %>%
+  mutate(dcat = rep(c("di0","diTau10"),each=240))
+
+tauArrow <- tibble(x=c(4.5,3.5,5.5,3.5),y=5e-04,xend=c(4.5,3.5,5.5,3.5),
+                   yend=0.5*findTau$mag_y[c(10,78,140,68)],
+                   label = c("  MC: Model 1\nData: Model 1",
+                             "  MC: Model 1\nData: Model 2",
+                             "  MC: Model 2\nData: Model 1",
+                             "  MC: Model 2\nData: Model 2"))
+ggplot() + theme_bw() +
+  geom_hline(yintercept = 1, lty = "dotdash") +
+  geom_line(data = findTau,
+            mapping = aes(x=x,
+                          y=mag_y,
+                          color=label,
+                          linetype=dcat)) +
+  scale_color_manual(values = c("#5e81b5","#e19c24","#eb6235","#8fb032"),
+                     guide = "none") +
+  scale_fill_manual(values = c("#5e81b5","#e19c24","#eb6235","#8fb032"),
+                    guide = "none") +
+  scale_y_log10(name = expression(paste("|",y,"|"))) +
+  scale_x_continuous(name = ,
+                     limits = c(0,31),
+                     breaks = seq(0,30,5),
+                     expand = c(0,0)) +
+  scale_linetype_manual(name = element_blank(),
+                        breaks = c("di0","diTau10"),
+                        labels = c(expression(paste("|",d[i]^(0),"|")),
+                                   expression(paste("|",d[i]^(tau),"|"))),
+                        values = c("di0"="solid","diTau10"="longdash")) +
+  geom_segment(data = tauArrow,
+               mapping = aes(x=x,y=y,xend=xend,yend=yend),
+               arrow = arrow(length = unit(4, "pt"))) +
+  geom_text(data = tibble(x=c(5,4,6,4),
+                          y=c(1e-05),
+                          lab=c("k==5","k==4","k==6","k==4"),
+                          label = c("  MC: Model 1\nData: Model 1",
+                             "  MC: Model 1\nData: Model 2",
+                             "  MC: Model 2\nData: Model 1",
+                             "  MC: Model 2\nData: Model 2")),
+            mapping = aes(x=x,y=y,label=lab), size = 3,
+            parse = TRUE) +
+    facet_wrap(~label, ncol=2) + theme(legend.position = "bottom")
+
+```
+
+
+```{r, echo = FALSE}
+
+tau11 <- s11[2:20]^2
+tau12 <- s12[2:20]^2
+tau21 <- s21[2:20]^2
+tau22 <- s22[2:20]^2
+#tau11 <- c(seq(0,1,0.01),seq(1.5,3.5,0.5),4:25,s11[10]^2)
+#tau12 <- c(seq(0,1,0.01),seq(1.5,3.5,0.5),4:25,s12[10]^2)
+#tau21 <- c(seq(0,1,0.01),seq(1.5,3.5,0.5),4:25,s21[10]^2)
+#tau22 <- c(seq(0,1,0.01),seq(1.5,3.5,0.5),4:25,s22[10]^2)
+
+#c(s11[10]^2,s12[10]^2,s21[10]^2,s22[10]^2)
 
 mu1 <- mcTruth1$Counts
 mu2 <- mcTruth2$Counts
 
-X1s <- matrix(map2_dbl(rep(1:30,each=30),rep(1:30,30),
-                       ~(As1[,.x]%*%As1[,.y])/(mu1[.x]*mu1[.y])),
-              nrow = 30,byrow = T)
-X2s <- matrix(map2_dbl(rep(1:30,each=30),rep(1:30,30),
-                       ~(As2[,.x]%*%As2[,.y])/(mu2[.x]*mu2[.y])),
-              nrow = 30,byrow = T)
+chis11 <- rep(0,length(tau11))
+chis12 <- rep(0,length(tau12))
+chis21 <- rep(0,length(tau21))
+chis22 <- rep(0,length(tau22))
 
-chi11s <-map_dbl(1:length(taus), ~ t(mu11hats[[.]] - mu1/dmrat) 
-                 %*% X1s %*%( mu11hats[[.]] - mu1/dmrat))
-chi12s <-map_dbl(1:length(taus), ~ t(mu12hats[[.]] - mu1/dmrat) 
-                 %*% X1s %*%( mu12hats[[.]] - mu1/dmrat))
-chi21s <-map_dbl(1:length(taus), ~ t(mu21hats[[.]] - mu2/dmrat) 
-                 %*% X1s %*%( mu21hats[[.]] - mu2/dmrat))
-chi22s <-map_dbl(1:length(taus), ~ t(mu22hats[[.]] - mu2/dmrat) 
-                 %*% X1s %*%( mu22hats[[.]] - mu2/dmrat))
+hats <- tibble(X = rep(seq(0.5,29.5,1),4*length(tau11)),
+               CVCounts = rep(0,30*4*length(tau11)),
+               label = rep(rep(c("MC 1 / Data 1",
+                                 "MC 1 / Data 2",
+                                 "MC 2 / Data 1",
+                                 "MC 2 / Data 2"),each=30),
+                           length(tau11)),
+               SD = rep(0,30*4*length(tau11)),
+               MC = rep(rep(c("MC 1","MC 2"),each=2*30),
+                        length(tau11)),
+               Data = rep(rep(c("Data 1","Data 2",
+                            "Data 1","Data 2"),each=30),
+                          length(tau11)),
+               Taus = c(rep(c(t(cbind(tau11,tau12,tau21,tau22))),each=30)))
+
+truth <- tibble(X = rep(c(0,rep(1:29,each=2),30),4),
+                TruthCounts = c(rep(rep(mu1,each=2)/dmrat,2),
+                                rep(rep(mu2,each=2)/dmrat,2)),
+                MC = rep(c("MC 1","MC 2"),each=120),
+                Data = rep(rep(c("Data 1","Data 2"),each=60),2))
+
+
+
+inv_sigMuHat11 <- inv_sigMuHat12 <- inv_sigMuHat21 <- 
+  inv_sigMuHat22 <- matrix(0, nrow = 30, ncol = 30)
+
+for(i in 1:30){
+  for(j in 1:30){
+    inv_sigMuHat11[i,j] <- 
+      sum(tXm1d1[,i]*tXm1d1[,j])/((mu1[i]*mu1[j])/dmrat^2)
+    inv_sigMuHat12[i,j] <- 
+      sum(tXm1d2[,i]*tXm1d2[,j])/((mu1[i]*mu1[j])/dmrat^2)
+    inv_sigMuHat21[i,j] <- 
+      sum(tXm2d1[,i]*tXm2d1[,j])/((mu2[i]*mu2[j])/dmrat^2)
+    inv_sigMuHat22[i,j] <- 
+      sum(tXm2d2[,i]*tXm2d2[,j])/((mu2[i]*mu2[j])/dmrat^2)
+  }
+}
+
+for(t in 1:length(tau11)){
+  
+  bTauHat11 <- bTauHat12 <- 
+    bTauHat21 <- bTauHat22 <- rep(0,30)
+  for(i in 1:30){
+    bTauHat11[i] <- (y11[i]*s11[i])/(s11[i]^2 + tau11[t])
+    bTauHat12[i] <- (y12[i]*s12[i])/(s12[i]^2 + tau12[t])
+    bTauHat21[i] <- (y21[i]*s21[i])/(s21[i]^2 + tau21[t])
+    bTauHat22[i] <- (y22[i]*s22[i])/(s22[i]^2 + tau22[t])
+  }
+  
+  betaTauHat11 <- solve(tC) %*% Vm1d1 %*% bTauHat11
+  betaTauHat12 <- solve(tC) %*% Vm1d2 %*% bTauHat12
+  betaTauHat21 <- solve(tC) %*% Vm2d1 %*% bTauHat21
+  betaTauHat22 <- solve(tC) %*% Vm2d2 %*% bTauHat22
+  
+  muTauHat11 <- betaTauHat11*(mu1/dmrat)
+  muTauHat12 <- betaTauHat12*(mu1/dmrat)
+  muTauHat21 <- betaTauHat21*(mu2/dmrat)
+  muTauHat22 <- betaTauHat22*(mu2/dmrat)
+  
+  hats$CVCounts[((t-1)*120 + 1):(t*120)] <-
+    c(muTauHat11,muTauHat12,muTauHat21,muTauHat22)
+  
+  sig_b_hat11 <- sig_b_hat12 <- sig_b_hat21 <- 
+    sig_b_hat22 <- matrix(0, nrow = 30, ncol = 30)
+  for(i in 1:30){
+    sig_b_hat11[i,i] <- s11[i]^2/(s11[i]^2 + tau11[t])^2
+    sig_b_hat12[i,i] <- s12[i]^2/(s12[i]^2 + tau12[t])^2
+    sig_b_hat21[i,i] <- s21[i]^2/(s21[i]^2 + tau21[t])^2
+    sig_b_hat22[i,i] <- s22[i]^2/(s22[i]^2 + tau22[t])^2
+  }
+  
+  sig_beta_hat11 <- solve(tC) %*% Vm1d1 %*% 
+    sig_b_hat11 %*% t(Vm1d1) %*% t(solve(tC))
+  sig_beta_hat12 <- solve(tC) %*% Vm1d2 %*% 
+    sig_b_hat12 %*% t(Vm1d2) %*% t(solve(tC))
+  sig_beta_hat21 <- solve(tC) %*% Vm2d1 %*% 
+    sig_b_hat21 %*% t(Vm2d1) %*% t(solve(tC))
+  sig_beta_hat22 <- solve(tC) %*% Vm2d2 %*% 
+    sig_b_hat22 %*% t(Vm2d2) %*% t(solve(tC))
+  
+  sigMuHat11 <- sigMuHat12 <- sigMuHat21 <- 
+    sigMuHat22 <- matrix(0, nrow = 30, ncol = 30)
+  for(i in 1:30){
+    for(j in 1:30){
+      sigMuHat11[i,j] <- 
+        (mu1[i]/dmrat)*sig_beta_hat11[i,j]*(mu1[j]/dmrat)
+      sigMuHat12[i,j] <- 
+        (mu1[i]/dmrat)*sig_beta_hat12[i,j]*(mu1[j]/dmrat)
+      sigMuHat21[i,j] <- 
+        (mu2[i]/dmrat)*sig_beta_hat21[i,j]*(mu2[j]/dmrat)
+      sigMuHat22[i,j] <- 
+        (mu2[i]/dmrat)*sig_beta_hat22[i,j]*(mu2[j]/dmrat)
+    }
+  }
+  
+  hats$SD[((t-1)*120 + 1):(t*120)] <- 
+    sqrt(c(diag(sigMuHat11),diag(sigMuHat12),
+           diag(sigMuHat21),diag(sigMuHat22)))
+  
+  chis11[t] <- t(muTauHat11 - mu1/dmrat) %*% 
+    inv_sigMuHat11 %*% (muTauHat11 - mu1/dmrat)
+  chis12[t] <- t(muTauHat12 - mu1/dmrat) %*% 
+    inv_sigMuHat12 %*% (muTauHat12 - mu1/dmrat)
+  chis21[t] <- t(muTauHat21 - mu2/dmrat) %*% 
+    inv_sigMuHat21 %*% (muTauHat21 - mu2/dmrat)
+  chis22[t] <- t(muTauHat22 - mu2/dmrat) %*% 
+    inv_sigMuHat22 %*% (muTauHat22 - mu2/dmrat)
+  
+}
 
 compareChis <- 
-  tibble(tau = rep(taus,4), 
-         Chi2 = c(chi11s,chi12s,chi21s,chi22s),
-         col=rep(c("MC1 Data1","MC1 Data2",
-                   "MC2 Data1","MC2 Data2"),each=length(taus)))
+  tibble(tau = c(tau11,tau12,tau21,tau22), 
+         Chi2 = c(chis11,chis12,chis21,chis22),
+         col=c(rep("MC 1 / Data 1",
+                   length(tau11)),
+               rep("MC 1 / Data 2",
+                   length(tau12)),
+               rep("MC 2 / Data 1",
+                   length(tau21)),
+               rep("MC 2 / Data 2",
+                   length(tau22))))
 
-ggplot(compareChis, aes(x=tau, y=Chi2, color=col)) +
-  geom_point() + theme_bw() + geom_line() +
+ggplot() + theme_bw() +
+  geom_line(data = compareChis, 
+            mapping = aes(x=tau, y=Chi2, color=col)) +
   scale_y_continuous(expand=c(0,1),
                      name = expression(Chi^2),
-                     limits=c(0,max(compareChis$Chi2)),
-                     breaks=seq(0,40,5)) +
-  scale_x_continuous(name = expression(tau),
-                     limits = c(0,10),
-                     breaks = 0:10,
+                     limits=c(0,max(compareChis$Chi2))) +
+  scale_x_log10(name = expression(tau),
                      expand = c(0,0.1)) +
-  scale_color_discrete(name = "Pairings")
+  geom_point(data = compareChis,
+             mapping = aes(x=tau, y=Chi2, fill=col),
+             shape = 21) +
+  scale_color_manual(name = "Pairings",
+                     values = c("#5e81b5","#e19c24",
+                                "#eb6235","#8fb032")) +
+  scale_fill_manual(name = "Pairings",
+                    values = c("#5e81b5","#e19c24",
+                               "#eb6235","#8fb032"))
 
+k11 <- 5
+k12 <- 4
+k21 <- 6
+k22 <- 4
+ggplot() + theme_bw() + geom_hline(yintercept = 0, lty = 2) +
+  geom_line(data = truth,
+            mapping = aes(x=X, y=TruthCounts, color = MC)) +
+  geom_errorbar(data = hats %>% 
+                 filter((MC == "MC 1" & Data == "Data 1" & Taus == s11[k11]^2) |
+                          (MC == "MC 1" & Data == "Data 2" & Taus == s12[k12]^2) |
+                          (MC == "MC 2" & Data == "Data 1" & Taus == s21[k21]^2) |
+                          (MC == "MC 2" & Data == "Data 2" & Taus == s22[k22]^2)),
+               mapping = aes(x=X,ymin=CVCounts-SD,ymax=CVCounts+SD),
+               width = 0.2) +
+  geom_point(data = hats %>% 
+                 filter((MC == "MC 1" & Data == "Data 1" & Taus == s11[k11]^2) |
+                          (MC == "MC 1" & Data == "Data 2" & Taus == s12[k12]^2) |
+                          (MC == "MC 2" & Data == "Data 1" & Taus == s21[k21]^2) |
+                          (MC == "MC 2" & Data == "Data 2" & Taus == s22[k22]^2)),
+             mapping = aes(x=X, y=CVCounts, fill = Data), shape = 21) +
+  scale_fill_manual(values = c("Data 1" = "#5e81b5",
+                               "Data 2" = "#e19c24")) +
+  scale_color_manual(values = c("MC 1" = "#5e81b5",
+                                "MC 2" = "#e19c24")) +
+  scale_x_continuous(limits = c(0,30),expand = c(0,0)) +
+  facet_wrap(~label)
+
+```
+
+```{r, echo = F, eval = F}
 compareMuHats <- tibble(x=c(rep(c(0,rep(1:29,each=2),30),2),
                             rep(seq(0.5,29.5,1),4),
                             rep(seq(0.5,29.5,1)+0.000001,2),
@@ -1265,7 +1578,7 @@ ggplot(data = tibble(x=c(2,4,6,4.000001,6.000001),y=rep(1,5)),
 
 ```
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, eval=FALSE}
 MC1toData1 <- tibble(x=rep(1:30-0.5,12),
                      y=c(mu1/dmrat,unlist(mu11hats)),
                      shape=c(rep(20,30),rep(1,30*11)),
@@ -1483,6 +1796,18 @@ detection rate (when $\epsilon_i=1$) is a function of the form
 \begin{align}
   p(X_i=x)=1-e^{-\sqrt{x}/4}.\nonumber
 \end{align}
+
+\section{Singular Value Decomposition} \label{app:svd}
+
+The below definitions were provided by the Wikipedia page for Singular Value Decomposition \cite{wiki:svd} or by a page it directly links to.
+
+Singular value decomposition involves the factorization of an $N\times M$ matrix $\bm{A}$ into
+\begin{align}
+  \bm{A}=\bm{USV}^T,\label{eq:svd}
+\end{align}
+where $\bm{U}$ and $\bm{V}$ are respectively $N\times N$ and $M\times M$ unitary matrices and $\bm{S}$ is an $N\times M$ rectangular diagonal matrix consisting of non-negative real numbers. 
+
+A \textbf{unitary} matrix is any matrix in which its conjugate transpose is also its inverse, i.e. $\bm{U}^\dagger=\bm{U}^{-1}$. When the contents of a unitary matrix are all real it is also referred to as an \textbf{orthogonal} or \textbf{orthonormal} matrix. A \textbf{rectangular diagonal matrix} is simply a rectangular (not necessarily square) in which all of its off diagonal components are $0$, i.e. $S_{ij}=0$ if $i\neq j$. The matrices $\bm{U}$ and $\bm{V}$ can be thought of as two rotation matrices that sandwich a rescaling matrix $\bm{S}$.
 
 \section{Bin-by-bin unfolding}
 
