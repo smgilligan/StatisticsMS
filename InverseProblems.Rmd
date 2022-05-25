@@ -16,10 +16,11 @@ header-includes:
   - \usepackage{hyperref}
   - \usepackage{csquotes}
   - \usepackage{float}
+  - \usepackage{multirow}
   - \usepackage{wrapfig}
   - \hypersetup{colorlinks=TRUE,linkcolor=red,citecolor=blue,filecolor=magenta,urlcolor=blue}
   - \newcommand{\comment}[1]{}
-abstract: \singlespacing This report provides a survey of some of the common methods used by the high energy physics community to understand and solve ill-posed inverse problems as they pertain to signal distortions that result from imperfect measuring devices and processes. These methods are in general collectively referred to as unfolding. The specifics of data and data collection methods are generalized. Common features are discussed insofar as they contribute to the necessary understanding of the data and implementation of any covered unfolding methods. In order to construct a slightly more wholistic picture some additional topics are briefly touched upon if they relate to other common aspects of data analysis in particle physics, but only during parts of relevant discussions where they would otherwise normally appear.
+abstract: \singlespacing This report provides an a brief look at ill-posed inverse problems in experimental particle physics as they pertain to signal distortions that result from imperfect measuring devices and processes. The methods they use in solving them are in general collectively referred to as unfolding. The specifics of data and data collection methods are generalized. Common features are discussed insofar as they contribute to the necessary understanding of the data and implementation of any covered methods. In order to construct a slightly more wholistic picture some additional topics are briefly touched upon if they relate to other common aspects of data analysis in particle physics, but only during parts of relevant discussions where they would otherwise normally appear. One non-iterative unfolding procedure is discussed and applied to an example.
 fontsize: 12pt
 editor_options: 
   markdown: 
@@ -336,7 +337,7 @@ Consider the following three sets of i.i.d. random variables from separate Cauch
 \end{align} 
 Current models predict that some class of physics events observed in past detectors are solely coming from the first two processes (Model 1), such that for $n$ events the number coming from the first process is an i.i.d. random variable from the binomial distribution $B(n,p)$. Meanwhile, a new model (Model 2) has been developed that suggests that the third process has been occurring this whole time but has been incorrectly categorized as one or the other of the first two. Napkin math has estimated a contribution rate that is reflective of some probability $p_3$, such that the binomial distribution is actually a multinomial distribution with probabilities $\bm p=\{p_1,p_2,p_3\}$.
 
-A new experiment is being designed and funded to test this new theory, on top of many others, and simulations are being performed to give analyzers plenty of opportunities to develop their collaboration's analysis framework, perform calibrations, and make ready a myriad of studies that hope to shed light on many an unanswered question. The corresponding MC simulations performed during this time include such simulations for the physics events of interest, but also for the detector. Fpr the purposes of this paper a relatively simple set of simulations have been performed, leading to 400,000 simulated events per theory that are meant to represent the MC simulations, as well as a set of 20,000 simulated events for each theory that are meant to represent hypothetical detector data.
+A new experiment is being designed and funded to test this new theory, on top of many others, and simulations are being performed to give analyzers plenty of opportunities to develop their collaboration's analysis framework, perform calibrations, and make ready a myriad of studies that hope to shed light on many an unanswered question. The corresponding MC simulations performed during this time include such simulations for the physics events of interest, but also for the detector. For the purposes of this paper a relatively simple set of simulations have been performed, leading to 400,000 simulated events per theory that are meant to represent the MC simulations, as well as a set of 20,000 simulated events for each theory that are meant to represent hypothetical detector data.
 
 ```{r, echo = F}
 set.seed(12321)
@@ -986,16 +987,16 @@ bins_hat <- tibble(Model = c(rep(c(rep(c("Model 1",
                               rep("Data",4*30)),
                    Name = c(rep("Reconstucted Model 1 Data",30),
                             rep("Reconstucted Model 2 Data",30),
-                            rep("Reconstucted Model 1  MC",30),
-                            rep("Reconstucted Model 2  MC",30),
+                            rep("Reconstucted Model 1 MC",30),
+                            rep("Reconstucted Model 2 MC",30),
                             rep("Truth Model 1 Data",30),
                             rep("Truth Model 2 Data",30),
-                            rep("MC: Model 1\n   Truth",30),
-                            rep("MC: Model 2\n   Truth",30),
-                            rep("  MC: Model 1\nData: Model 1",30),
-                            rep("  MC: Model 2\nData: Model 1",30),
-                            rep("  MC: Model 1\nData: Model 2",30),
-                            rep("  MC: Model 2\nData: Model 2",30)),
+                            rep("MC 1 / Truth",30),
+                            rep("MC 2 / Truth",30),
+                            rep("MC 1 / 1 Data",30),
+                            rep("MC 2 / 1 Data",30),
+                            rep("MC 1 / 2 Data",30),
+                            rep("MC 2 / 2 Data",30)),
                    Error = c(sqrt(diag(Vnu1))[1:30],
                              sqrt(diag(Vnu2))[1:30],
                              sqrt(mcReco1$Counts[1:30]/dmrat),
@@ -1140,7 +1141,7 @@ H$\ddot{\text{o}}$cker and Kartvelishvili work with this to conceptualize an equ
 \end{align}
 From here they implement the method of \textbf{damped least squares} to express the solution for $\tau>0$ in terms of the solution for $\tau=0$. They start with absorbing the matrix $\bm{C}$ into $\bm{\beta}$ to get $\begin{bmatrix}\bm{\tilde{X}}\bm{C}^{-1}\\\sqrt{\tau}\,\bm{I}_{N\times M}\end{bmatrix}\bm{C}\bm{\beta}$. The matrix $\bm{C}$ is notably singular, so $\bm{C}^{-1}$ does not exist. The writers work around this by adding a negligible value to its diagonal elements and creating the invertable matrix $\bm{\tilde{C}}=\bm{C}+\xi\bm{I}$, where typically $\xi=10^{-3}$ or $10^{-4}$.
 
-Setting $\tau=0$ and applying singular value decomposition to the remaining matrix on the left-hand, such that $\bm{\tilde{X}\tilde{C}}^{-1}=\bm{USV}^T$, modifies the least-squares equation to 
+Setting $\tau=0$ and applying singular value decomposition to the remaining matrix on the left-hand side, such that $\bm{\tilde{X}\tilde{C}}^{-1}=\bm{USV}^T$, will modify the least-squares equation to 
 \begin{align}\chi^2
   &=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)\nonumber\\
   &=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\tilde{C}}^{-1}\bm{\tilde{C}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\tilde{C}}^{-1}\bm{\tilde{C}}\bm{\beta}\right)\nonumber\\
@@ -1169,14 +1170,14 @@ The analysts work out the resulting covariance matrices for these estimates, whi
   \hat\Sigma_{ij}^{\mu}&=\mu_i^{\text{MC}}\hat\Sigma_{ij}^\beta\mu_j^{\text{MC}}.\nonumber
 \end{align}
 
-As far as selecting a value of $\tau$, H$\ddot{\text{o}}$cker and Kartvelishvili recommend first plotting $\vert y_i\vert$ with respect to $i$. They point at that $\bm{y}$ makes up the coefficients of the decomposition of the reconstructed counts $\bm{n}$ ($\bm{Y}$ above), with an orthogonal basis given by the columns of $\bm{U}$. It is expected that $\vert d_i\vert$ will decay exponentially with $i$ until some critical value $i=k$ in which all following coefficients will be indistinguishable from random samples from an $N(0,1)$ distribution. Once that value of $k$ has been identified set $\tau=s_k^2$.
-
 ```{r, echo = F}
 C <- rbind(rep(0,30),cbind(diag(1,29),rep(0,29))) + 
   rbind(cbind(rep(0,29),diag(1,29)),rep(0,30)) +
   diag(c(-1,rep(-2,28),-1))
 
 tC <- C + diag(10^(-3),30)
+
+inv_tC <- svd(tC)$v %*% solve(diag(svd(tC)$d)) %*% t(svd(tC)$u)
 
 X1 <- R_mc1 %*% diag(mcTruth1$Counts/dmrat)
 X2 <- R_mc2 %*% diag(mcTruth2$Counts/dmrat)
@@ -1192,11 +1193,6 @@ Q2 <- svd(SigNu2)$u
 T1 <- diag(svd(SigNu1)$d)
 T2 <- diag(svd(SigNu1)$d)
 
-#tXm1d1 <- sqrt(solve(T1)) %*% t(Q1) %*% X1
-#tXm1d2 <- sqrt(solve(T2)) %*% t(Q2) %*% X1
-#tXm2d1 <- sqrt(solve(T1)) %*% t(Q1) %*% X2
-#tXm2d2 <- sqrt(solve(T2)) %*% t(Q2) %*% X2
-
 tXm1d1 <- tXm1d2 <- tXm2d1 <- tXm2d2 <- matrix(0,nrow=31,ncol=30)
 tY1 <- tY2 <- rep(0,31)
 for(i in 1:31){
@@ -1210,21 +1206,18 @@ for(i in 1:31){
   tY2[i] <- (Q2[i,] %*% Y2)/sqrt(T2[i,i])
 }
 
-#tY1 <- sqrt(solve(T1)) %*% t(Q1) %*% Y1
-#tY2 <- sqrt(solve(T2)) %*% t(Q2) %*% Y2
-
-Um1d1 <- svd(tXm1d1 %*% solve(tC))$u
-Um1d2 <- svd(tXm1d2 %*% solve(tC))$u
-Um2d1 <- svd(tXm2d1 %*% solve(tC))$u
-Um2d2 <- svd(tXm2d2 %*% solve(tC))$u
-Vm1d1 <- svd(tXm1d1 %*% solve(tC))$v
-Vm1d2 <- svd(tXm1d2 %*% solve(tC))$v
-Vm2d1 <- svd(tXm2d1 %*% solve(tC))$v
-Vm2d2 <- svd(tXm2d2 %*% solve(tC))$v
-Sm1d1 <- diag(svd(tXm1d1 %*% solve(tC))$d)
-Sm1d2 <- diag(svd(tXm1d2 %*% solve(tC))$d)
-Sm2d1 <- diag(svd(tXm2d1 %*% solve(tC))$d)
-Sm2d2 <- diag(svd(tXm2d2 %*% solve(tC))$d)
+Um1d1 <- svd(tXm1d1 %*% inv_tC)$u
+Um1d2 <- svd(tXm1d2 %*% inv_tC)$u
+Um2d1 <- svd(tXm2d1 %*% inv_tC)$u
+Um2d2 <- svd(tXm2d2 %*% inv_tC)$u
+Vm1d1 <- svd(tXm1d1 %*% inv_tC)$v
+Vm1d2 <- svd(tXm1d2 %*% inv_tC)$v
+Vm2d1 <- svd(tXm2d1 %*% inv_tC)$v
+Vm2d2 <- svd(tXm2d2 %*% inv_tC)$v
+Sm1d1 <- diag(svd(tXm1d1 %*% inv_tC)$d)
+Sm1d2 <- diag(svd(tXm1d2 %*% inv_tC)$d)
+Sm2d1 <- diag(svd(tXm2d1 %*% inv_tC)$d)
+Sm2d2 <- diag(svd(tXm2d2 %*% inv_tC)$d)
 
 s11 <- diag(Sm1d1)
 s12 <- diag(Sm1d2)
@@ -1237,30 +1230,33 @@ y21 <- t(Um2d1) %*% tY1
 y22 <- t(Um2d2) %*% tY2
 ```
 
-```{r, echo = FALSE, fig.height=5}
+\begin{figure}[!ht]
+    \centering
+```{r, echo = FALSE, fig.height=3.25, fig.align='center'}
 findTau <- tibble(x = rep(c(0,rep(1:29,each=2),30),4),
                   mag_y = abs(rep(c(y11,y12,y21,y22),each=2)),
-                  label = c(rep("  MC: Model 1\nData: Model 1",60),
-                            rep("  MC: Model 1\nData: Model 2",60),
-                            rep("  MC: Model 2\nData: Model 1",60),
-                            rep("  MC: Model 2\nData: Model 2",60)))
+                  label = c(rep("MC 1 / 1 Data",60),
+                            rep("MC 1 / 2 Data",60),
+                            rep("MC 2 / 1 Data",60),
+                            rep("MC 2 / 2 Data",60)))
 
 sTau <- rep(c(s11,s12,s21,s22)^2,each=2)/
   (rep(c(s11,s12,s21,s22)^2,each=2) + 
-     rep(c(s11[2],s12[11],s21[11],s22[11])^2,each=60))
+     rep(c(s11[4],s12[4],s21[4],s22[4])^2,each=60))
 
 findTau <- rbind(findTau,
                  findTau %>% mutate(mag_y = mag_y*sTau)) %>%
-  mutate(dcat = rep(c("di0","diTau10"),each=240))
+  mutate(dcat = rep(c("yi0","yiTau10"),each=240))
 
-tauArrow <- tibble(x=c(4.5,3.5,5.5,3.5),y=5e-04,xend=c(4.5,3.5,5.5,3.5),
-                   yend=0.5*findTau$mag_y[c(10,78,140,68)],
-                   label = c("  MC: Model 1\nData: Model 1",
-                             "  MC: Model 1\nData: Model 2",
-                             "  MC: Model 2\nData: Model 1",
-                             "  MC: Model 2\nData: Model 2"))
+tauArrow <- tibble(x=c(4.5,4.5,4.5,4.5),y=5e-04,
+                   xend=c(4.5,4.5,4.5,4.5),
+                   yend=c(0.5,0.25,0.5,0.25),
+                   label = c("MC 1 / 1 Data",
+                             "MC 1 / 2 Data",
+                             "MC 2 / 1 Data",
+                             "MC 2 / 2 Data"))
 ggplot() + theme_bw() +
-  geom_hline(yintercept = 1, lty = "dotdash") +
+  geom_hline(yintercept = 1, lty = "dotted") +
   geom_line(data = findTau,
             mapping = aes(x=x,
                           y=mag_y,
@@ -1270,80 +1266,92 @@ ggplot() + theme_bw() +
                      guide = "none") +
   scale_fill_manual(values = c("#5e81b5","#e19c24","#eb6235","#8fb032"),
                     guide = "none") +
-  scale_y_log10(name = expression(paste("|",y,"|"))) +
-  scale_x_continuous(name = ,
+  scale_y_log10(name = expression(paste("decomposition coefficient weight |",y[i],"|"))) +
+  scale_x_continuous(name = "decomposition coefficient i",
                      limits = c(0,31),
                      breaks = seq(0,30,5),
                      expand = c(0,0)) +
   scale_linetype_manual(name = element_blank(),
-                        breaks = c("di0","diTau10"),
-                        labels = c(expression(paste("|",d[i]^(0),"|")),
-                                   expression(paste("|",d[i]^(tau),"|"))),
-                        values = c("di0"="solid","diTau10"="longdash")) +
+                        breaks = c("yi0","yiTau10"),
+                        labels = c(expression(paste("|",y[i]^(0),"|")),
+                                   expression(paste("|",y[i]^(tau),"|"))),
+                        values = c("yi0"="solid","yiTau10"="longdash")) +
   geom_segment(data = tauArrow,
                mapping = aes(x=x,y=y,xend=xend,yend=yend),
                arrow = arrow(length = unit(4, "pt"))) +
-  geom_text(data = tibble(x=c(5,4,6,4),
+  geom_text(data = tibble(x=c(5,5,5,5),
                           y=c(1e-05),
-                          lab=c("k==5","k==4","k==6","k==4"),
-                          label = c("  MC: Model 1\nData: Model 1",
-                             "  MC: Model 1\nData: Model 2",
-                             "  MC: Model 2\nData: Model 1",
-                             "  MC: Model 2\nData: Model 2")),
+                          lab=c("k==5","k==5","k==5","k==5"),
+                          label = c("MC 1 / 1 Data",
+                             "MC 1 / 2 Data",
+                             "MC 2 / 1 Data",
+                             "MC 2 / 2 Data")),
             mapping = aes(x=x,y=y,label=lab), size = 3,
             parse = TRUE) +
-    facet_wrap(~label, ncol=2) + theme(legend.position = "bottom")
+  theme(axis.title = element_text(size = 9)) +
+    facet_wrap(~label, ncol=2)
 
 ```
+\caption{\emph{\small For each of the four cases the point at which $\vert y_i\vert$ drops consistently below 1 is approximately identified. This approach helps determine effective rank. This plot also shows how adding $\tau$ to get $\vert y_i^{(\tau)}\vert$ suppresses spurious influences due to statistical fluctuation.}}
+  \label{TauSelect}
+\end{figure}
 
+As far as selecting a value of $\tau$, H$\ddot{\text{o}}$cker and Kartvelishvili recommend first plotting $\vert y_i\vert$ with respect to $i$. They point at that $\bm{y}$ makes up the coefficients of the decomposition of the reconstructed counts $\bm{n}$ ($\bm{Y}$ above), with an orthogonal basis given by the columns of $\bm{U}$. It is expected that $\vert y_i\vert$ will decay exponentially with $i$ until some critical value $i=k$ in which all following coefficients will be indistinguishable from random samples from an $N(0,1)$ distribution. Once that value of $k$ has been identified the idea is to set $\tau=s_k^2$. For this paper's simulations these identifications are graphically identified in Figure \ref{TauSelect}, which shows the plot of $\vert y_i^{(0)}\vert$ and the resulting $\vert y_i^{(\tau)}\vert$. The same value of $k$ was chosen for all four combinations for consistency.
+
+This manner of choosing the regularization parameter is just one suggestion, and while its reasoning is fairly clear there is another way that considers values of $\tau$ not restricted to squares of the singular values. Figure \ref{chicomp} features two plots concerning the sums of squares for different values of $\tau$, which were calculated by comparing the unfolded distributions to their true distributions (LEFT) and to the true distributions for the MC model used in the unfolding process (RIGHT). The Data, being also simulated, are playing the role of training sets in this capacity. The plot on the left reveals the existance of a critical value of $\tau$ above which an unfolded distribution is overfitted to the associated MC distribution, which will hide features of the original distribution that are a departure from the model being tested. The plot on the right contains no such indicators.
 
 ```{r, echo = FALSE}
 
-tau11 <- s11[2:20]^2
-tau12 <- s12[2:20]^2
-tau21 <- s21[2:20]^2
-tau22 <- s22[2:20]^2
-#tau11 <- c(seq(0,1,0.01),seq(1.5,3.5,0.5),4:25,s11[10]^2)
-#tau12 <- c(seq(0,1,0.01),seq(1.5,3.5,0.5),4:25,s12[10]^2)
-#tau21 <- c(seq(0,1,0.01),seq(1.5,3.5,0.5),4:25,s21[10]^2)
-#tau22 <- c(seq(0,1,0.01),seq(1.5,3.5,0.5),4:25,s22[10]^2)
+nMC <- 2
+nData <- 2
 
-#c(s11[10]^2,s12[10]^2,s21[10]^2,s22[10]^2)
+tvec1 <- c(2^{-1:19}) # vector of trial taus
+tvec2 <- seq(4386.1,4386.35,0.01)
+tvecS <- c(s11,s12,s21,s22)^2
+
+nt1 <- length(tvec1)
+nt2 <- length(tvec2)
+ntS <- length(tvecS)
+
+taus <- array(0, dim=c(nMC,nData,nt1+nt2+ntS))
+for(i in 1:nMC) for(j in 1:nData) taus[i,j,] <- c(tvec1,tvec2,tvecS)
+
+chis11d <- chis12d <- chis21d <- chis22d <- 
+  chis11m <- chis12m <- chis21m <- chis22m <- rep(0,nt1+nt2+ntS)
 
 mu1 <- mcTruth1$Counts
 mu2 <- mcTruth2$Counts
 
-chis11 <- rep(0,length(tau11))
-chis12 <- rep(0,length(tau12))
-chis21 <- rep(0,length(tau21))
-chis22 <- rep(0,length(tau22))
 
-hats <- tibble(X = rep(seq(0.5,29.5,1),4*length(tau11)),
-               CVCounts = rep(0,30*4*length(tau11)),
-               label = rep(rep(c("MC 1 / Data 1",
-                                 "MC 1 / Data 2",
-                                 "MC 2 / Data 1",
-                                 "MC 2 / Data 2"),each=30),
-                           length(tau11)),
-               SD = rep(0,30*4*length(tau11)),
+hats <- tibble(X = rep(seq(0.5,29.5,1),4*length(taus[1,1,])),
+               CVCounts = rep(0,30*4*length(taus[1,1,])),
+               label = rep(rep(c("MC 1 / 1 Data",
+                                 "MC 1 / 2 Data",
+                                 "MC 2 / 1 Data",
+                                 "MC 2 / 2 Data"),each=30),
+                           length(taus[1,1,])),
+               SD = rep(0,30*4*length(taus[1,1,])),
                MC = rep(rep(c("MC 1","MC 2"),each=2*30),
-                        length(tau11)),
+                        length(taus[1,1,])),
                Data = rep(rep(c("Data 1","Data 2",
                             "Data 1","Data 2"),each=30),
-                          length(tau11)),
-               Taus = c(rep(c(t(cbind(tau11,tau12,tau21,tau22))),each=30)))
+                          length(taus[1,1,])),
+               Taus = c(rep(c(t(cbind(taus[1,1,],taus[1,2,],
+                                      taus[2,1,],taus[2,2,]))),each=30)))
 
-truth <- tibble(X = rep(c(0,rep(1:29,each=2),30),4),
-                TruthCounts = c(rep(rep(mu1,each=2)/dmrat,2),
-                                rep(rep(mu2,each=2)/dmrat,2)),
-                MC = rep(c("MC 1","MC 2"),each=120),
-                Data = rep(rep(c("Data 1","Data 2"),each=60),2))
+truth <- tibble(X = rep(c(0,rep(1:29,each=2),30),8),
+                TruthCounts = c(rep(rep(mcTruth1$Counts/dmrat,each=2),2),
+                                rep(rep(mcTruth2$Counts/dmrat,each=2),2),
+                                rep(rep(dataTruth1$Counts,each=2),2),
+                                rep(rep(dataTruth2$Counts,each=2),2)),
+                MC = rep(c("MC 1","MC 2","Data 1","Data 2"),each=120),
+                Data = c(rep(rep(c("Data 1","Data 2"),each=60),2),
+                         rep(rep(c("MC 1","MC 2"),each=60),2)))
 
 
 
 inv_sigMuHat11 <- inv_sigMuHat12 <- inv_sigMuHat21 <- 
   inv_sigMuHat22 <- matrix(0, nrow = 30, ncol = 30)
-
 for(i in 1:30){
   for(j in 1:30){
     inv_sigMuHat11[i,j] <- 
@@ -1357,26 +1365,26 @@ for(i in 1:30){
   }
 }
 
-for(t in 1:length(tau11)){
+for(t in 1:(nt1+nt2+ntS)){
   
   bTauHat11 <- bTauHat12 <- 
     bTauHat21 <- bTauHat22 <- rep(0,30)
   for(i in 1:30){
-    bTauHat11[i] <- (y11[i]*s11[i])/(s11[i]^2 + tau11[t])
-    bTauHat12[i] <- (y12[i]*s12[i])/(s12[i]^2 + tau12[t])
-    bTauHat21[i] <- (y21[i]*s21[i])/(s21[i]^2 + tau21[t])
-    bTauHat22[i] <- (y22[i]*s22[i])/(s22[i]^2 + tau22[t])
+    bTauHat11[i] <- (y11[i]*s11[i])/(s11[i]^2 + taus[1,1,t])
+    bTauHat12[i] <- (y12[i]*s12[i])/(s12[i]^2 + taus[1,2,t])
+    bTauHat21[i] <- (y21[i]*s21[i])/(s21[i]^2 + taus[2,1,t])
+    bTauHat22[i] <- (y22[i]*s22[i])/(s22[i]^2 + taus[2,2,t])
   }
   
-  betaTauHat11 <- solve(tC) %*% Vm1d1 %*% bTauHat11
-  betaTauHat12 <- solve(tC) %*% Vm1d2 %*% bTauHat12
-  betaTauHat21 <- solve(tC) %*% Vm2d1 %*% bTauHat21
-  betaTauHat22 <- solve(tC) %*% Vm2d2 %*% bTauHat22
+  betaTauHat11 <- inv_tC %*% Vm1d1 %*% bTauHat11
+  betaTauHat12 <- inv_tC %*% Vm1d2 %*% bTauHat12
+  betaTauHat21 <- inv_tC %*% Vm2d1 %*% bTauHat21
+  betaTauHat22 <- inv_tC %*% Vm2d2 %*% bTauHat22
   
-  muTauHat11 <- betaTauHat11*(mu1/dmrat)
-  muTauHat12 <- betaTauHat12*(mu1/dmrat)
-  muTauHat21 <- betaTauHat21*(mu2/dmrat)
-  muTauHat22 <- betaTauHat22*(mu2/dmrat)
+  muTauHat11 <- betaTauHat11*(mcTruth1$Counts/dmrat)
+  muTauHat12 <- betaTauHat12*(mcTruth1$Counts/dmrat)
+  muTauHat21 <- betaTauHat21*(mcTruth2$Counts/dmrat)
+  muTauHat22 <- betaTauHat22*(mcTruth2$Counts/dmrat)
   
   hats$CVCounts[((t-1)*120 + 1):(t*120)] <-
     c(muTauHat11,muTauHat12,muTauHat21,muTauHat22)
@@ -1384,20 +1392,20 @@ for(t in 1:length(tau11)){
   sig_b_hat11 <- sig_b_hat12 <- sig_b_hat21 <- 
     sig_b_hat22 <- matrix(0, nrow = 30, ncol = 30)
   for(i in 1:30){
-    sig_b_hat11[i,i] <- s11[i]^2/(s11[i]^2 + tau11[t])^2
-    sig_b_hat12[i,i] <- s12[i]^2/(s12[i]^2 + tau12[t])^2
-    sig_b_hat21[i,i] <- s21[i]^2/(s21[i]^2 + tau21[t])^2
-    sig_b_hat22[i,i] <- s22[i]^2/(s22[i]^2 + tau22[t])^2
+    sig_b_hat11[i,i] <- s11[i]^2/(s11[i]^2 + taus[1,1,t])^2
+    sig_b_hat12[i,i] <- s12[i]^2/(s12[i]^2 + taus[1,2,t])^2
+    sig_b_hat21[i,i] <- s21[i]^2/(s21[i]^2 + taus[2,1,t])^2
+    sig_b_hat22[i,i] <- s22[i]^2/(s22[i]^2 + taus[2,2,t])^2
   }
   
-  sig_beta_hat11 <- solve(tC) %*% Vm1d1 %*% 
-    sig_b_hat11 %*% t(Vm1d1) %*% t(solve(tC))
-  sig_beta_hat12 <- solve(tC) %*% Vm1d2 %*% 
-    sig_b_hat12 %*% t(Vm1d2) %*% t(solve(tC))
-  sig_beta_hat21 <- solve(tC) %*% Vm2d1 %*% 
-    sig_b_hat21 %*% t(Vm2d1) %*% t(solve(tC))
-  sig_beta_hat22 <- solve(tC) %*% Vm2d2 %*% 
-    sig_b_hat22 %*% t(Vm2d2) %*% t(solve(tC))
+  sig_beta_hat11 <- inv_tC %*% Vm1d1 %*% 
+    sig_b_hat11 %*% t(Vm1d1) %*% t(inv_tC)
+  sig_beta_hat12 <- inv_tC %*% Vm1d2 %*% 
+    sig_b_hat12 %*% t(Vm1d2) %*% t(inv_tC)
+  sig_beta_hat21 <- inv_tC %*% Vm2d1 %*% 
+    sig_b_hat21 %*% t(Vm2d1) %*% t(inv_tC)
+  sig_beta_hat22 <- inv_tC %*% Vm2d2 %*% 
+    sig_b_hat22 %*% t(Vm2d2) %*% t(inv_tC)
   
   sigMuHat11 <- sigMuHat12 <- sigMuHat21 <- 
     sigMuHat22 <- matrix(0, nrow = 30, ncol = 30)
@@ -1413,188 +1421,361 @@ for(t in 1:length(tau11)){
         (mu2[i]/dmrat)*sig_beta_hat22[i,j]*(mu2[j]/dmrat)
     }
   }
-  
   hats$SD[((t-1)*120 + 1):(t*120)] <- 
     sqrt(c(diag(sigMuHat11),diag(sigMuHat12),
            diag(sigMuHat21),diag(sigMuHat22)))
   
-  chis11[t] <- t(muTauHat11 - mu1/dmrat) %*% 
-    inv_sigMuHat11 %*% (muTauHat11 - mu1/dmrat)
-  chis12[t] <- t(muTauHat12 - mu1/dmrat) %*% 
-    inv_sigMuHat12 %*% (muTauHat12 - mu1/dmrat)
-  chis21[t] <- t(muTauHat21 - mu2/dmrat) %*% 
-    inv_sigMuHat21 %*% (muTauHat21 - mu2/dmrat)
-  chis22[t] <- t(muTauHat22 - mu2/dmrat) %*% 
-    inv_sigMuHat22 %*% (muTauHat22 - mu2/dmrat)
+  chis11d[t] <- t(muTauHat11 - dataTruth1$Counts) %*% 
+    inv_sigMuHat11 %*% (muTauHat11 - dataTruth1$Counts)
+  chis12d[t] <- t(muTauHat12 - dataTruth2$Counts) %*% 
+    inv_sigMuHat12 %*% (muTauHat12 - dataTruth2$Counts)
+  chis21d[t] <- t(muTauHat21 - dataTruth1$Counts) %*% 
+    inv_sigMuHat21 %*% (muTauHat21 - dataTruth1$Counts)
+  chis22d[t] <- t(muTauHat22 - dataTruth2$Counts) %*% 
+    inv_sigMuHat22 %*% (muTauHat22 - dataTruth2$Counts)
+  chis11m[t] <- t(muTauHat11 - mcTruth1$Counts/dmrat) %*% 
+    inv_sigMuHat11 %*% (muTauHat11 - mcTruth1$Counts/dmrat)
+  chis12m[t] <- t(muTauHat12 - mcTruth1$Counts/dmrat) %*% 
+    inv_sigMuHat12 %*% (muTauHat12 - mcTruth1$Counts/dmrat)
+  chis21m[t] <- t(muTauHat21 - mcTruth2$Counts/dmrat) %*% 
+    inv_sigMuHat21 %*% (muTauHat21 - mcTruth2$Counts/dmrat)
+  chis22m[t] <- t(muTauHat22 - mcTruth2$Counts/dmrat) %*% 
+    inv_sigMuHat22 %*% (muTauHat22 - mcTruth2$Counts/dmrat)
   
 }
 
-compareChis <- 
-  tibble(tau = c(tau11,tau12,tau21,tau22), 
-         Chi2 = c(chis11,chis12,chis21,chis22),
-         col=c(rep("MC 1 / Data 1",
-                   length(tau11)),
-               rep("MC 1 / Data 2",
-                   length(tau12)),
-               rep("MC 2 / Data 1",
-                   length(tau21)),
-               rep("MC 2 / Data 2",
-                   length(tau22))))
+compareChis1 <- 
+  tibble(tau = c(taus[1,1,1:nt1],taus[1,2,1:nt1],taus[2,1,1:nt1],
+                 taus[2,2,1:nt1],taus[1,1,1:nt1]), 
+         Chi2 = c(chis11d[1:nt1],chis12d[1:nt1],chis21d[1:nt1],
+                  chis22d[1:nt1],(chis11d+chis12d+chis21d+chis22d)[1:nt1]),
+         col=c(rep("MC 1 / 1 Data",
+                   length(taus[1,1,1:nt1])),
+               rep("MC 1 / 2 Data",
+                   length(taus[1,2,1:nt1])),
+               rep("MC 2 / 1 Data",
+                   length(taus[2,1,1:nt1])),
+               rep("MC 2 / 2 Data",
+                   length(taus[2,2,1:nt1])),
+               rep("Sum(MC i / j Data)",
+                   length(taus[2,2,1:nt1]))))
 
-ggplot() + theme_bw() +
-  geom_line(data = compareChis, 
-            mapping = aes(x=tau, y=Chi2, color=col)) +
-  scale_y_continuous(expand=c(0,1),
-                     name = expression(Chi^2),
-                     limits=c(0,max(compareChis$Chi2))) +
-  scale_x_log10(name = expression(tau),
-                     expand = c(0,0.1)) +
-  geom_point(data = compareChis,
-             mapping = aes(x=tau, y=Chi2, fill=col),
+Chi_plot <- ggplot() + theme_bw() +
+    geom_hline(yintercept = 0, lty = 2) +
+    geom_line(data = compareChis1, 
+              mapping = aes(x=tau, y=Chi2, color=col)) +
+    scale_y_continuous(name = expression(Chi^2)) +
+    scale_x_log10(name = expression(tau)) + 
+    theme(axis.text.x = element_text(size = 8,angle=-30)) +
+    geom_point(data = compareChis1,
+               mapping = aes(x=tau, y=Chi2, fill=col),
+               shape = 21) +
+    scale_color_manual(name = "Pairings",
+                       values = c("#5e81b5","#e19c24",
+                                  "#eb6235","#8fb032",
+                                  "#333333")) +
+    scale_fill_manual(name = "Pairings",
+                      values = c("#5e81b5","#e19c24",
+                                 "#eb6235","#8fb032",
+                                 "#888888")) +
+  labs(title = "Unfolded vs Data Truth")
+
+compareChis2 <- 
+  tibble(tau = c(taus[1,1,1:nt1],taus[1,2,1:nt1],taus[2,1,1:nt1],
+                 taus[2,2,1:nt1],taus[1,1,1:nt1]), 
+         Chi2 = c(chis11m[1:nt1],chis12m[1:nt1],chis21m[1:nt1],
+                  chis22m[1:nt1],(chis11m+chis12m+chis21m+chis22m)[1:nt1]),
+         col=c(rep("MC 1 / 1 Data",
+                   length(taus[1,1,1:nt1])),
+               rep("MC 1 / 2 Data",
+                   length(taus[1,2,1:nt1])),
+               rep("MC 2 / 1 Data",
+                   length(taus[2,1,1:nt1])),
+               rep("MC 2 / 2 Data",
+                   length(taus[2,2,1:nt1])),
+               rep("Sum(MC i / j Data)",
+                   length(taus[2,2,1:nt1]))))
+
+Chi_plot2 <- ggplot() + theme_bw() +
+    geom_hline(yintercept = 0, lty = 2) +
+    geom_line(data = compareChis2, 
+              mapping = aes(x=tau, y=Chi2, color=col)) +
+    scale_y_continuous(name = expression(Chi^2)) +
+    scale_x_log10(name = expression(tau)) + 
+    theme(axis.text.x = element_text(size = 8,angle=-30)) +
+    geom_point(data = compareChis2,
+               mapping = aes(x=tau, y=Chi2, fill=col),
+               shape = 21) +
+    scale_color_manual(name = "Pairings",
+                       values = c("#5e81b5","#e19c24",
+                                  "#eb6235","#8fb032",
+                                  "#333333")) +
+    scale_fill_manual(name = "Pairings",
+                      values = c("#5e81b5","#e19c24",
+                                 "#eb6235","#8fb032",
+                                 "#888888")) +
+  labs(title = "Unfolded vs MC Truth")
+
+D1 <- solve(lower.tri(matrix(1,nt2,nt2),diag=T))
+compareDeltaChis2 <- 
+  tibble(tau = c(taus[1,1,(nt1+1):(nt1+nt2)][-1],
+                 taus[1,2,(nt1+1):(nt1+nt2)][-1],
+                 taus[2,1,(nt1+1):(nt1+nt2)][-1],
+                 taus[2,2,(nt1+1):(nt1+nt2)][-1],
+                 taus[1,1,(nt1+1):(nt1+nt2)][-1]), 
+         dChi2 = c(c(D1%*%chis11d[(nt1+1):(nt1+nt2)])[-1],
+                   (D1%*%chis12d[(nt1+1):(nt1+nt2)])[-1],
+                   (D1%*%chis21d[(nt1+1):(nt1+nt2)])[-1],
+                   (D1%*%chis22d[(nt1+1):(nt1+nt2)])[-1],
+                   (D1%*%(chis11d+chis12d+chis21d+chis22d)[(nt1+1):(nt1+nt2)])[-1]),
+         col=c(rep("MC 1 / 1 Data",
+                   length(taus[1,1,(nt1+1):(nt1+nt2)][-1])),
+               rep("MC 1 / 2 Data",
+                   length(taus[1,2,(nt1+1):(nt1+nt2)][-1])),
+               rep("MC 2 / 1 Data",
+                   length(taus[2,1,(nt1+1):(nt1+nt2)][-1])),
+               rep("MC 2 / 2 Data",
+                   length(taus[2,2,(nt1+1):(nt1+nt2)][-1])),
+               rep("Sum(MC i / j Data)",
+                   length(taus[2,2,(nt1+1):(nt1+nt2)][-1]))))
+
+dChi_plot2 <- ggplot() + theme_bw() +
+  geom_hline(yintercept = 0, lty = 2) +
+  geom_line(data = compareDeltaChis2, 
+            mapping = aes(x=tau, y=abs(dChi2), color=col)) +
+  geom_point(data = compareDeltaChis2,
+             mapping = aes(x=tau, y=abs(dChi2), fill=col),
              shape = 21) +
+  scale_y_log10(name = expression(paste("Abs(",Delta,Chi^2,")"))) +
+  scale_x_continuous(name = expression(tau)) +
+  theme(axis.text.x = element_text(size = 8,angle=-30)) +
   scale_color_manual(name = "Pairings",
                      values = c("#5e81b5","#e19c24",
-                                "#eb6235","#8fb032")) +
+                                "#eb6235","#8fb032",
+                                "#333333")) +
   scale_fill_manual(name = "Pairings",
                     values = c("#5e81b5","#e19c24",
-                               "#eb6235","#8fb032"))
+                               "#eb6235","#8fb032",
+                               "#888888")) +
+  labs(title = "")
+```
+\begin{figure}[!ht]
+    \centering
+```{r,echo = F, fig.align='center', fig.height=3}
+egg::ggarrange(Chi_plot + 
+                 theme(legend.position = "none",
+                       axis.title.y = element_blank()), 
+               Chi_plot2 + theme(axis.title.y = element_blank()), 
+               left = textGrob(expression(Chi^2), rot = 90, vjust = 0.25),
+               nrow = 1)
+```
+\caption{\emph{\small Above are plots of the individual $\chi^2$s and their summation $\sum\chi^2$ with respect to selected values of $\tau$. On the left the unfolded counts were compared to their actual true counts. On the right the unfolded counts were compared to the true counts of the MC model used to unfold them.}}
+  \label{chicomp}
+\end{figure}
 
-k11 <- 5
-k12 <- 4
-k21 <- 6
-k22 <- 4
-ggplot() + theme_bw() + geom_hline(yintercept = 0, lty = 2) +
-  geom_line(data = truth,
+As the purpose of unfolding is to undo effects related to the measurement process, it would be ideal for a method to be model agnostic. As a MC simulation is used to generate the response matrix this is unfortunately impossible. However, if an unknown true model is expected to produce similar looking distributions to an assumed model, we can rely on them behaving similarly under an unfolding procedure using the same regularization parameter, as the behaviors shown in Figure \ref{chicomp} depict.
+
+\begin{table}
+\centering
+\begin{tabular}{| c | c || c | c || c | c |} 
+ \hline
+ MC & Data & $\tau=s_5^2$ & $\chi^2$ & $\min\limits_{\tau}\sum\chi^2$ & $\chi^2$ \\
+ \hline
+ 1 & 1 & $5029.04$ &  $3.61$ & $4386.22$ &  $3.63$ \\ 
+ 1 & 2 & $4942.46$ & $11.60$ & $4386.22$ & $11.43$ \\
+ 2 & 1 & $4972.61$ &  $2.14$ & $4386.22$ &  $1.93$ \\
+ 2 & 2 & $4923.57$ &  $5.98$ & $4386.22$ &  $6.27$ \\
+ \hline
+ \multicolumn{2}{|c||}{All} & \multicolumn{2}{|r||}{$\sum\chi^2=23.33$} & \multicolumn{2}{|r|}{$\sum\chi^2=23.26$}\\
+ \hline
+\end{tabular}
+\caption{The $\chi^2$s and their summations $\sum\chi^2$ for the listed values of $\tau$ as chosen by their respective selection methods.}
+\label{tab:chi2}
+\end{table}
+
+\begin{figure}[!ht]
+    \centering
+```{r, echo = FALSE, fig.align='center', fig.height=4.5}
+k <- 5
+tau <- taus[1,1,(nt1+1):(nt1+nt2)][which.min((chis11d+chis12d+
+                                                chis21d+chis22d)[(nt1+1):(nt1+nt2)])]
+
+unfplot_t <- ggplot() + theme_bw() + geom_hline(yintercept = 0, lty = 2) +
+  geom_line(data = truth[c(1:60,121:180),],
             mapping = aes(x=X, y=TruthCounts, color = MC)) +
   geom_errorbar(data = hats %>% 
-                 filter((MC == "MC 1" & Data == "Data 1" & Taus == s11[k11]^2) |
-                          (MC == "MC 1" & Data == "Data 2" & Taus == s12[k12]^2) |
-                          (MC == "MC 2" & Data == "Data 1" & Taus == s21[k21]^2) |
-                          (MC == "MC 2" & Data == "Data 2" & Taus == s22[k22]^2)),
+                 filter((MC == "MC 1" & Data == "Data 1" & Taus == tau) |
+                          (MC == "MC 1" & Data == "Data 2" & Taus == tau) |
+                          (MC == "MC 2" & Data == "Data 1" & Taus == tau) |
+                          (MC == "MC 2" & Data == "Data 2" & Taus == tau)),
                mapping = aes(x=X,ymin=CVCounts-SD,ymax=CVCounts+SD),
                width = 0.2) +
   geom_point(data = hats %>% 
-                 filter((MC == "MC 1" & Data == "Data 1" & Taus == s11[k11]^2) |
-                          (MC == "MC 1" & Data == "Data 2" & Taus == s12[k12]^2) |
-                          (MC == "MC 2" & Data == "Data 1" & Taus == s21[k21]^2) |
-                          (MC == "MC 2" & Data == "Data 2" & Taus == s22[k22]^2)),
-             mapping = aes(x=X, y=CVCounts, fill = Data), shape = 21) +
-  scale_fill_manual(values = c("Data 1" = "#5e81b5",
+                 filter((MC == "MC 1" & Data == "Data 1" & Taus == tau) |
+                          (MC == "MC 1" & Data == "Data 2" & Taus == tau) |
+                          (MC == "MC 2" & Data == "Data 1" & Taus == tau) |
+                          (MC == "MC 2" & Data == "Data 2" & Taus == tau)),
+             mapping = aes(x=X, y=CVCounts, fill = Data), shape = 21, size = 1.5) +
+  scale_fill_manual(name = "Unfolded Data",
+                    labels = c("Data 1" = "Model 1",
+                               "Data 2" = "Model 2"),
+                    values = c("Data 1" = "#5e81b5",
                                "Data 2" = "#e19c24")) +
-  scale_color_manual(values = c("MC 1" = "#5e81b5",
+  scale_color_manual(name = "MC Truth",
+                     labels = c("MC 1" = "Model 1",
+                                "MC 2" = "Model 2"),
+                     values = c("MC 1" = "#5e81b5",
                                 "MC 2" = "#e19c24")) +
-  scale_x_continuous(limits = c(0,30),expand = c(0,0)) +
+  scale_x_continuous(limits = c(0,30),
+                     expand = c(0,0),
+                     name = "X (Truth)",
+                     breaks = seq(0,30,3)) +
+  scale_y_continuous(name = "Counts") + theme(axis.text.x = element_text(size = 8)) +
+  labs(title = expression(paste("SVD Unfolded (",tau==4386.22,")"))) +
   facet_wrap(~label)
 
+unfplot_k <- ggplot() + theme_bw() + geom_hline(yintercept = 0, lty = 2) +
+  geom_line(data = truth[c(1:60,121:180),],
+            mapping = aes(x=X, y=TruthCounts, color = MC)) +
+  geom_errorbar(data = hats %>% 
+                 filter((MC == "MC 1" & Data == "Data 1" & Taus == s11[k]^2) |
+                          (MC == "MC 1" & Data == "Data 2" & Taus == s12[k]^2) |
+                          (MC == "MC 2" & Data == "Data 1" & Taus == s21[k]^2) |
+                          (MC == "MC 2" & Data == "Data 2" & Taus == s22[k]^2)),
+               mapping = aes(x=X,ymin=CVCounts-SD,ymax=CVCounts+SD),
+               width = 0.2) +
+  geom_point(data = hats %>% 
+                 filter((MC == "MC 1" & Data == "Data 1" & Taus == s11[k]^2) |
+                          (MC == "MC 1" & Data == "Data 2" & Taus == s12[k]^2) |
+                          (MC == "MC 2" & Data == "Data 1" & Taus == s21[k]^2) |
+                          (MC == "MC 2" & Data == "Data 2" & Taus == s22[k]^2)),
+             mapping = aes(x=X, y=CVCounts, fill = Data), shape = 21, size = 1.5) +
+  scale_fill_manual(name = "Unfolded Data",
+                    labels = c("Data 1" = "Model 1",
+                               "Data 2" = "Model 2"),
+                    values = c("Data 1" = "#5e81b5",
+                               "Data 2" = "#e19c24")) +
+  scale_color_manual(name = "MC Truth",
+                     labels = c("MC 1" = "Model 1",
+                                "MC 2" = "Model 2"),
+                     values = c("MC 1" = "#5e81b5",
+                                "MC 2" = "#e19c24")) +
+  scale_x_continuous(limits = c(0,30),expand = c(0,0),name = "X (Truth)") +
+  scale_y_continuous(name = "Counts") +
+  labs(title = expression(paste("SVD Unfolded (",k==5,")"))) +
+  facet_wrap(~label)
+
+unfplot_t
 ```
+\caption{\emph{\small Unfolded Data superimposed on both MC Truth histograms. Data from Model 2 had the more difficult time unfolding using the opposite Model's MC response matrix during unfolding.}}
+  \label{unfolded}
+\end{figure}
 
-```{r, echo = F, eval = F}
-compareMuHats <- tibble(x=c(rep(c(0,rep(1:29,each=2),30),2),
-                            rep(seq(0.5,29.5,1),4),
-                            rep(seq(0.5,29.5,1)+0.000001,2),
-                            rep(c(0,rep(1:29,each=2),30),2),
-                            rep(seq(0.5,29.5,1),4),
-                            rep(seq(0.5,29.5,1)+0.000001,2)),
-                        y=c(rep(mu1/dmrat,each=2),
-                            rep(dataTruth1$Counts,each=2),
-                            c(mu11hats[[2]]),c(mu11hats[[11]]),
-                            c(mu12hats[[2]]),c(mu12hats[[11]]),
-                            c(mu12hats[[2]]),c(mu12hats[[11]]),
-                            rep(mu2/dmrat,each=2),
-                            rep(dataTruth2$Counts,each=2),
-                            c(mu21hats[[2]]),c(mu21hats[[11]]),
-                            c(mu22hats[[2]]),c(mu22hats[[11]]),
-                            c(mu22hats[[2]]),c(mu22hats[[11]])),
-                        col=c(rep("MC1",60),rep("Data1",60),
-                              rep(c("MC1 Data1","MC1 Data2",
-                                    "Incorrect Model"),each=(30*2)),
-                              rep("MC2",60),rep("Data2",60),
-                              rep(c("MC2 Data1","MC2 Data2",
-                                  "Incorrect Model"),each=(30*2))))
+In particular, when both sets of Data are paired with the wrong MC model during unfolding, they both consistently behave similarly across the observed regions of $\tau$ values, and reach a minimum at a value of $\tau$ that aligns well with confirmatory $\chi^2$ values for the same Data when paired with the correct MC models. As a contrast to finding $k$ as depicted in Figure \ref{TauSelect}, these observations inform a method for choosing the value of $\tau$ which minimizes the sum of squares of differences between the unfolded counts of test Data and their true counts. A side-by-side numerical comparison of both methods' sums of squares is given in Table \ref{tab:chi2}.
 
-ggplot() +
-  geom_line(data = compareMuHats %>%
-              filter(col == "MC1" | col == "MC2" |
-                      col == "Data1" | col == "Data2"),
-            mapping = aes(x=x, y=y, color=col)) +
-  geom_point(data = compareMuHats %>%
-                 filter(col == "MC1 Data1" | col == "MC1 Data2" |
-                          col == "MC2 Data1" | col == "MC2 Data2" |
-                          col == "Incorrect Model"),
-             mapping = aes(x=x, y=y, fill=col, shape=col),
-             size=2) + 
-  scale_color_manual(name = "True Distribution",
-                     breaks = c("MC1","MC2","Data1","Data2"),
-                     labels = c("MC1"="MC Model 1",
-                                "MC2"="MC Model 2",
-                                "Data1"="Data Model 1",
-                                "Data2"="Data Model 2"),
-                     values = c("MC1"="#000000",
-                                "MC2"="555555",
-                                "Data1"="#5e81b5",
-                                "Data2"="#e19c24")) +
-  scale_fill_manual(name = "Models",
-                    breaks = c("MC1 Data1","MC1 Data2",
-                               "MC2 Data1","MC2 Data2",
-                               "Incorrect Model"),
-                    labels = c("MC1 Data1"="Model 1",
-                               "MC1 Data2"="Model 2",
-                               "MC2 Data1"="Model 1",
-                               "MC2 Data2"="Model 2",
-                               "Incorrect Model"="Incorrect Model"),
-                    values = c("MC1 Data1"="#5e81b5",
-                               "MC1 Data2"="#e19c24",
-                               "MC2 Data1"="#5e81b5",
-                               "MC2 Data2"="#e19c24",
-                               "Incorrect Model"="#FFFFFF")) +
-  scale_shape_manual(name = "Models",
-                    breaks = c("MC1 Data1","MC1 Data2",
-                               "MC2 Data1","MC2 Data2",
-                               "Incorrect Model"),
-                    labels = c("MC1 Data1"="Model 1",
-                               "MC1 Data2"="Model 2",
-                               "MC2 Data1"="Model 1",
-                               "MC2 Data2"="Model 2",
-                               "Incorrect Model"="Incorrect Model"),
-                    values = c("MC1 Data1"=21,
-                               "MC1 Data2"=21,
-                               "MC2 Data1"=21,
-                               "MC2 Data2"=21,
-                               "Incorrect Model"=13)) +
-  scale_y_continuous(expand=c(0,0),
-                     limits = c(0,1600),
-                     name = "counts") +
-  scale_x_continuous(expand=c(0,0),
-                     name = expression(tau))
+In Figure \ref{unfolded} each of the unfolded results are plotted against both MC simulations Truth counts. In all cases it is apparent that the Data sets unfolded more into agreement with the MC histograms that were simulated with the same model, regardless of which MC set was used in the unfolding process.
 
-ggplot(data = tibble(x=c(2,4,6,4.000001,6.000001),y=rep(1,5)),
-       mapping = aes(x=x,y=y,shape=as.factor(x),
-                     fill=as.factor(y),size=as.factor(y))) +
-  geom_point() + theme_bw() +
-  scale_shape_manual(labels = c(2,4,6,4,6),
-                     breaks = c(2,4,6,4.000001,6.000001),
-                     values = c(21,21,21,4,13)) +
-  scale_size_manual(values = 3)
+\section{Conclusion}
 
-```
+The SVD-based unfolding method described here provides a robust approach to solving ill-posed inverse problems.
 
-```{r, echo = FALSE, eval=FALSE}
-MC1toData1 <- tibble(x=rep(1:30-0.5,12),
-                     y=c(mu1/dmrat,unlist(mu11hats)),
-                     shape=c(rep(20,30),rep(1,30*11)),
-                     alpha=c(rep(1,30),rep((1:30)/30,each=11)))
-ggplot(MC1toData1, aes(x=x,y=y,shape=as.factor(shape),alpha=alpha,
-                       color=as.factor(shape))) +
-  geom_point() +
-  scale_shape_manual(values = c(1,20)) +
-  scale_color_manual(values = c("red","black")) +
-  scale_y_continuous(limits = c(0,1500))
-
-```
 
 \newpage
 
 \appendix
+
+\section{Extra Plots}
+
+```{r, echo = FALSE, fig.align='center', fig.height=6}
+diffdat1 <- hats %>% filter((MC == "MC 1" & Data == "Data 1" & Taus == tau) |
+                  (MC == "MC 1" & Data == "Data 2" & Taus == tau) |
+                  (MC == "MC 2" & Data == "Data 1" & Taus == tau) |
+                  (MC == "MC 2" & Data == "Data 2" & Taus == tau)) %>%
+  mutate(DataTruth = rep(c(dataTruth1$Counts,dataTruth2$Counts),2))
+
+areadat1 <- tibble(X = rep(c(0,rep(1:30,each=2),rep(29:1,each=2),0,0),4),
+                  Y = rep(c(rep(dataTruth1$Counts,each=2),-rev(rep(dataTruth1$Counts,each=2)),dataTruth1$Counts[1],
+                            rep(dataTruth2$Counts,each=2),-rev(rep(dataTruth2$Counts,each=2)),dataTruth2$Counts[1]),2),
+                  label = rep(c("MC 1 / 1 Data - 1 Data","MC 1 / 2 Data - 2 Data",
+                                "MC 2 / 1 Data - 1 Data","MC 2 / 2 Data - 2 Data"),each=121),
+                  Data = rep(c(rep("Data 1",121),rep("Data 2",121)),2))
+
+g1 <- ggplot() + theme_bw() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_polygon(data = areadat1,
+            mapping = aes(x=X,y=sign(Y)*sqrt(abs(Y)),fill=Data,color=Data),
+            linetype = "dotted") +
+  geom_polygon(data = areadat1,
+            mapping = aes(x=X,y=2*sign(Y)*sqrt(abs(Y)),fill=Data,color=Data),
+            linetype = "dotted") +
+  geom_errorbar(data = diffdat1,
+                mapping = aes(x=X,ymin=DataTruth-CVCounts-SD,
+                              ymax=DataTruth-CVCounts+SD),width=0.2) +
+  geom_point(data = rbind(diffdat1,diffdat1,diffdat1),
+             mapping = aes(x=X,y=DataTruth-CVCounts,fill=Data), shape = 21,size=1.5) +
+  scale_color_manual(values = c("#5e81b5","#e19c24")) +
+  scale_fill_manual(values = c(alpha("#5e81b5",0.3),alpha("#e19c24",0.3))) +
+  scale_x_continuous(expand = c(0,0), breaks = seq(0,30,3),
+                     name = "X (Truth)") +
+  scale_y_continuous(name = TeX("$\\mu-\\hat{\\mu}$    Count")) +
+  theme(axis.text.x = element_text(size = 8)) +
+  facet_wrap( ~label,nrow=4)
+
+diffdat2 <- hats %>% filter((MC == "MC 1" & Data == "Data 1" & Taus == tau) |
+                  (MC == "MC 1" & Data == "Data 2" & Taus == tau) |
+                  (MC == "MC 2" & Data == "Data 1" & Taus == tau) |
+                  (MC == "MC 2" & Data == "Data 2" & Taus == tau)) %>%
+  mutate(DataTruth = rep(c(dataTruth2$Counts,dataTruth1$Counts),2))
+
+areadat2 <- tibble(X = rep(c(0,rep(1:30,each=2),rep(29:1,each=2),0,0),4),
+                  Y = rep(c(rep(dataTruth2$Counts,each=2),-rev(rep(dataTruth2$Counts,each=2)),dataTruth2$Counts[1],
+                            rep(dataTruth1$Counts,each=2),-rev(rep(dataTruth1$Counts,each=2)),dataTruth1$Counts[1]),2),
+                  label = rep(c("MC 1 / 1 Data - 2 Data","MC 1 / 2 Data - 1 Data",
+                                "MC 2 / 1 Data - 2 Data","MC 2 / 2 Data - 1 Data"),each=121),
+                  Data = rep(c(rep("Data 2",121),rep("Data 1",121)),2))
+
+diffdat1$label[which(diffdat1$label=="MC 1 / 1 Data")] <-
+  paste0(diffdat1$label[which(diffdat1$label=="MC 1 / 1 Data")]," - 1 Data")
+diffdat1$label[which(diffdat1$label=="MC 1 / 2 Data")] <-
+  paste0(diffdat1$label[which(diffdat1$label=="MC 1 / 2 Data")]," - 2 Data")
+diffdat1$label[which(diffdat1$label=="MC 2 / 1 Data")] <-
+  paste0(diffdat1$label[which(diffdat1$label=="MC 2 / 1 Data")]," - 1 Data")
+diffdat1$label[which(diffdat1$label=="MC 2 / 2 Data")] <-
+  paste0(diffdat1$label[which(diffdat1$label=="MC 2 / 2 Data")]," - 2 Data")
+diffdat2$label[which(diffdat2$label=="MC 1 / 1 Data")] <-
+  paste0(diffdat2$label[which(diffdat2$label=="MC 1 / 1 Data")]," - 2 Data")
+diffdat2$label[which(diffdat2$label=="MC 1 / 2 Data")] <-
+  paste0(diffdat2$label[which(diffdat2$label=="MC 1 / 2 Data")]," - 1 Data")
+diffdat2$label[which(diffdat2$label=="MC 2 / 1 Data")] <-
+  paste0(diffdat2$label[which(diffdat2$label=="MC 2 / 1 Data")]," - 2 Data")
+diffdat2$label[which(diffdat2$label=="MC 2 / 2 Data")] <-
+  paste0(diffdat2$label[which(diffdat2$label=="MC 2 / 2 Data")]," - 1 Data")
+diffdat <- rbind(diffdat1,diffdat2)
+
+ggplot() + theme_bw() +
+  geom_hline(yintercept = 0, linetype = "dashed") + 
+  geom_polygon(data = rbind(areadat1,areadat2),
+            mapping = aes(x=X,y=sign(Y)*sqrt(abs(Y)),fill=Data,color=Data),
+            linetype = "dotted") +
+  geom_polygon(data = rbind(areadat1,areadat2),
+            mapping = aes(x=X,y=2*sign(Y)*sqrt(abs(Y)),fill=Data,color=Data),
+            linetype = "dotted") +
+  geom_errorbar(data = rbind(diffdat1,diffdat2),
+                mapping = aes(x=X,ymin=DataTruth-CVCounts-SD,
+                              ymax=DataTruth-CVCounts+SD),width=0.2) +
+  geom_point(data = rbind(diffdat1,diffdat1,diffdat1,diffdat2,diffdat2,diffdat2),
+             mapping = aes(x=X,y=DataTruth-CVCounts,fill=Data), shape = 21,size=1.5) +
+  scale_color_manual(values = c("#5e81b5","#e19c24")) +
+  scale_fill_manual(values = c(alpha("#5e81b5",0.3),alpha("#e19c24",0.3))) +
+  scale_x_continuous(expand = c(0,0), breaks = seq(0,30,3),
+                     name = "X (Truth)") +
+  scale_y_continuous(name = TeX("$\\mu-\\hat{\\mu}$    Count")) +
+  theme(axis.text.x = element_text(size = 8)) +
+  facet_wrap( ~label, nrow=4)
+
+
+```
+
 
 \section{Hilbert Spaces}\label{appHilbert}
 
@@ -1767,7 +1948,7 @@ is commonly written such that for $f(x)\in L^2[-\pi,\pi]$ \begin{align}
 \end{matrix}$$ Verification that this basis meets all the requirements
 laid out so far is beyond the scope of this paper.
 
-\section{Description of simulations} \label{simuApp}
+\section{Description of Simulations} \label{simuApp}
 
 The Cauchy processes specifically are of the form
 \begin{align}
@@ -1780,9 +1961,72 @@ The probabilities under Model 1 (in which only the first two processes take plac
   \bm{p'}
     &=\bm{\Lambda}\bm{p}
     =\begin{pmatrix}0.75 & 0 \\ 0 & 0.75 \\ 0.6 & 0.1\end{pmatrix}\begin{pmatrix}0.3\\0.7\end{pmatrix}
-    =\begin{pmatrix}0.225 \\ 0.525 \\ 0.25 \end{pmatrix}\nonumber
+    =\begin{pmatrix}0.225 \\ 0.525 \\ 0.25 \end{pmatrix}.\nonumber
 \end{align}
-the effects of detector smearing is represented by i.i.d random variables generated by the conditional Gaussian process
+The individual weighted distributions contributing to each model's physical processes are shown below in Figure \ref{IndividualDistros}.
+\begin{figure}[!ht]
+    \centering
+```{r, echo = FALSE, fig.align='center',fig.height=3}
+
+ggplot() + 
+  theme_bw() +
+  geom_line(data = fpx_truth1,
+            mapping = aes(x = X, 
+                          y = nsim_data*Density,
+                      color = Process),
+            alpha = 0.9) +
+  geom_line(data = fpx_truth2,
+            mapping = aes(x = X, 
+                          y = nsim_data*Density,
+                   linetype = Process),
+            color = rep(c("#5e81b5","#e19c24","#8fb032"),each=3001),
+            alpha = 0.9) +
+  scale_color_manual(name = "Model 1",
+                     labels = c(TeX("$X_{1,i}\\;\\sim\\;Cauchy(11,4)$"),
+                                TeX("$X_{2,i}\\;\\sim\\;Cauchy(18,4)$")),
+                     breaks = c("Process 1",
+                                "Process 2"),
+                     values = c("Process 1" = "#5e81b5",
+                                "Process 2" = "#e19c24")) + 
+  scale_linetype_manual(name = "Model 2",
+                        labels = c(TeX("$X_{1,i}\\;\\sim\\;Cauchy(11,4)$"),
+                                   TeX("$X_{2,i}\\;\\sim\\;Cauchy(18,4)$"),
+                                   TeX("$X_{3,i}\\;\\sim\\;Cauchy(14,4)$")),
+                        breaks = c("Process 1",
+                                   "Process 2",
+                                   "Process 3"),
+                        values = c("Process 1" = "dashed",
+                                   "Process 2" = "dashed",
+                                   "Process 3" = "dashed")) +
+  guides(color = guide_legend(title = "Model 1", order = 1, 
+                              override.aes = list(shape = "solid",
+                                                  alpha = 0.9),
+                              title.vjust = unit(-0.2, "pt")),
+         linetype = guide_legend(title = "Model 2", order = 2, 
+                                 override.aes = list(color = c("#5e81b5","#e19c24","#8fb032"),
+                                                     alpha = 0.9),
+                                 title.vjust = unit(-0.2, "pt"))) +
+  scale_x_continuous("X (Truth)",
+                     breaks = seq(0,30,3), 
+                     limits = c(0,30), 
+                     expand = c(0,0)) +
+  scale_y_continuous("Counts",
+                     limits = c(0,fmax_count), expand = c(0,0),
+                     breaks = seq(0,ceiling(fmax_count),100)) +
+  labs(title = "Individual Scaled Physics Process Distributions") +
+  theme(legend.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        legend.justification = c("left", "top"),
+        legend.box.just = "left",
+        legend.spacing.y = unit(1, "pt"),
+        legend.key.height = unit(10,"points"),
+        legend.margin = margin(1,5,5,5,"pt"))
+```
+\caption{\emph{\small The figure contains the individual underlying distributions guiding each contributing physics process per model. They are weighted to reflect their relative contributions.}}
+  \label{IndividualDistros}
+\end{figure}
+
+The effects of detector smearing is represented by i.i.d random variables generated by the conditional Gaussian process
 $$\varepsilon_i\sim N\left(\mu(X_i),\sigma(X_i)^2\right),$$
 the mean and variance of which are functions defined by 
 \begin{align}
@@ -1809,9 +2053,9 @@ where $\bm{U}$ and $\bm{V}$ are respectively $N\times N$ and $M\times M$ unitary
 
 A \textbf{unitary} matrix is any matrix in which its conjugate transpose is also its inverse, i.e. $\bm{U}^\dagger=\bm{U}^{-1}$. When the contents of a unitary matrix are all real it is also referred to as an \textbf{orthogonal} or \textbf{orthonormal} matrix. A \textbf{rectangular diagonal matrix} is simply a rectangular (not necessarily square) in which all of its off diagonal components are $0$, i.e. $S_{ij}=0$ if $i\neq j$. The matrices $\bm{U}$ and $\bm{V}$ can be thought of as two rotation matrices that sandwich a rescaling matrix $\bm{S}$.
 
-\section{Bin-by-bin unfolding}
+\section{Bin-by-bin Unfolding}
 
-In this approach a multiplicative \textbf{correction factor} $C_i$ is
+In this naive approach a multiplicative \textbf{correction factor} $C_i$ is
 applied to the observed number of signal events $n_i$ for each bin to
 produce the estimator of $\mu_i$ \cite{Cowan1998}, 
 \begin{align}
