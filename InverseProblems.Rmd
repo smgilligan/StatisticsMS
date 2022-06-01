@@ -1,5 +1,5 @@
 ---
-title: "The Structure of Inverse Problems in Experimental Particle Physics"
+title: "The Structure of Ill-Posed Inverse Problems in Experimental Particle Physics"
 author: "Sean Gilligan"
 output: 
   pdf_document:
@@ -20,7 +20,7 @@ header-includes:
   - \usepackage{wrapfig}
   - \hypersetup{colorlinks=TRUE,linkcolor=red,citecolor=blue,filecolor=magenta,urlcolor=blue}
   - \newcommand{\comment}[1]{}
-abstract: \singlespacing This report provides a brief look at ill-posed inverse problems in experimental particle physics as they pertain to signal distortions that result from imperfect measuring devices and processes. The methods they use in solving them are in general collectively referred to as unfolding. The specifics of data and data collection methods are generalized. Common features are discussed insofar as they contribute to the necessary understanding of the data and implementation of any covered methods. In order to construct a slightly more wholistic picture some additional topics are briefly touched upon if they relate to other common aspects of data analysis in particle physics, but only during parts of relevant discussions where they would otherwise normally appear. One non-iterative unfolding procedure is discussed and applied to an example.
+abstract: \singlespacing This report provides a brief look at ill-posed inverse problems within the context of measurement related data distortions in experimental particle physics. The methods they use in solving them are in general collectively referred to as unfolding. The specifics of data and data collection methods are generalized. Common features are discussed insofar as they contribute to the necessary understanding of the data and implementation of any covered methods. In order to construct a slightly more holistic picture some additional topics are briefly touched upon if they relate to other common aspects of data analysis in particle physics, but only during parts of relevant discussions where they would otherwise normally appear. One non-iterative unfolding procedure that uses extensions of common linear regression tools is discussed and applied to a simulated example.
 fontsize: 12pt
 editor_options: 
   markdown: 
@@ -53,18 +53,18 @@ library(latex2exp)
 
 A common problem faced in the quantitative sciences and their associated technologies is the introduction of errors during the data collection process. While the possible sources of these errors are as varied as the possible events which the data might describe, significant work has been done to develop methods the can help would-be analysts reconcile them. The requisite understanding of a scenario's underlying systematic and stochastic processes might not allow researchers to truly reverse entropy or make up for the finite resolution of a detector, but it can approximate them with a quantifiable degree of certainty. 
 
-The applied mathematics that this involves falls within the general category of \textbf{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. There is the colloquially vague \textbf{unsmearing}, but there are also names that reference specific applications and methods. For the sake of simplicity, and any necessary physical constraints, the manner of inverse problems addressed here will only have satisfactory solutions that involve linear operations that map from one Hilbert space\footnote{The definition of a Hilbert space is provided in Appendix \ref{appHilbert} for convenience.} to another. Symbolically this can be expressed by the equation
+The applied mathematics that this involves falls within the general category of \textbf{inverse problems}, and there are a variety of labels used to refer to the procedures in its arsenal. There is the colloquially vague \textbf{unsmearing}, but there are also names that reference specific applications and methods. For the sake of simplicity, and satisfying necessary physical constraints, the manner of inverse problems addressed here will only have satisfactory solutions that involve linear operations that map from one Hilbert space\footnote{The definition of a Hilbert space is provided in Appendix \ref{appHilbert} for convenience.} to another. Symbolically this can be expressed by the equation
 \begin{align}
 Az=u,\nonumber
 \end{align} 
-where $A$ is a linear operator acting on an element $z\in Z$, the sought solution, to produce an element $u\in U$, the observed data. Within the context of the methods described herein $z$
+where $A$ is a linear operator acting on an element $z\in Z$, the sought solution, to produce an element $u\in U$, the observed data. Within the context of the methods described here $z$
 and $u$ take the form of continuous or discrete distributions that when integrated or summed over the domain of their arguments result in finite real quantities.
 
-The difficulty of solving for $z$ can be classified into one of two camps. The easiest cases involve conditions that create a \textbf{well-posed} problem, which requires that \cite{Yagola2011ch2}
+The difficulty of solving for $z$ can be classified into one of two camps. The easiest cases involve conditions that create a \textbf{well-posed} problem, which requires that \cite{Tikh1977}
 \begin{enumerate}
-  \item a solution exists $\forall u\in U$,
+  \item $\forall u\in U$ there exists a solution $z\in Z$,
   \item the solution is unique,
-  \item and if $u_n\longrightarrow u$, $Az_n\longrightarrow u_n$, and $Az\longrightarrow u$, then $z_n\longrightarrow z$.
+  \item and the problem is stable on $U$ and $Z$.
 \end{enumerate}
 Conditions 1 and 2 work together to imply that the inverse operator
 $A^{-1}$ exists, and Condition 3 is often worded to describe the inverse
@@ -74,14 +74,13 @@ these conditions are not met, the problem is said to be
 \textbf{ill-posed}, and some of the consequences of assuming otherwise
 should hopefully become clear in the coming pages.
 
-Entire books have been written on this subject that do not begin to cover the full scope
-of the methods developed to deal with ill-posed problems. With that in mind the hope for this short paper is for it to serve as an introduction to ill-posed problems while providing some degree of direction for those who would like to know more.
+Entire books have been written on this subject that do not begin to cover the full scope of the methods developed to deal with ill-posed problems. With that in mind the hope for this short paper is for it to serve as an introduction to ill-posed problems while providing some degree of direction for those who would like to know more. The specific case of data and measurement error being uncorrelated and analyzable as continuous, parametric distributions will serve as a starting point. Being permissible under these conditions the method of deconvolution will be introduced, after which some generalization will occur and nonparametric cases with discrete representations will be become the focus.
 
 \subsection{The Deconvolution}\label{deconvolution}
 
 One way to characterize a basic example of a situation suitable for
 being treated as a convolution would be one that should be very familiar
-to anyone who has ever taken statistics course. Assume that data
+to anyone who has ever taken a statistics course. Assume that data
 collected regarding $n$ statistical events represent the measurement of
 $n$ independent and identically distributed (i.i.d.) random variables
 $\bm{X}=\{X_1,X_2,\dots,X_n\}$ from a distribution of possible values
@@ -93,12 +92,16 @@ domain of $x$. The error introduced during the measurement process is
 similarly represented by a set of i.i.d. random variables
 $\bm{\varepsilon}=\{\varepsilon_1,\varepsilon_2,\dots,\varepsilon_n\}$
 with a PDF $f_\varepsilon(\varepsilon)$, where the sets
-$\bm{\varepsilon}$ and $\bm{X}$ are typically assumed to be independent
-of each other. The set of measured/reconstructed values
-$\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ then are also i.i.d. and can be defined
-in terms of the preceding sets of variables such that for event
-$i\in\{1,\dots,n\}$,
-\begin{align}Y_i&=g(X_i,\varepsilon_i)\nonumber\\&=X_i+\varepsilon_i.\label{eq:meas}\end{align}
+$\bm{\varepsilon}$ and $\bm{X}$ are assumed to be independent 
+of each other. This is naive but appropriate for this simple example. 
+The set of measured/reconstructed values $\bm{Y}=\{Y_1,Y_2,\dots,Y_n\}$ 
+then are also i.i.d. and can be defined in terms of the preceding sets of 
+variables such that for event $i\in\{1,\dots,n\}$,
+\begin{align}
+  Y_i
+    &=g(X_i,\varepsilon_i)\nonumber\\
+    &=X_i+\varepsilon_i.\label{eq:meas}
+\end{align}
 In light of this relationship, the corresponding PDF $f_Y(y)$ can be
 found explicitly through an operation on $f_X(x)$ and
 $f_\varepsilon(\varepsilon)$ using the mathematics of functional
@@ -195,16 +198,20 @@ sampled from $f_Y(y)$, back to their true values $\bm X$.
 
 \subsection{Discretization} \label{discret}
 
-In practice researchers are only ever dealing with estimates $\hat f_X$,
+In practice researchers are often dealing with estimates $\hat f_X$,
 $\hat f_Y$, $\hat f_X^{\text{MC}}$, and $\hat f_Y^{\text{MC}}$, and the
 sets of data that contribute to these estimates are organized by bin
 into histograms that form unnormalized granular approximations of their
-true distributions. Thinking in terms of these histograms allows for the
-reformulation of Equation \eqref{eq:fred} into the linear matrix
-equation: \begin{align}\bm\nu = \bm{R}\bm\mu.\label{eq:mat}\end{align}
+true distributions, which to an extent is a natural result of data
+digitization, and is required for most modern computational methods. 
+Thinking in terms of these histograms allows for the reformulation of 
+Equation \eqref{eq:fred} into the linear matrix equation: 
+\begin{align}
+  \bm\nu = \bm{R}\bm\mu.\label{eq:mat}
+\end{align}
 The vectors $\bm\nu$, $\bm\mu$ and matrix $\bm{R}$ relate to their
 continuous counterparts by \cite{Blobel2013}: \begin{align}
-  \text{true distribution }f_X(x)&\longrightarrow\bm\mu\,\in\,\{\mathcal{U}\equiv\mathbb{R}^M_{+}\cup\bm{0}\}\text{ the unknown true bin counts,}\nonumber\\
+  \text{true distribution }f_X(x)&\longrightarrow\bm\mu\,\in\,\mathcal{U}\equiv\{\mathbb{R}^M_{+}\cup\bm{0}\}\text{ the unknown true bin counts,}\nonumber\\
   \text{measured distribution }f_Y(y)&\longrightarrow\bm\nu\,\in\,\mathcal{V}\equiv\{\mathbb{R}^N_{+}\cup\bm{0}\}\text{ the measured bin counts,}\nonumber\\
   \text{Kernel }K(x,y)&\longrightarrow\bm{R}\;\;\text{the rectangular }N\text{-by-}M\text{ \bf response matrix}\text{.}\nonumber
 \end{align} The components of vectors $\bm\nu$ and $\bm\mu$ represent
@@ -231,7 +238,7 @@ $\nu_i$ receives potential contributions from each of the $M$ bins in
 $\bm\mu$, i.e.
 \begin{align}
   \nu_i &= \sum_{j=1}^MR_{ij}\mu_j\;\text{     and}\label{eq:bini}\\
-  R_{ij}&=\frac{\partial\nu_i}{\partial\mu_j}\label{dnudmu}.
+  \frac{\partial\nu_i}{\partial\mu_j}&=R_{ij}\label{dnudmu}.
 \end{align}
 The number of bins are typically set such that $M\leq N$, with the
 convention $N=M+1$ being common. A higher number of bins in the measured
@@ -262,10 +269,8 @@ interest can be smeared out of it, events produced out of it can be
 smeared into it. The crossed barrier could correspond to the variable of
 interest, but it can also include events excluded from analysis due to
 assigned constraints on other variables that describe the event.
-Background processes are often studied and dealt with prior to the
-unfolding procedures described in the paper. It is briefly mentioned
-here to provide a slightly more holistic picture of particle physics
-analysese. Mathematically, background would be included by modifying
+Background processes can be studied and dealt with prior to the
+unfolding procedures described in the paper. It is briefly mentioned here to provide a slightly more holistic picture of particle physics analyses. Mathematically, background would be included by modifying
 Equation \eqref{eq:bini} to read
 \begin{align}\nu_i = \sum_{j=1}^MR_{ij}\mu_j+\beta_i,\end{align} where
 $\beta_i$ is the $i$th component of the $N$-vector $\bm\beta$, which
@@ -301,21 +306,21 @@ independent Poisson processes has components of the form
 where $\delta_{ij}$ is the Kronecker
 delta\footnote{The Kronecker delta $\delta_{ij}$ is a piecewise function of variables $i$ and $j$ defined by $\delta_{ij}=\begin{cases}0\;\;\;\text{if }i\neq j\\1\;\;\;\text{if }i=j\end{cases}.$}.
 The path to an estimated covariance matrix of the estimated true distribution
-$\bm{\hat\mu}$, itself a function of $\bm{n}$ and $\bm{\nu}$ (or its estimate), can be considered briefly by considering the maximum
+$\bm{\hat\mu}$ is itself a function of $\bm{n}$ and $\bm{\nu}$ (or its estimate), can be considered briefly by considering the maximum
 log-likelihood, where it can be shown \begin{align}
   \log L(\bm\mu)
     &=\sum_{i=1}^N\log\left(\frac{\nu_i^{n_i}e^{-\nu_i}}{n_i!}\right)\nonumber\\
-    &=\sum_{i=1}^N\left(n_i\log\nu_i-\nu_i-\log n_i!\right)\nonumber\\
+    &=\sum_{i=1}^N\left(n_i\log\nu_i-\nu_i-\log n_i!\right)\label{eq:logL}\\
   \frac{\partial\log L}{\partial\mu_k}
     &=\sum_{i=1}^N\frac{\partial\log L}{\partial\nu_i}\frac{\partial\nu_i}{\partial\mu_k}\nonumber\\
-    &=\sum_{i=1}^N\left(\frac{n_i}{\nu_i}-1\right)R_{ik}=0.\nonumber
+    &=\sum_{i=1}^N\left(\frac{n_i}{\nu_i}-1\right)R_{ik}=0.\label{eq:dlogL}
 \end{align} Some minor algebra here thankfully reproduces the estimate
 $\bm{\hat\nu}=\bm{n}$, as expected from an earlier observation about $n_i$. Continuing
 with an additional derivative shows 
 \begin{align}
   \frac{\partial^2\log L}{\partial\mu_k\partial\mu_l}
     &=-\sum_{i=1}^N\left(\frac{n_i}{\nu_i^2}\frac{\partial\nu_i}{\partial\mu_l}\right) R_{ik}\nonumber\\
-    &=-\sum_{i=1}^N\frac{n_i R_{il}R_{ik}}{\nu_i^2},\nonumber
+    &=-\sum_{i=1}^N\frac{n_i R_{il}R_{ik}}{\nu_i^2},\label{eq:d2logL}
 \end{align} the negative of the expectation value of which is the Fisher information matrix $\bm{\mathcal{I}}(\bm\mu)$. Since the Fisher information's relationship with the Cram$\acute{\text{e}}$r-Rao lower bound can, as its name implies, be used to determine the lower bound on the covariance matrix of an estimator of $\bm{\mu}$, one can show for one such \emph{unbiased} estimator, say $\bm{T}(\bm{n})$, that
 \begin{align}
   \text{Cov}_{\!\bm{\mu}}\!\left[\bm{T}(\bm{n})\right]\geq \bm{\mathcal{I}}(\bm{\mu})^{-1}
@@ -329,7 +334,7 @@ Indeed, this matrix must then be lower bound for the covariance matrix of any un
 
 \subsection{A Simulated Example}\label{simulation}
 
-Consider the following three sets of i.i.d. random variables from separate Cauchy distributions.
+The following example is not meant to reflect any actual physics. Consider the following three sets of i.i.d. random variables from separate Cauchy distributions.
 \begin{align}
   X_{1,i}&\sim \text{Cauchy}(x_0^{(1)},\gamma_1)\nonumber\\
   X_{2,i}&\sim \text{Cauchy}(x_0^{(2)},\gamma_2)\nonumber\\
@@ -337,13 +342,13 @@ Consider the following three sets of i.i.d. random variables from separate Cauch
 \end{align} 
 Current models predict that some class of physics events observed in past detectors are solely coming from the first two processes (Model 1), such that for $n$ events the number coming from the first process is an i.i.d. random variable from the binomial distribution $B(n,p)$. Meanwhile, a new model (Model 2) has been developed that suggests that the third process has been occurring this whole time but has been incorrectly categorized as one or the other of the first two. Napkin math has estimated a contribution rate that is reflective of some probability $p_3$, such that the binomial distribution is actually a multinomial distribution with probabilities $\bm p=\{p_1,p_2,p_3\}$.
 
-A new experiment is being designed and funded to test this new theory, on top of many others, and simulations are being performed to give analyzers plenty of opportunities to develop their collaboration's analysis framework, perform calibrations, and make ready a myriad of studies that hope to shed light on many an unanswered question. The corresponding MC simulations performed during this time include such simulations for the physics events of interest, but also for the detector. For the purposes of this paper a relatively simple set of simulations have been performed, leading to 400,000 simulated events per theory that are meant to represent the MC simulations, as well as a set of 20,000 simulated events for each theory that are meant to represent hypothetical detector data.
+A new experiment is being designed and funded to test this new model, on top of many others, and simulations are being performed to give analyzers plenty of opportunities to develop their collaboration's analysis framework, perform calibrations, and make ready a myriad of studies that hope to shed light on many an unanswered question. The corresponding MC simulations performed during this time include such simulations for the physics events of interest, but also for the detector. For the purposes of this paper I am performing a relatively simple set of simulations, resulting in 200,000 simulated events per model that are meant to represent the MC simulations, and a set of 20,000 simulated events for each model that are meant to represent either hypothetical detector data or MC test sets as need dictates. I will also be writing the code to carry out any of the discussed methods that are applied to this simulated data.
 
 ```{r, echo = F}
-set.seed(12321)
+set.seed(1234)
 # Assume 10000 events
 nsim_data <- 20000
-dmrat <- 20
+dmrat <- 10
 nsim_mc <- dmrat*nsim_data
 
 # Two possible types of processes with different means but equal variances
@@ -850,7 +855,7 @@ mcTruth2 <- sims_mc %>%
 
 \section{Unfolding in particle physics}
 
-The international particle physics community is highly collaborative. Most of this is likely due to necessity, as advances in the field are requiring larger and more expensive experiments that rely on pooled resources of talent, labor, and capital. This extends to digital resources as well. ROOT \cite{Brun1997} is an open-source data analysis framework developed and used primarily by people doing particle physics. Analyses incorporating its resources are primarily written in some combination of Python and C++. While it does contain a strong base level of classes, objects, and methods within its default toolkit, including some for unfolding, extended frameworks are typically built on top of it to meet the needs of specific experiments or to facilitate expanded capabilities that would bloatware for most users. The RooUnfold framework \cite{Adye2011} is one such example. Two methods from the RooUnfold framework will be covered in this section. One is considered naive, as will be shown. The other finds ways past the issues brought up in the first.
+The international particle physics community is highly collaborative. Most of this is likely due to necessity, as advances in the field are requiring larger and more expensive experiments that rely on pooled resources of talent, labor, and capital. This extends to digital resources as well. ROOT \cite{Brun1997} is an open-source data analysis framework developed and used primarily by people doing particle physics. Analyses incorporating its resources are primarily written in some combination of Python and C++. While it does contain a strong base level of classes, objects, and methods within its default toolkit, including some for unfolding, extended frameworks are typically built on top of it to meet the needs of specific experiments or to facilitate expanded capabilities that would effectively be bloatware for most users. The RooUnfold framework \cite{Adye2011} is one such example. Two methods from the RooUnfold framework will be covered in this section. One is considered naive, as will be shown. The other finds ways past the issues brought up in the first.
 
 \subsection{Inverting the Response Matrix}
 
@@ -860,7 +865,7 @@ $\bm{R}^{-1}$, as estimated from MC simulations, and map the reconstructed count
 the true counts via \begin{align}
   \bm{\hat\mu}=\bm{R}^{-1}\bm{n}.\label{eq:naiveInv}
 \end{align} A statistical justification for this comes from performing
-generalized leaste-squares \cite{Johnson2007} fit to estimate $\bm\mu$,
+generalized least-squares \cite{Johnson2007} fit to estimate $\bm\mu$,
 which relies on approximating bin count $n_i$ as normally distributed
 with mean $\nu_i$ and variance $1/\nu_i$. Minimizing the sums of squares
 yields \begin{align}\min_{\bm\mu}\nabla_{\!\bm\mu}\bm\chi^2(\bm{\mu})
@@ -991,12 +996,12 @@ bins_hat <- tibble(Model = c(rep(c(rep(c("Model 1",
                             rep("Reconstucted Model 2 MC",30),
                             rep("Truth Model 1 Data",30),
                             rep("Truth Model 2 Data",30),
-                            rep("MC 1 / Truth",30),
-                            rep("MC 2 / Truth",30),
-                            rep("MC 1 / 1 Data",30),
-                            rep("MC 2 / 1 Data",30),
-                            rep("MC 1 / 2 Data",30),
-                            rep("MC 2 / 2 Data",30)),
+                            rep("MC 1",30),
+                            rep("MC 2",30),
+                            rep("Data 1 unfolded with MC 1",30),
+                            rep("Data 2 unfolded with MC 1",30),
+                            rep("Data 1 unfolded with MC 2",30),
+                            rep("Data 2 unfolded with MC 2",30)),
                    Error = c(sqrt(diag(Vnu1))[1:30],
                              sqrt(diag(Vnu2))[1:30],
                              sqrt(mcReco1$Counts[1:30]/dmrat),
@@ -1076,7 +1081,7 @@ ggplot() +
 
 The massive, rapid oscillations and large uncertainties indicate that these are not very good results, regardless of whether or not the Data and the MC came from the same Model. The unfolding process used here cannot account for even small random variations in Reconstructed space because it has been over-fitted by the MC results. In search of an unbiased estimator we have unwittingly created a minimum variance that is simply too large to be in any way useful. Some degree of bias in estimating $\bm{\hat\mu}$ will be needed to probe the neighborhood around the unbiased estimate resulting from minimizing the least-squares of Equation \eqref{eq:leastsq} (or equivalent maximum log-likelihood) to find an alternative solution that can actually be used elsewhere. This is done by including an extra term in these equations through a process called \textbf{Regularization}.
 
-\subsection{Regularization}
+\subsection{Regularization}\label{sub:reg}
 
 This section reviews a method of unfolding that utilizes a form of \textbf{Tikhonov regularization}. Tikhonov regularization as discussed here can be described as a form of \textbf{regularized ridge regression} with weighted least-squares, and using a ridge penalty known by some as the \textbf{ridge fused penalty} \cite{vanwieringen2021}. This method is referred to in particle physics as \textbf{Singular Value Decomposition} (SVD) \cite{Adye2011}\cite{Blobel2013}\cite{Cowan1998}, which unfortunately hides much of the underlying concepts. In general, SVD is a matrix factorization method in linear algebra which, to be fair, is featured prominently in this unfolding method. Please refer to Appendix \ref{app:svd} for a brief description of SVD.
 
@@ -1094,30 +1099,38 @@ After rescaling singular value decomposition is then applied to the reconstructe
 \end{align}
 The elements of the diagonal matrix $\bm{T}$ are to be written $T_{ij}=t_i^2\delta_{ij}$. Substituting the inverse of this SVD of $\bm{\hat\Sigma}_\nu$ into Equation \eqref{regSq} the weighted sum of squares becomes an unweighted sum of squares, such that
 \begin{align}
-  \chi^2(\bm{\beta})=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right),
+  \chi^2(\bm{\beta})
+    &=\left(\bm{Y}-\bm{X}\bm{\beta}\right)^T\bm{\hat\Sigma}_\nu^{-1}\left(\bm{Y}-\bm{X}\bm{\beta}\right)\nonumber\\
+    &=\left(\bm{Y}-\bm{X}\bm{\beta}\right)^T\bm{Q}\bm{T}^{-1}\bm{Q}^T\left(\bm{Y}-\bm{X}\bm{\beta}\right)\nonumber\\
+    &=\left(\bm{Y}-\bm{X}\bm{\beta}\right)^T\bm{Q}\bm{T}^{-1/2}\bm{T}^{-1/2}\bm{Q}^T\left(\bm{Y}-\bm{X}\bm{\beta}\right)\nonumber\\
+    &=\left(\bm{T}^{-1/2}\bm{Q}^T\bm{Y}-\bm{T}^{-1/2}\bm{Q}^T\bm{X}\bm{\beta}\right)^T\left(\bm{T}^{-1/2}\bm{Q}^T\bm{Y}-\bm{T}^{-1/2}\bm{Q}^T\bm{X}\bm{\beta}\right)\nonumber\\
+    &=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right),
 \end{align}
 where
 \begin{align}
-  \tilde{X}_{ij}=\frac{1}{t_i}\sum_{k=1}^NQ_{ik}X_{kj}\;\;\;\;\;\;\;\text{and}\;\;\;\;\;\;\tilde{Y}_i=\frac{1}{t_i}\sum_{k=1}^NQ_{ik}Y_{k}.
+  \bm{\tilde{X}}=\bm{T}^{-1/2}\bm{Q}^T\bm{X}\;\;\;\;\;\;\;\text{and}\;\;\;\;\;\;\bm{\tilde{Y}}=\bm{T}^{-1/2}\bm{Q}^T\bm{Y}.
 \end{align}
-The bias introduced by regularizing the sum of squares exists by way of the addition of a weighted functional $\tau\,\bm{\Omega}(\bm{\beta})$. As an operator it acts on $\bm{\beta}$ in a fixed way as determined be the needs of the analyst, and $\tau$ (or $\alpha$) is varied to shift the location of the minimum least-squares \cite{Tikh1977}. In this circumstance we are most concerned with reducing the oscillations in our final estimate by encouraging smoothness in the estimated distribution. The general practice is to use an estimate of the second derivative between the ordered elements of $\bm{\beta}$ by way of a matrix operator $\bm{C}$, with the overall goal of minimizing
+The bias introduced by regularizing the sum of squares exists by way of the addition of a weighted functional $\tau\,\bm{\Omega}(\bm{\beta})$. As an operator it acts on $\bm{\beta}$ in a fixed way as determined by the needs of the analyst, and $\tau$ (sometimes $\alpha$ or $\lambda$) is varied to shift the location of the minimum least-squares \cite{Tikh1977}. In this circumstance we are most concerned with reducing the oscillations in our final estimate by encouraging smoothness in the estimated distribution. The general practice is to use an estimate of the second derivative between the ordered elements of $\bm{\beta}$ by way of a matrix operator $\bm{C}$, with the overall goal of minimizing
 \begin{align}
-  \left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)+\tau (\bm{C}\bm{\beta})^T\bm{C}\bm{\beta}.\label{eq:regular}
+  \chi^2(\bm{\beta})
+    &=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)\nonumber\\
+    &=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)+\tau (\bm{C}\bm{\beta})^T\bm{C}\bm{\beta}\nonumber\\
+    &=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)+\tau\bm{\beta}^T\bm{C}^T\bm{C}\bm{\beta}.\label{eq:regular}
 \end{align}
-The matrix $\bm{C}$ by default assumes a uniform bin width, but if that is not the case the bins can be weighted accordingly by a diagonal matrix $\bm{B}$ whose element $B_{ii}$ equals the width of bin $i$. Plugged in, this changes the regularizing expression in Equation \eqref{eq:regular} to
+The matrix $\bm{C}$ by default assumes a uniform bin width, but if that is not the case the bins can be weighted accordingly by a diagonal matrix $\bm{B}$ with positive elements $B_{ii}=\Delta x_i$, the width of bin $i$. Plugged in, this changes the regularizing expression in Equation \eqref{eq:regular} to
 \begin{align}
-  \tau\left(\bm{B}^{1/2}\bm{C}\bm{\beta}\right)^T\bm{B}^{1/2}\bm{C}\bm{\beta}\;\;=\;\;\tau\bm{\beta}^T\left(\bm{C}^T\bm{B}\bm{C}\right)\bm{\beta},\nonumber
+  \tau\left(\bm{B}^{1/2}\bm{C}\bm{\beta}\right)^T\bm{B}^{1/2}\bm{C}\bm{\beta}\;\;=\;\;\tau\bm{\beta}^T\bm{C}^T\bm{B}\bm{C}\bm{\beta},\nonumber
 \end{align}
 where \cite{Cowan1998},
 \begin{align}
   \begin{matrix}
     \bm{C}=\begin{pmatrix}
-      -1&1&0&\dots&\\
-      1&-2&1&\dots&&\\
-      0&1&-2&\ddots&\\
-      \vdots&\vdots&\vdots&\ddots&\vdots&\vdots\\
-      &&&\dots&-2&1\\
-      &&&\dots&1&-1
+      -1&1&0&0&\dots&\\
+      1&-2&1&0&\dots&&\\
+      0&1&-2&1&\ddots&\\
+      \vdots&\vdots&\vdots&\vdots&\ddots&\vdots&\vdots\\
+      &&&&\dots&-2&1\\
+      &&&&\dots&1&-1
     \end{pmatrix}&
     \text{and}&
     \bm{B}=\begin{pmatrix}
@@ -1129,7 +1142,7 @@ where \cite{Cowan1998},
     \end{pmatrix}.
   \end{matrix}\nonumber
 \end{align}
-H$\ddot{\text{o}}$cker and Kartvelishvili work with this to conceptualize an equivalent to Equation \eqref{eq:mat} that involves stacking $N\times M$ matrix $\sqrt{\tau}\,\bm{C}$ below the response matrix and lengthening the Reconstructed vector by $N$ zeros, such that
+Uniform bin widths where $\Delta x_i\neq1$ are equivalent to when $\Delta x_i=1$, with $\tau$ absorbing the appropriate scale factor. Continuing with uniform bin width, H$\ddot{\text{o}}$cker and Kartvelishvili conceptualize an equivalent to Equation \eqref{eq:mat} that involves stacking $N\times M$ matrix $\sqrt{\tau}\,\bm{C}$ below the response matrix and lengthening the Reconstructed vector by $N$ zeros, such that
 \begin{align}
   \begin{bmatrix}
     \bm{\tilde{X}}\\\sqrt{\tau}\,\bm{C}
@@ -1139,17 +1152,17 @@ H$\ddot{\text{o}}$cker and Kartvelishvili work with this to conceptualize an equ
     \bm{0}_N
   \end{bmatrix},\nonumber
 \end{align}
-From here they implement the method of \textbf{damped least squares} to express the solution for $\tau>0$ in terms of the solution for $\tau=0$. They start with absorbing the matrix $\bm{C}$ into $\bm{\beta}$ to get $\begin{bmatrix}\bm{\tilde{X}}\bm{C}^{-1}\\\sqrt{\tau}\,\bm{I}_{N\times M}\end{bmatrix}\bm{C}\bm{\beta}$. The matrix $\bm{C}$ is notably singular, so $\bm{C}^{-1}$ does not exist. The writers work around this by adding a negligible value to its diagonal elements and creating the invertable matrix $\bm{\tilde{C}}=\bm{C}+\xi\bm{I}$, where typically $\xi=10^{-3}$ or $10^{-4}$.
+At this point you could perform SVD to calculate a pseudoinverse and be done. However, they instead implement the method of \textbf{damped least squares} to express the solution for $\tau>0$ in terms of the solution for $\tau=0$. They start with absorbing the matrix $\bm{C}$ into $\bm{\beta}$ to get $\begin{bmatrix}\bm{\tilde{X}}\bm{C}^{-1}\\\sqrt{\tau}\,\bm{I}_{N\times M}\end{bmatrix}\bm{C}\bm{\beta}$. The matrix $\bm{C}$ is notably singular, so $\bm{C}^{-1}$ does not exist. The writers work around this by adding a negligible value to its diagonal elements and creating the invertable matrix $\bm{\tilde{C}}=\bm{C}+\xi\bm{I}$, where typically $\xi=10^{-3}$ or $10^{-4}$.
 
 Setting $\tau=0$ and applying singular value decomposition to the remaining matrix on the left-hand side, such that $\bm{\tilde{X}\tilde{C}}^{-1}=\bm{USV}^T$, will modify the least-squares equation to 
 \begin{align}\chi^2
   &=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)\nonumber\\
   &=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\tilde{C}}^{-1}\bm{\tilde{C}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\tilde{C}}^{-1}\bm{\tilde{C}}\bm{\beta}\right)\nonumber\\
   &=\left(\bm{\tilde{Y}}-\bm{USV}^T\bm{\tilde{C}\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{USV}^T\bm{\tilde{C}\beta}\right)\nonumber\\
-  &=\left(\bm{\tilde{Y}}-\bm{USb}\right)^T\left(\bm{\tilde{Y}}-\bm{USb}\right)\nonumber\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\{\bm{b}=\bm{V}^T\bm{\tilde{C}\beta}\}\\
+  &=\left(\bm{\tilde{Y}}-\bm{USb}\right)^T\left(\bm{\tilde{Y}}-\bm{USb}\right)\nonumber\tag{$\bm{b}=\bm{V}^T\bm{\tilde{C}\beta}$}\\
   &=\left(\bm{\tilde{Y}}^T-\bm{b}^T\bm{S}^T\bm{U}^T\right)\left(\bm{\tilde{Y}}-\bm{USb}\right)\nonumber\\
-  &=\bm{\tilde{Y}}^T\bm{UU}^T\bm{\tilde{Y}}-\bm{b}^T\bm{S}^T\bm{U}^T\bm{\tilde{Y}}-\bm{\tilde{Y}}^T\bm{USb}+\bm{b}^T\bm{S}^T\bm{U}^T\bm{USb}\;\;\;\;\;\;\{\bm{UU}^T=\bm{U}^T\bm{U}=\bm{I}_{N\times N}\}\nonumber\\
-  &=\bm{y}^T\bm{y}-\bm{b}^T\bm{S}^T\bm{y}-\bm{y}^T\bm{Sb}+\bm{b}^T\bm{S}^T\bm{S}\bm{b}\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\{\bm{y}=\bm{U}^T\bm{Y}\}\nonumber\\
+  &=\bm{\tilde{Y}}^T\bm{UU}^T\bm{\tilde{Y}}-\bm{b}^T\bm{S}^T\bm{U}^T\bm{\tilde{Y}}-\bm{\tilde{Y}}^T\bm{USb}+\bm{b}^T\bm{S}^T\bm{U}^T\bm{USb}\tag{$\bm{UU}^T=\bm{U}^T\bm{U}=\bm{I}_{N\times N}$}\nonumber\\
+  &=\bm{y}^T\bm{y}-\bm{b}^T\bm{S}^T\bm{y}-\bm{y}^T\bm{Sb}+\bm{b}^T\bm{S}^T\bm{S}\bm{b}\tag{$\bm{y}=\bm{U}^T\bm{\tilde{Y}}$}\nonumber\\
   &=(\bm{y}-\bm{Sb})^T(\bm{y}-\bm{Sb}).\nonumber
 \end{align}
 Since $\bm{S}$ is a diagonal matrix with elements $S_{ii}=s_i>0$ the solution can be found easily enough to be 
@@ -1188,23 +1201,18 @@ SigNu2 <- diag(dataReco2$Counts)
 Y1 <- dataReco1$Counts
 Y2 <- dataReco2$Counts
 
+# Decompose the covariance matrix
 Q1 <- svd(SigNu1)$u
 Q2 <- svd(SigNu2)$u
 T1 <- diag(svd(SigNu1)$d)
 T2 <- diag(svd(SigNu1)$d)
 
-tXm1d1 <- tXm1d2 <- tXm2d1 <- tXm2d2 <- matrix(0,nrow=31,ncol=30)
-tY1 <- tY2 <- rep(0,31)
-for(i in 1:31){
-  for(j in 1:30){
-    tXm1d1[i,j] <- (Q1[i,] %*% X1[,j])/sqrt(T1[i,i])
-    tXm1d2[i,j] <- (Q2[i,] %*% X1[,j])/sqrt(T2[i,i])
-    tXm2d1[i,j] <- (Q1[i,] %*% X2[,j])/sqrt(T1[i,i])
-    tXm2d2[i,j] <- (Q2[i,] %*% X2[,j])/sqrt(T2[i,i])
-  }
-  tY1[i] <- (Q1[i,] %*% Y1)/sqrt(T1[i,i])
-  tY2[i] <- (Q2[i,] %*% Y2)/sqrt(T2[i,i])
-}
+tXm1d1 <- sqrt(solve(T1)) %*% t(Q1) %*% X1
+tXm1d2 <- sqrt(solve(T2)) %*% t(Q2) %*% X1
+tXm2d1 <- sqrt(solve(T1)) %*% t(Q1) %*% X2
+tXm2d2 <- sqrt(solve(T2)) %*% t(Q2) %*% X2
+tY1 <- sqrt(solve(T1)) %*% t(Q1) %*% Y1 
+tY2 <- sqrt(solve(T2)) %*% t(Q2) %*% Y2 
 
 Um1d1 <- svd(tXm1d1 %*% inv_tC)$u
 Um1d2 <- svd(tXm1d2 %*% inv_tC)$u
@@ -1235,10 +1243,10 @@ y22 <- t(Um2d2) %*% tY2
 ```{r, echo = FALSE, fig.height=3.25, fig.align='center'}
 findTau <- tibble(x = rep(c(0,rep(1:29,each=2),30),4),
                   mag_y = abs(rep(c(y11,y12,y21,y22),each=2)),
-                  label = c(rep("MC 1 / 1 Data",60),
-                            rep("MC 1 / 2 Data",60),
-                            rep("MC 2 / 1 Data",60),
-                            rep("MC 2 / 2 Data",60)))
+                  label = c(rep("Data 1 unfolded with MC 1",60),
+                            rep("Data 2 unfolded with MC 1",60),
+                            rep("Data 1 unfolded with MC 2",60),
+                            rep("Data 2 unfolded with MC 2",60)))
 
 sTau <- rep(c(s11,s12,s21,s22)^2,each=2)/
   (rep(c(s11,s12,s21,s22)^2,each=2) + 
@@ -1251,10 +1259,10 @@ findTau <- rbind(findTau,
 tauArrow <- tibble(x=c(4.5,4.5,4.5,4.5),y=5e-04,
                    xend=c(4.5,4.5,4.5,4.5),
                    yend=c(0.5,0.25,0.5,0.25),
-                   label = c("MC 1 / 1 Data",
-                             "MC 1 / 2 Data",
-                             "MC 2 / 1 Data",
-                             "MC 2 / 2 Data"))
+                   label = c("Data 1 unfolded with MC 1",
+                             "Data 2 unfolded with MC 1",
+                             "Data 1 unfolded with MC 2",
+                             "Data 2 unfolded with MC 2"))
 ggplot() + theme_bw() +
   geom_hline(yintercept = 1, lty = "dotted") +
   geom_line(data = findTau,
@@ -1282,10 +1290,10 @@ ggplot() + theme_bw() +
   geom_text(data = tibble(x=c(5,5,5,5),
                           y=c(1e-05),
                           lab=c("k==5","k==5","k==5","k==5"),
-                          label = c("MC 1 / 1 Data",
-                             "MC 1 / 2 Data",
-                             "MC 2 / 1 Data",
-                             "MC 2 / 2 Data")),
+                          label = c("Data 1 unfolded with MC 1",
+                             "Data 1 unfolded with MC 2",
+                             "Data 2 unfolded with MC 1",
+                             "Data 2 unfolded with MC 2")),
             mapping = aes(x=x,y=y,label=lab), size = 3,
             parse = TRUE) +
   theme(axis.title = element_text(size = 9)) +
@@ -1306,7 +1314,8 @@ nMC <- 2
 nData <- 2
 
 tvec1 <- c(2^{-1:19}) # vector of trial taus
-tvec2 <- seq(4386.1,4386.35,0.01)
+#tvec2 <- seq(4386.1,4386.35,0.01)
+tvec2 <- seq(1527,1527.3,0.01)
 tvecS <- c(s11,s12,s21,s22)^2
 
 nt1 <- length(tvec1)
@@ -1325,10 +1334,10 @@ mu2 <- mcTruth2$Counts
 
 hats <- tibble(X = rep(seq(0.5,29.5,1),4*length(taus[1,1,])),
                CVCounts = rep(0,30*4*length(taus[1,1,])),
-               label = rep(rep(c("MC 1 / 1 Data",
-                                 "MC 1 / 2 Data",
-                                 "MC 2 / 1 Data",
-                                 "MC 2 / 2 Data"),each=30),
+               label = rep(rep(c("Data 1 unfolded with MC 1",
+                                 "Data 2 unfolded with MC 1",
+                                 "Data 1 unfolded with MC 2",
+                                 "Data 2 unfolded with MC 2"),each=30),
                            length(taus[1,1,])),
                SD = rep(0,30*4*length(taus[1,1,])),
                MC = rep(rep(c("MC 1","MC 2"),each=2*30),
@@ -1449,71 +1458,78 @@ compareChis1 <-
                  taus[2,2,1:nt1],taus[1,1,1:nt1]), 
          Chi2 = c(chis11d[1:nt1],chis12d[1:nt1],chis21d[1:nt1],
                   chis22d[1:nt1],(chis11d+chis12d+chis21d+chis22d)[1:nt1]),
-         col=c(rep("MC 1 / 1 Data",
+         col=c(rep("Data 1 unfolded with MC 1",
                    length(taus[1,1,1:nt1])),
-               rep("MC 1 / 2 Data",
+               rep("Data 1 unfolded with MC 2",
                    length(taus[1,2,1:nt1])),
-               rep("MC 2 / 1 Data",
+               rep("Data 2 unfolded with MC 1",
                    length(taus[2,1,1:nt1])),
-               rep("MC 2 / 2 Data",
+               rep("Data 2 unfolded with MC 2",
                    length(taus[2,2,1:nt1])),
-               rep("Sum(MC i / j Data)",
+               rep("Sum(Data i unf. with MC j)",
                    length(taus[2,2,1:nt1]))))
-
-Chi_plot <- ggplot() + theme_bw() +
-    geom_hline(yintercept = 0, lty = 2) +
-    geom_line(data = compareChis1, 
-              mapping = aes(x=tau, y=Chi2, color=col)) +
-    scale_y_continuous(name = expression(Chi^2)) +
-    scale_x_log10(name = expression(tau)) + 
-    theme(axis.text.x = element_text(size = 8,angle=-30)) +
-    geom_point(data = compareChis1,
-               mapping = aes(x=tau, y=Chi2, fill=col),
-               shape = 21) +
-    scale_color_manual(name = "Pairings",
-                       values = c("#5e81b5","#e19c24",
-                                  "#eb6235","#8fb032",
-                                  "#333333")) +
-    scale_fill_manual(name = "Pairings",
-                      values = c("#5e81b5","#e19c24",
-                                 "#eb6235","#8fb032",
-                                 "#888888")) +
-  labs(title = "Unfolded vs Data Truth")
 
 compareChis2 <- 
   tibble(tau = c(taus[1,1,1:nt1],taus[1,2,1:nt1],taus[2,1,1:nt1],
                  taus[2,2,1:nt1],taus[1,1,1:nt1]), 
          Chi2 = c(chis11m[1:nt1],chis12m[1:nt1],chis21m[1:nt1],
                   chis22m[1:nt1],(chis11m+chis12m+chis21m+chis22m)[1:nt1]),
-         col=c(rep("MC 1 / 1 Data",
+         col=c(rep("Data 1 unfolded with MC 1",
                    length(taus[1,1,1:nt1])),
-               rep("MC 1 / 2 Data",
+               rep("Data 1 unfolded with MC 2",
                    length(taus[1,2,1:nt1])),
-               rep("MC 2 / 1 Data",
+               rep("Data 2 unfolded with MC 1",
                    length(taus[2,1,1:nt1])),
-               rep("MC 2 / 2 Data",
+               rep("Data 2 unfolded with MC 2",
                    length(taus[2,2,1:nt1])),
-               rep("Sum(MC i / j Data)",
+               rep("Sum(Data i unf. with MC j)",
                    length(taus[2,2,1:nt1]))))
 
+sumChi2 <- chis11d+chis12d+chis21d+chis22d
+minChi2_index <- nt1+which.min(sumChi2[(nt1+1):(nt1+nt2)])
+
+Chi_plot <- ggplot() + theme_bw() +
+  geom_hline(yintercept = 0, lty = 2) +
+  geom_vline(xintercept = taus[1,1,minChi2_index], 
+             linetype = 3, color = "#FF1493") +
+  geom_line(data = compareChis1, 
+            mapping = aes(x=tau, y=Chi2, color=col)) +
+  scale_y_continuous(name = expression(chi^2)) +
+  scale_x_log10(name = expression(tau)) + 
+  theme(axis.text.x = element_text(size = 8, angle=-30)) +
+  geom_point(data = compareChis1,
+             mapping = aes(x=tau, y=Chi2, fill=col),
+             shape = 21, size = 1) +
+  scale_color_manual(name = "Pairings",
+                     values = c("#5e81b5","#e19c24",
+                                "#eb6235","#8fb032",
+                                "#333333")) +
+  scale_fill_manual(name = "Pairings",
+                    values = c("#5e81b5","#e19c24",
+                               "#eb6235","#8fb032",
+                               "#888888")) +
+  labs(title = "Unfolded vs Data Truth")
+
 Chi_plot2 <- ggplot() + theme_bw() +
-    geom_hline(yintercept = 0, lty = 2) +
-    geom_line(data = compareChis2, 
-              mapping = aes(x=tau, y=Chi2, color=col)) +
-    scale_y_continuous(name = expression(Chi^2)) +
-    scale_x_log10(name = expression(tau)) + 
-    theme(axis.text.x = element_text(size = 8,angle=-30)) +
-    geom_point(data = compareChis2,
-               mapping = aes(x=tau, y=Chi2, fill=col),
-               shape = 21) +
-    scale_color_manual(name = "Pairings",
-                       values = c("#5e81b5","#e19c24",
-                                  "#eb6235","#8fb032",
-                                  "#333333")) +
-    scale_fill_manual(name = "Pairings",
-                      values = c("#5e81b5","#e19c24",
-                                 "#eb6235","#8fb032",
-                                 "#888888")) +
+  geom_hline(yintercept = 0, lty = 2) +
+  geom_vline(xintercept = taus[1,1,minChi2_index], 
+             linetype = 3, color = "#FF1493") +
+  geom_line(data = compareChis2, 
+            mapping = aes(x=tau, y=Chi2, color=col)) +
+  scale_y_continuous(name = expression(Chi^2)) +
+  scale_x_log10(name = expression(tau)) + 
+  theme(axis.text.x = element_text(size = 8,angle=-30)) +
+  geom_point(data = compareChis2,
+             mapping = aes(x=tau, y=Chi2, fill=col),
+             shape = 21, size = 1) +
+  scale_color_manual(name = "Pairings",
+                     values = c("#5e81b5","#e19c24",
+                                "#eb6235","#8fb032",
+                                "#333333")) +
+  scale_fill_manual(name = "Pairings",
+                    values = c("#5e81b5","#e19c24",
+                               "#eb6235","#8fb032",
+                               "#888888")) +
   labs(title = "Unfolded vs MC Truth")
 
 D1 <- solve(lower.tri(matrix(1,nt2,nt2),diag=T))
@@ -1528,15 +1544,15 @@ compareDeltaChis2 <-
                    (D1%*%chis21d[(nt1+1):(nt1+nt2)])[-1],
                    (D1%*%chis22d[(nt1+1):(nt1+nt2)])[-1],
                    (D1%*%(chis11d+chis12d+chis21d+chis22d)[(nt1+1):(nt1+nt2)])[-1]),
-         col=c(rep("MC 1 / 1 Data",
+         col=c(rep("Data 1 unfolded with MC 1",
                    length(taus[1,1,(nt1+1):(nt1+nt2)][-1])),
-               rep("MC 1 / 2 Data",
+               rep("Data 1 unfolded with MC 2",
                    length(taus[1,2,(nt1+1):(nt1+nt2)][-1])),
-               rep("MC 2 / 1 Data",
+               rep("Data 2 unfolded with MC 1",
                    length(taus[2,1,(nt1+1):(nt1+nt2)][-1])),
-               rep("MC 2 / 2 Data",
+               rep("Data 2 unfolded with MC 2",
                    length(taus[2,2,(nt1+1):(nt1+nt2)][-1])),
-               rep("Sum(MC i / j Data)",
+               rep("Sum(Data i unf. with MC j)",
                    length(taus[2,2,(nt1+1):(nt1+nt2)][-1]))))
 
 dChi_plot2 <- ggplot() + theme_bw() +
@@ -1546,9 +1562,12 @@ dChi_plot2 <- ggplot() + theme_bw() +
   geom_point(data = compareDeltaChis2,
              mapping = aes(x=tau, y=abs(dChi2), fill=col),
              shape = 21) +
-  scale_y_log10(name = expression(paste("Abs(",Delta,Chi^2,")"))) +
+  scale_y_log10(name = expression(paste("Abs(",Delta,chi^2,")"))) +
   scale_x_continuous(name = expression(tau)) +
-  theme(axis.text.x = element_text(size = 8,angle=-30)) +
+  labs(title = expression(paste("Plot of |",chi^2,(tau[i])-chi^2,(tau[i-1]),
+                                "| for Data Unfolded vs Data Truth"))) +
+  theme(axis.text.x = element_text(size = 8,angle=-30),
+        plot.title = element_text(size = 12)) +
   scale_color_manual(name = "Pairings",
                      values = c("#5e81b5","#e19c24",
                                 "#eb6235","#8fb032",
@@ -1556,8 +1575,31 @@ dChi_plot2 <- ggplot() + theme_bw() +
   scale_fill_manual(name = "Pairings",
                     values = c("#5e81b5","#e19c24",
                                "#eb6235","#8fb032",
-                               "#888888")) +
-  labs(title = "")
+                               "#888888"))
+
+Chi2table <- tibble(MC = c(1,1,2,2,NA),
+                    Data = c(1,2,1,2,NA),
+                    s5Tau = c(taus[1,1,nt1+nt2+5],
+                              taus[1,2,nt1+nt2+5],
+                              taus[2,1,nt1+nt2+5],
+                              taus[2,2,nt1+nt2+5],
+                              NA),
+                    s5Chi2 = c(chis11d[nt1+nt2+5],
+                               chis12d[nt1+nt2+5],
+                               chis21d[nt1+nt2+5],
+                               chis22d[nt1+nt2+5],
+                               sumChi2[nt1+nt2+5]),
+                    minTau = c(taus[1,1,minChi2_index],
+                               taus[1,2,minChi2_index],
+                               taus[2,1,minChi2_index],
+                               taus[2,2,minChi2_index],
+                               NA),
+                    minChi2 = c(chis11d[minChi2_index],
+                                chis12d[minChi2_index],
+                                chis21d[minChi2_index],
+                                chis22d[minChi2_index],
+                                sumChi2[minChi2_index]))
+Chi2table <- round(Chi2table,2)
 ```
 \begin{figure}[!ht]
     \centering
@@ -1569,7 +1611,7 @@ egg::ggarrange(Chi_plot +
                left = textGrob(expression(Chi^2), rot = 90, vjust = 0.25),
                nrow = 1)
 ```
-\caption{\emph{\small Above are plots of the individual $\chi^2$s and their summation $\sum\chi^2$ with respect to selected values of $\tau$. On the left the unfolded counts were compared to their actual true counts. On the right the unfolded counts were compared to the true counts of the MC model used to unfold them.}}
+\caption{\emph{\small Above are plots of the individual $\chi^2$s and their summation $\sum\chi^2$ with respect to selected values of $\tau$. On the left the unfolded counts were compared to their actual true counts. On the right the unfolded counts were compared to the true counts of the MC model used to unfold them. The dotted vertical pink line indicates the value of $\tau$ that minimizes $\sum\chi^2$ for the plot on the left.}}
   \label{chicomp}
 \end{figure}
 
@@ -1581,15 +1623,15 @@ As the purpose of unfolding is to undo effects related to the measurement proces
  \hline
  MC & Data & $\tau=s_5^2$ & $\chi^2$ & $\min\limits_{\tau}\sum\chi^2$ & $\chi^2$ \\
  \hline
- 1 & 1 & $5029.04$ &  $3.61$ & $4386.22$ &  $3.63$ \\ 
- 1 & 2 & $4942.46$ & $11.60$ & $4386.22$ & $11.43$ \\
- 2 & 1 & $4972.61$ &  $2.14$ & $4386.22$ &  $1.93$ \\
- 2 & 2 & $4923.57$ &  $5.98$ & $4386.22$ &  $6.27$ \\
+ 1 & 1 & $`r Chi2table$s5Tau[1]`$ & $`r Chi2table$s5Chi2[1]`$ & $`r Chi2table$minTau[1]`$ & $`r Chi2table$minChi2[1]`$ \\ 
+ 1 & 2 & $`r Chi2table$s5Tau[2]`$ & $`r Chi2table$s5Chi2[2]`$ & $`r Chi2table$minTau[2]`$ & $`r Chi2table$minChi2[2]`$ \\
+ 2 & 1 & $`r Chi2table$s5Tau[3]`$ & $`r Chi2table$s5Chi2[3]`$ & $`r Chi2table$minTau[3]`$ & $`r Chi2table$minChi2[3]`$ \\
+ 2 & 2 & $`r Chi2table$s5Tau[4]`$ & $`r Chi2table$s5Chi2[4]`$ & $`r Chi2table$minTau[4]`$ & $`r Chi2table$minChi2[4]`$ \\
  \hline
- \multicolumn{2}{|c||}{All} & \multicolumn{2}{|r||}{$\sum\chi^2=23.33$} & \multicolumn{2}{|r|}{$\sum\chi^2=23.26$}\\
+ \multicolumn{2}{|c||}{All} & \multicolumn{2}{|r||}{$\sum\chi^2=`r Chi2table$s5Chi2[5]`$} & \multicolumn{2}{|r|}{$\sum\chi^2=`r Chi2table$minChi2[5]`$}\\
  \hline
 \end{tabular}
-\caption{The $\chi^2$s and their summations $\sum\chi^2$ for the listed values of $\tau$ as chosen by their respective selection methods.}
+\caption{\emph{The $\chi^2$s and their summations $\sum\chi^2$ for the listed values of $\tau$ as chosen by their respective selection methods.}}
 \label{tab:chi2}
 \end{table}
 
@@ -1597,8 +1639,7 @@ As the purpose of unfolding is to undo effects related to the measurement proces
     \centering
 ```{r, echo = FALSE, fig.align='center', fig.height=4.5}
 k <- 5
-tau <- taus[1,1,(nt1+1):(nt1+nt2)][which.min((chis11d+chis12d+
-                                                chis21d+chis22d)[(nt1+1):(nt1+nt2)])]
+tau <- taus[1,1,minChi2_index]
 
 unfplot_t <- ggplot() + theme_bw() + geom_hline(yintercept = 0, lty = 2) +
   geom_line(data = truth[c(1:60,121:180),],
@@ -1631,7 +1672,7 @@ unfplot_t <- ggplot() + theme_bw() + geom_hline(yintercept = 0, lty = 2) +
                      name = "X (Truth)",
                      breaks = seq(0,30,3)) +
   scale_y_continuous(name = "Counts") + theme(axis.text.x = element_text(size = 8)) +
-  labs(title = expression(paste("SVD Unfolded (",tau==4386.22,")"))) +
+  labs(title = bquote("SVD Unfolded ("~tau==.(tau)~")")) +
   facet_wrap(~label)
 
 unfplot_k <- ggplot() + theme_bw() + geom_hline(yintercept = 0, lty = 2) +
@@ -1664,10 +1705,11 @@ unfplot_k <- ggplot() + theme_bw() + geom_hline(yintercept = 0, lty = 2) +
   scale_y_continuous(name = "Counts") +
   labs(title = expression(paste("SVD Unfolded (",k==5,")"))) +
   facet_wrap(~label)
-
 unfplot_t
+
+#(svd(rbind(tXm1d1,sqrt(4800)*tC))$v %*% diag(svd(rbind(tXm1d1,sqrt(4800)*tC))$d) %*% t(svd(rbind(tXm1d1,sqrt(4800)*tC))$u)) %*% c(tY1,rep(0,30))
 ```
-\caption{\emph{\small Unfolded Data superimposed on both MC Truth histograms. Data from Model 2 had the more difficult time unfolding using the opposite Model's MC response matrix during unfolding.}}
+\caption{\emph{\small Unfolded Data superimposed on both MC Truth histograms. Data from both Model 1 and 2 had a difficult time unfolding using the opposite Model's MC response matrix.}}
   \label{unfolded}
 \end{figure}
 
@@ -1677,8 +1719,10 @@ In Figure \ref{unfolded} each of the unfolded results are plotted against both M
 
 \section{Conclusion}
 
-The SVD-based unfolding method described here provides a robust approach to solving ill-posed inverse problems.
+The SVD Unfolding method described here provides a robust approach to solving ill-posed inverse problems, and it has had a storied career in particle physics experiments since its introduction \cite{ALEPH:1998}\cite{CLEO:1999dln}\cite{OPAL:2002plk}\cite{KLOE:2004lnj}\cite{ALEPH:2005}\cite{MiniBooNE:2009dxl}\cite{IceCube:2010whx}\cite{ATLAS:2011juz}\cite{ATLAS:2012tjt}\cite{Belle:2012}\cite{CDF:2012ctl}\cite{ALICE:2013dpt}\cite{PierreAuger:2014}\cite{CMS:2015}\cite{DayaBay:2015}. There are however many other unfolding methods that are currently heavily implemented. One is an iterative unfolding method based on Bayes' theorem \cite{DAgostini1994}\cite{DAgostini2010}. Popular among experiments at the Large Hadron Collider is the unfolding method SPlot \cite{Pivk:2004}, which focuses on unfolding the individual contributions to a signal of interest, such as the two processes of Model 1 or the three of Model 2. Also of note is another unfolding method based on least-squares and Tikhonov regularization called TUnfold \cite{Schmitt2012}, as well as a self-described iterative, dynamically stabilized (IDS) method of unfolding \cite{Malaescu:2009}\cite{Malaescu:2011}. In contrast to these methods there is an ongoing discussion about whether unfolded histograms need to be, or should be, used to test hypotheses. Some work has been done towards exploring this question and developing a "bottom-line-test" that directly compares theoretical predictions that have been smeared and distorted by a simulated detector response to detector data that has not been unfolded \cite{Cousins:2016}. With that said, unfolding continues to be an extremely important, and at times contentious, part of particle physics analyses. Consulting multiple methods of unfolding is common for an analysis, and any such method of hypothesis testing that does not involve unfolding would at this time likely exist as another supplementary method in this way.
 
+\section{Acknowledgements}
+I am grateful to my physics advisor, Heidi Schellman, for making it possible for me to study statistics these last few years concurrent with my physics PhD research. Through her I have been funded in part by the National Science Foundation. It is my hope that the material I've learned in pursuing a statistics degree will makeup for any misgivings she may have had along the way. I would also like to thank my statistics advisor James Molyneux for taking me in when my previous advisor left Oregon State University for a position elsewhere. His active engagement and endless optimism have been crucial towards my completion of this less traditional statistics MS project. Finally, I would like to thank Sarah Emerson and Sharmodeep Bhattacharyya for being my committee members as well as excellent disseminators of statistics knowledge and wisdom. I still frequent my notes from the courses I took under them.
 
 \newpage
 
@@ -1686,96 +1730,133 @@ The SVD-based unfolding method described here provides a robust approach to solv
 
 \section{Extra Plots}
 
-```{r, echo = FALSE, fig.align='center', fig.height=6}
+Below are some supplementary plots relevant to Section \ref{sub:reg}.
+
+\begin{figure}[!ht]
+    \centering
+```{r, echo = FALSE, fig.align='center', fig.height=3}
 diffdat1 <- hats %>% filter((MC == "MC 1" & Data == "Data 1" & Taus == tau) |
                   (MC == "MC 1" & Data == "Data 2" & Taus == tau) |
                   (MC == "MC 2" & Data == "Data 1" & Taus == tau) |
                   (MC == "MC 2" & Data == "Data 2" & Taus == tau)) %>%
-  mutate(DataTruth = rep(c(dataTruth1$Counts,dataTruth2$Counts),2))
-
-areadat1 <- tibble(X = rep(c(0,rep(1:30,each=2),rep(29:1,each=2),0,0),4),
-                  Y = rep(c(rep(dataTruth1$Counts,each=2),-rev(rep(dataTruth1$Counts,each=2)),dataTruth1$Counts[1],
-                            rep(dataTruth2$Counts,each=2),-rev(rep(dataTruth2$Counts,each=2)),dataTruth2$Counts[1]),2),
-                  label = rep(c("MC 1 / 1 Data - 1 Data","MC 1 / 2 Data - 2 Data",
-                                "MC 2 / 1 Data - 1 Data","MC 2 / 2 Data - 2 Data"),each=121),
-                  Data = rep(c(rep("Data 1",121),rep("Data 2",121)),2))
-
-g1 <- ggplot() + theme_bw() +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_polygon(data = areadat1,
-            mapping = aes(x=X,y=sign(Y)*sqrt(abs(Y)),fill=Data,color=Data),
-            linetype = "dotted") +
-  geom_polygon(data = areadat1,
-            mapping = aes(x=X,y=2*sign(Y)*sqrt(abs(Y)),fill=Data,color=Data),
-            linetype = "dotted") +
-  geom_errorbar(data = diffdat1,
-                mapping = aes(x=X,ymin=DataTruth-CVCounts-SD,
-                              ymax=DataTruth-CVCounts+SD),width=0.2) +
-  geom_point(data = rbind(diffdat1,diffdat1,diffdat1),
-             mapping = aes(x=X,y=DataTruth-CVCounts,fill=Data), shape = 21,size=1.5) +
-  scale_color_manual(values = c("#5e81b5","#e19c24")) +
-  scale_fill_manual(values = c(alpha("#5e81b5",0.3),alpha("#e19c24",0.3))) +
-  scale_x_continuous(expand = c(0,0), breaks = seq(0,30,3),
-                     name = "X (Truth)") +
-  scale_y_continuous(name = TeX("$\\mu-\\hat{\\mu}$    Count")) +
-  theme(axis.text.x = element_text(size = 8)) +
-  facet_wrap( ~label,nrow=4)
+  mutate(MCTruth = rep(c(mcTruth1$Counts,mcTruth2$Counts),2))
+diffdat1$Data[which(diffdat1$Data=="Data 1")] <- "Model 1"
+diffdat1$Data[which(diffdat1$Data=="Data 2")] <- "Model 2"
 
 diffdat2 <- hats %>% filter((MC == "MC 1" & Data == "Data 1" & Taus == tau) |
                   (MC == "MC 1" & Data == "Data 2" & Taus == tau) |
                   (MC == "MC 2" & Data == "Data 1" & Taus == tau) |
                   (MC == "MC 2" & Data == "Data 2" & Taus == tau)) %>%
-  mutate(DataTruth = rep(c(dataTruth2$Counts,dataTruth1$Counts),2))
+  mutate(DataTruth = c(dataTruth1$Counts,dataTruth1$Counts,
+                       dataTruth2$Counts,dataTruth2$Counts))
+diffdat2$Data[which(diffdat1$Data=="Data 1")] <- "Model 1"
+diffdat2$Data[which(diffdat1$Data=="Data 2")] <- "Model 2"
+
+areadat1 <- tibble(X = rep(c(0,rep(1:30,each=2),rep(29:1,each=2),0,0),4),
+                  Y = c(rep(c(rep(mcTruth1$Counts/dmrat,each=2),
+                              -rev(rep(mcTruth1$Counts/dmrat,each=2)),
+                              mcTruth1$Counts[1]/dmrat,
+                              rep(mcTruth2$Counts/dmrat,each=2),
+                              -rev(rep(mcTruth2$Counts/dmrat,each=2)),
+                              mcTruth2$Counts[1]/dmrat),2)),
+                  label = rep(c("Data 1 unfolded with MC 1","Data 1 unfolded with MC 2",
+                                "Data 2 unfolded with MC 1","Data 2 unfolded with MC 2"),each=121),
+                  MC = c(rep("Model 1",242),rep("Model 2",242)))
 
 areadat2 <- tibble(X = rep(c(0,rep(1:30,each=2),rep(29:1,each=2),0,0),4),
-                  Y = rep(c(rep(dataTruth2$Counts,each=2),-rev(rep(dataTruth2$Counts,each=2)),dataTruth2$Counts[1],
-                            rep(dataTruth1$Counts,each=2),-rev(rep(dataTruth1$Counts,each=2)),dataTruth1$Counts[1]),2),
-                  label = rep(c("MC 1 / 1 Data - 2 Data","MC 1 / 2 Data - 1 Data",
-                                "MC 2 / 1 Data - 2 Data","MC 2 / 2 Data - 1 Data"),each=121),
-                  Data = rep(c(rep("Data 2",121),rep("Data 1",121)),2))
-
-diffdat1$label[which(diffdat1$label=="MC 1 / 1 Data")] <-
-  paste0(diffdat1$label[which(diffdat1$label=="MC 1 / 1 Data")]," - 1 Data")
-diffdat1$label[which(diffdat1$label=="MC 1 / 2 Data")] <-
-  paste0(diffdat1$label[which(diffdat1$label=="MC 1 / 2 Data")]," - 2 Data")
-diffdat1$label[which(diffdat1$label=="MC 2 / 1 Data")] <-
-  paste0(diffdat1$label[which(diffdat1$label=="MC 2 / 1 Data")]," - 1 Data")
-diffdat1$label[which(diffdat1$label=="MC 2 / 2 Data")] <-
-  paste0(diffdat1$label[which(diffdat1$label=="MC 2 / 2 Data")]," - 2 Data")
-diffdat2$label[which(diffdat2$label=="MC 1 / 1 Data")] <-
-  paste0(diffdat2$label[which(diffdat2$label=="MC 1 / 1 Data")]," - 2 Data")
-diffdat2$label[which(diffdat2$label=="MC 1 / 2 Data")] <-
-  paste0(diffdat2$label[which(diffdat2$label=="MC 1 / 2 Data")]," - 1 Data")
-diffdat2$label[which(diffdat2$label=="MC 2 / 1 Data")] <-
-  paste0(diffdat2$label[which(diffdat2$label=="MC 2 / 1 Data")]," - 2 Data")
-diffdat2$label[which(diffdat2$label=="MC 2 / 2 Data")] <-
-  paste0(diffdat2$label[which(diffdat2$label=="MC 2 / 2 Data")]," - 1 Data")
-diffdat <- rbind(diffdat1,diffdat2)
+                  Y = c(rep(c(rep(dataTruth1$Counts,each=2),
+                              -rev(rep(dataTruth1$Counts,each=2)),
+                              dataTruth1$Counts[1]),2),
+                            rep(c(rep(dataTruth2$Counts,each=2),
+                                  -rev(rep(dataTruth2$Counts,each=2)),
+                                  dataTruth2$Counts[1]),2)),
+                  label = rep(c("Data 1 unfolded with MC 1","Data 1 unfolded with MC 2",
+                                "Data 2 unfolded with MC 1","Data 2 unfolded with MC 2"),each=121),
+                  `Data Truth` = c(rep("Model 1",242),rep("Model 2",242)))
 
 ggplot() + theme_bw() +
-  geom_hline(yintercept = 0, linetype = "dashed") + 
-  geom_polygon(data = rbind(areadat1,areadat2),
-            mapping = aes(x=X,y=sign(Y)*sqrt(abs(Y)),fill=Data,color=Data),
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_polygon(data = areadat1,
+            mapping = aes(x=X,y=sign(Y)*sqrt(abs(Y)),fill=label,color=label),
             linetype = "dotted") +
-  geom_polygon(data = rbind(areadat1,areadat2),
-            mapping = aes(x=X,y=2*sign(Y)*sqrt(abs(Y)),fill=Data,color=Data),
+  geom_polygon(data = areadat1,
+            mapping = aes(x=X,y=2*sign(Y)*sqrt(abs(Y)),fill=label,color=label),
             linetype = "dotted") +
-  geom_errorbar(data = rbind(diffdat1,diffdat2),
-                mapping = aes(x=X,ymin=DataTruth-CVCounts-SD,
-                              ymax=DataTruth-CVCounts+SD),width=0.2) +
-  geom_point(data = rbind(diffdat1,diffdat1,diffdat1,diffdat2,diffdat2,diffdat2),
-             mapping = aes(x=X,y=DataTruth-CVCounts,fill=Data), shape = 21,size=1.5) +
-  scale_color_manual(values = c("#5e81b5","#e19c24")) +
-  scale_fill_manual(values = c(alpha("#5e81b5",0.3),alpha("#e19c24",0.3))) +
+  geom_errorbar(data = diffdat1,
+                mapping = aes(x=X,ymin=CVCounts-MCTruth/dmrat-SD,
+                              ymax=CVCounts-MCTruth/dmrat+SD),width=0.2) +
+  geom_point(data = diffdat1,
+             mapping = aes(x=X,y=CVCounts-MCTruth/dmrat,fill=label), shape = 21,size=1.5) +
+  geom_point(data = diffdat1,
+             mapping = aes(x=X,y=CVCounts-MCTruth/dmrat,color=label), shape = 16,size=1) +
+  scale_color_manual(name = "Pairings",
+                     values = c("Data 1 unfolded with MC 1"="#5e81b5",
+                                "Data 1 unfolded with MC 2"="#5e81b5",
+                                "Data 2 unfolded with MC 1"="#e19c24",
+                                "Data 2 unfolded with MC 2"="#e19c24")) +
+  scale_fill_manual(name = "Pairings",
+                    values = c("Data 1 unfolded with MC 1"=alpha("#5e81b5",0.3),
+                               "Data 1 unfolded with MC 2"=alpha("#e19c24",0.3),
+                               "Data 2 unfolded with MC 1"=alpha("#5e81b5",0.3),
+                               "Data 2 unfolded with MC 2"=alpha("#e19c24",0.3))) +
   scale_x_continuous(expand = c(0,0), breaks = seq(0,30,3),
                      name = "X (Truth)") +
-  scale_y_continuous(name = TeX("$\\mu-\\hat{\\mu}$    Count")) +
+  scale_y_continuous(name = TeX("$\\hat{\\mu}_i-\\mu^{MC}_j$")) +
   theme(axis.text.x = element_text(size = 8)) +
-  facet_wrap( ~label, nrow=4)
-
-
+  facet_wrap( ~label,nrow=2) +
+  labs(title = "Residual of Unfolded Data to MC used in SVD Unfolding")
 ```
+\caption{\emph{\small The above is a plot of the residuals of the SVD unfolded Data with respect to the MC model used in the unfolding. The shaded regions represent 1 and 2 SD based on a per-bin Poisson model assumption for the MC's Truth counts.}}
+  \label{unfolded}
+\end{figure}
 
+\begin{figure}[!ht]
+    \centering
+```{r, echo = FALSE, fig.align='center', fig.height=3}
+ggplot() + theme_bw() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_polygon(data = areadat2,
+            mapping = aes(x=X,y=sign(Y)*sqrt(abs(Y)),fill=label,color=label),
+            linetype = "dotted") +
+  geom_polygon(data = areadat2,
+            mapping = aes(x=X,y=2*sign(Y)*sqrt(abs(Y)),fill=label,color=label),
+            linetype = "dotted") +
+  geom_errorbar(data = diffdat2,
+                mapping = aes(x=X,ymin=CVCounts-DataTruth-SD,
+                              ymax=CVCounts-DataTruth+SD),width=0.2) +
+  geom_point(data = diffdat2,
+             mapping = aes(x=X,y=CVCounts-DataTruth,fill=label), shape = 21,size=1.5) +
+  geom_point(data = diffdat2,
+             mapping = aes(x=X,y=CVCounts-DataTruth,color=label), shape = 16,size=1) +
+  scale_color_manual(name = "Pairings",
+                     values = c("Data 1 unfolded with MC 1"="#5e81b5",
+                                "Data 1 unfolded with MC 2"="#5e81b5",
+                                "Data 2 unfolded with MC 1"="#e19c24",
+                                "Data 2 unfolded with MC 2"="#e19c24")) +
+  scale_fill_manual(name = "Pairings",
+                    values = c("Data 1 unfolded with MC 1"=alpha("#5e81b5",0.3),
+                               "Data 1 unfolded with MC 2"=alpha("#e19c24",0.3),
+                               "Data 2 unfolded with MC 1"=alpha("#5e81b5",0.3),
+                               "Data 2 unfolded with MC 2"=alpha("#e19c24",0.3))) +
+  scale_x_continuous(expand = c(0,0), breaks = seq(0,30,3),
+                     name = "X (Truth)") +
+  scale_y_continuous(name = TeX("$\\hat{\\mu}_i-\\mu^{Data}_i$")) +
+  theme(axis.text.x = element_text(size = 8)) +
+  facet_wrap( ~label,nrow=2) +
+  labs(title = "Residual of Unfolded Data to Data Truth")
+```
+\caption{\emph{\small The above is a plot of the residuals of the SVD unfolded Data with respect to the same Data's Truth counts. SVD unnfolded Data from Model 1 is only compared to Model 1 Data's Truth counts, and similarly for Model 2. The shaded regions represent 1 and 2 SD based on a per-bin Poisson model assumption for the Data's Truth counts.}}
+  \label{unfolded}
+\end{figure}
+
+\begin{figure}[!ht]
+    \centering
+```{r, echo = FALSE, fig.align='center', fig.height=3}
+dChi_plot2
+```
+\caption{\emph{\small For adjacent tested values of $\tau$, the above plot shows the absolute value of the change in the weighted sums of squares of the residuals of the unfolded Data with respect to its True counts. The minimum value for the sum of the pairings' $\chi^2$'s indicates where the $\sum\chi^2$ shifts from decreasing with $\tau$ to increasing with $\tau$.}}
+  \label{unfolded}
+\end{figure}
 
 \section{Hilbert Spaces}\label{appHilbert}
 
@@ -1845,7 +1926,8 @@ sequence in a metric space $X$ is any sequence $\{x_n\}$ that
 $\forall\varepsilon>0$ there exists an integer $N$ such that
 $d(x_m,x_n)<\varepsilon$ when $m>N$ and $n>N$. A quick example of this
 is the sequence defined by $x_n=\sqrt{n}$. For some starting $x_m$ and
-$x_n$ where $m-n=\delta$, we have \begin{align}
+$x_n$ where $m-n=\delta$, we have 
+\begin{align}
 d(x_m,x_n)
   &=\sqrt{m}-\sqrt{n}\nonumber\\
   &=\sqrt{n+\delta}-\sqrt{n}\nonumber\\
@@ -1854,13 +1936,52 @@ d(x_m,x_n)
   &=\frac{\delta}{\sqrt{n}(\sqrt{1+\delta/n}+\sqrt{1})}\nonumber\\
   &<\frac{1}{\sqrt{n}}\left(\frac{\delta}{2}\right)<\varepsilon\nonumber\\
   \implies n &> \left(\frac{\delta}{2\varepsilon}\right)^2.\nonumber
-\end{align} Noting that for constant $\delta$ the limit of
+\end{align}
+Noting that for constant $\delta$ the limit of
 $\frac{1}{\sqrt{n}}\left(\frac{\delta}{2}\right)$ as
 $n\longrightarrow\infty$ is the zero vector (the point of convergence)
 would also be sufficient to show that $x_n=\sqrt{n}$ is a Cauchy
 sequence.
 
-\begin{wrapfigure}{r}{0.55\textwidth}
+Incidentally, a normed vector space that is complete as defined here
+meets the definition of a \textbf{Banach space}. An additional subset of
+the normed vector spaces consists of those spaces in which for all
+$x,y\in X$ there exists a real or complex number $\langle x,y\rangle$
+defined by an operator called the \textbf{inner product}. For all
+$x,y,z\in X$ this operation must satisfy
+\begin{enumerate}
+  \item $\langle x,y\rangle=\langle y,x\rangle^*$ (where the ${}^*$ represents the complex conjugate),
+  \item $\langle x+y,z\rangle=\langle x,z\rangle+\langle y,z\rangle$,
+  \item $\langle \alpha x,y\rangle=\alpha\langle x,y\rangle$ (for $\alpha\in\mathbb{C}$),
+  \item $\langle x,x\rangle\geq0$, and
+  \item $\langle x,x\rangle=0$ iff $x=0$.
+\end{enumerate}
+
+A space that satisfies these requirements forms an
+\textbf{inner product space}, and the inner product defined in such a
+space relates to the form of its norm, such that
+$\vert\vert x\vert\vert=\langle x,x\rangle^{1/2}$. Finally, at the
+intersection of Banach spaces and inner product spaces are the Hilbert
+spaces. I.e. a \textbf{Hilbert space} is a complete vector space with an
+inner product defined by its norm.
+
+A commonly presented example is the $L^2$ function space, which consists
+of functions that are square integrable, i.e. if
+$f(x)\in L^2\implies \vert\vert f(x)\vert\vert^2=\int_\chi\vert f(x)\vert^2dx<\infty$,
+where $\chi$ is the domain of $x$. The subset $L^2[-\pi,\pi]$, where
+$\chi=[-\pi,\pi]$, has the well known Fourier series as a basis, which
+is commonly written such that for $f(x)\in L^2[-\pi,\pi]$
+\begin{align}
+  f(x)=\frac{a_0}{2} + \sum_{n=1}^\infty\left[a_n\cos(nx)+b_n\sin(nx)\right],\nonumber
+\end{align} 
+where 
+$$\begin{matrix}
+  a_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\cos(nx)dx \\ \text{and} \\ b_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\sin(nx)dx.
+\end{matrix}$$
+Verification that this basis meets all the requirements
+laid out so far is beyond the scope of this paper.
+
+\begin{figure}
   \centering
 ```{r, echo=F, fig.height=3.6, fig.width=3.6, fig.align='center'}
 venndiagram <- tibble(X0 = c( 0.0,0.0,
@@ -1912,41 +2033,8 @@ ggplot() +
 ```
   \caption{\emph{A Venn diagram representing the intersection and nesting of the spaces described in Appendix \ref{appHilbert}.}}
   \label{spaceVenn}
-  \vspace{-30pt}
-\end{wrapfigure}
-
-Incidentally, a normed vector space that is complete as defined here
-meets the definition of a \textbf{Banach space}. An additional subset of
-the normed vector spaces consists of those spaces in which for all
-$x,y\in X$ there exists a real or complex number $\langle x,y\rangle$
-defined by an operator called the \textbf{inner product}. For all
-$x,y,z\in X$ this operation must satisfy
-\begin{enumerate}
-  \item $\langle x,y\rangle=\langle y,x\rangle^*$ (where the ${}^*$ represents the complex conjugate),
-  \item $\langle x+y,z\rangle=\langle x,z\rangle+\langle y,z\rangle$,
-  \item $\langle \alpha x,y\rangle=\alpha\langle x,y\rangle$ (for $\alpha\in\mathbb{C}$),
-  \item $\langle x,x\rangle\geq0$, and
-  \item $\langle x,x\rangle=0$ iff $x=0$.
-\end{enumerate}
-A space that satisfies these requirements forms an
-\textbf{inner product space}, and the inner product defined in such a
-space relates to the form of its norm, such that
-$\vert\vert x\vert\vert=\langle x,x\rangle^{1/2}$. Finally, at the
-intersection of Banach spaces and inner product spaces are the Hilbert
-spaces. I.e. a \textbf{Hilbert space} is a complete vector space with an
-inner product defined by its norm.
-
-A commonly presented example is the $L^2$ function space, which consists
-of functions that are square integrable, i.e. if
-$f(x)\in L^2\implies \vert\vert f(x)\vert\vert^2=\int_\chi\vert f(x)\vert^2dx<\infty$,
-where $\chi$ is the domain of $x$. The subset $L^2[-\pi,\pi]$, where
-$\chi=[-\pi,\pi]$, has the well known Fourier series as a basis, which
-is commonly written such that for $f(x)\in L^2[-\pi,\pi]$ \begin{align}
-  f(x)=\frac{a_0}{2} + \sum_{n=1}^\infty\left[a_n\cos(nx)+b_n\sin(nx)\right],\nonumber
-\end{align} where $$\begin{matrix}
-  a_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\cos(nx)dx \\ \text{and} \\ b_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\sin(nx)dx.
-\end{matrix}$$ Verification that this basis meets all the requirements
-laid out so far is beyond the scope of this paper.
+  \vspace{-20pt}
+\end{figure}
 
 \section{Description of Simulations} \label{simuApp}
 
@@ -2053,6 +2141,7 @@ where $\bm{U}$ and $\bm{V}$ are respectively $N\times N$ and $M\times M$ unitary
 
 A \textbf{unitary} matrix is any matrix in which its conjugate transpose is also its inverse, i.e. $\bm{U}^\dagger=\bm{U}^{-1}$. When the contents of a unitary matrix are all real it is also referred to as an \textbf{orthogonal} or \textbf{orthonormal} matrix. A \textbf{rectangular diagonal matrix} is simply a rectangular (not necessarily square) in which all of its off diagonal components are $0$, i.e. $S_{ij}=0$ if $i\neq j$. The matrices $\bm{U}$ and $\bm{V}$ can be thought of as two rotation matrices that sandwich a rescaling matrix $\bm{S}$.
 
+```{r, echo=FALSE, eval=FALSE}
 \section{Bin-by-bin Unfolding}
 
 In this naive approach a multiplicative \textbf{correction factor} $C_i$ is
@@ -2087,8 +2176,9 @@ easily enough as well, and with it the bias
     &=\frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}\nu_i-\mu_i\nonumber\\
     &=\left(\frac{\mu_i^{\text{MC}}}{\nu_i^{\text{MC}}}-\frac{\mu_i}{\nu_i}\right)\nu_i.\label{eq:binbias}
 \end{align}
+```
 
-```{r, echo = F, fig.align='center',fig.height=3}
+```{r, echo = F, fig.align='center',fig.height=3, eval=FALSE}
 BinByBin_bins <- tibble(Model = c(rep(c("Model 1","Model 2"),each=60),
                               rep(c("Model 1","Model 2"),each=30)),
                    `Assumed Model` = rep(rep(c("Model 1","Model 2"),
@@ -2194,7 +2284,7 @@ ggplot() +
   facet_wrap(`Assumed Model` ~ ., ncol = 2, dir = "v")
 ```
 
-```{r, echo = F, fig.align='center',fig.height=3}
+```{r, echo = F, fig.align='center',fig.height=3, eval=FALSE}
 ggplot() + 
   theme_bw() + 
   geom_hline(yintercept = 0, linetype = "dashed") +
@@ -2245,7 +2335,7 @@ ggplot() +
   facet_wrap(`Assumed Model` ~ ., ncol = 2, dir = "v")
 ```
 
-```{r, echo = F, fig.align='center',fig.height=3}
+```{r, echo = F, fig.align='center',fig.height=3, eval=FALSE}
 
 biases <- 
   c((mcTruth1$Counts/mcReco1$Counts[1:30] - 
@@ -2362,5 +2452,3 @@ ggplot() + theme_bw() +
   theme(axis.text.x = element_text(size = 8))
 
 ```
-
-\section{R Code}

@@ -1,0 +1,163 @@
+---
+title: "The Structure of Ill-Posed Inverse Problems in Experimental Particle Physics"
+author: Sean Gilligan
+output:
+  ioslides_presentation:
+    toc: true
+    widescreen: true
+    smaller: true
+---
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse)
+```
+
+
+# Introduction
+
+## Making things clear
+
+<div style="float: left; width: 50%;">
+
+What is an inverse problem?
+
+Where do they come from?
+
+What makes them hard?
+
+</div>
+<div style="float: right; width: 50%;">
+```{r, echo = FALSE, fig.align='center', fig.height=4, fig.width=5}
+par(mfrow = c(2, 2),
+    mar = c(0,0.5,1,0.1),
+    oma = c(1.5,1.5,0.5,0))
+
+mean1 <- -1
+mean2 <- 1
+xmin <- -3
+xmax <- 3
+dx <- 0.2
+
+continuous_data <- tibble(x = seq(xmin,xmax,0.1),
+                          y1 = (1/3)*dnorm(seq(xmin,xmax,0.1),mean1,0.5) +
+                            (2/3)*dnorm(seq(xmin,xmax,0.1),mean2,0.5),
+                          y2 = (1/3)*dnorm(seq(xmin,xmax,0.1),mean1,sqrt(0.5)) +
+                            (2/3)*dnorm(seq(xmin,xmax,0.1),mean2,sqrt(0.5)))
+
+discrete_data <- tibble(x = c(xmin,rep(seq(xmin+dx,xmax-dx,dx),each=2),xmax),
+                        y1 = rep(((1/3)*(pnorm(seq(xmin+dx,xmax,dx),mean1,0.5)-
+                                          pnorm(seq(xmin,xmax-dx,dx),mean1,0.5)) +
+                                   (2/3)*(pnorm(seq(xmin+dx,xmax,dx),mean2,0.5)-
+                                            pnorm(seq(xmin,xmax-dx,dx),mean2,0.5))),each=2)/dx,
+                        y2 = rep(((1/3)*(pnorm(seq(xmin+dx,xmax,dx),mean1,sqrt(0.5))-
+                                          pnorm(seq(xmin,xmax-dx,dx),mean1,sqrt(0.5))) +
+                                   (2/3)*(pnorm(seq(xmin+dx,xmax,dx),mean2,sqrt(0.5))-
+                                            pnorm(seq(xmin,xmax-dx,dx),mean2,sqrt(0.5)))),each=2)/dx)
+
+plot(continuous_data$x,continuous_data$y1,type="l",col="blue",
+     yaxt = "n", xaxt = "n", ylim=c(0,0.55))
+title("True Value", adj = 0)
+axis(2, at = c(0.0,0.1,0.2,0.3,0.4,0.5), tck = -0.03, las = 1, hadj = 0.5)
+plot(continuous_data$x,continuous_data$y2,type="l",col="red",
+     tck = -0.03, yaxt = "n", xaxt = "n", ylim=c(0,0.55))
+title("Measured Value", adj = 0)
+plot(discrete_data$x,discrete_data$y1,type="l",col="blue",ann = FALSE,
+     yaxt = "n", xaxt = "n", ylim=c(0,0.55))
+axis(2, at = c(0.0,0.1,0.2,0.3,0.4,0.5), tck = -0.03, las = 1, hadj = 0.5)
+axis(1, at = -3:3, tck = -0.03, padj = -1)
+plot(discrete_data$x,discrete_data$y2,type="l",col="red",ann = FALSE,
+     yaxt = "n", xaxt = "n", ylim=c(0,0.55))
+axis(1, at = -3:3, tck = -0.03, padj = -1)
+```
+</div>
+
+## Deconvolution
+
+Simple model
+
+Math
+
+## Generalizing the Deconvolution
+
+It's unfolding now
+
+Use a kernel
+
+## Discrete Discretions
+
+A new equation to solve
+
+The response matrix
+
+Efficiency
+
+Poisson processes
+
+Estimates
+
+Unbiased Estimator
+
+## Some Simulated Toy Models
+
+The processes
+
+The models and their distributions
+
+Migration
+
+# Unfolding
+
+## Resources in particle physics
+
+ROOT and RooUnfold
+
+## Response Matrix Inversion
+
+Basic premise
+
+Weighted least squares solution
+
+The pseudoinverse
+
+An unbiased estimator
+
+Ugly results
+
+Why?
+
+## Regularization
+
+Tikhonov regularization and ridge regression
+
+SVD
+
+Data and notation transformations
+
+SVD to distribute weights
+
+Regularizing terms
+
+Damped least squares
+
+SVD to diagonalize response matrix and normalize response
+
+Solution
+
+Selecting tau one way
+
+The purpose of unfolding
+
+Selecting another way
+
+Results and discussion
+
+## Conclusion
+
+Some other methods
+
+## Acknowledgements
+
+James, Heidi, NSF, committee, linear algebra, Soviet era physicists and mathematicians
+
+
+
