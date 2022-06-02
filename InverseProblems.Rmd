@@ -140,7 +140,7 @@ $T\in\mathbb{R}$ as
 When conditions permit the inverse Fourier transform can be found via
 \begin{align}f_U(u)=\int_{-\infty}^\infty \phi_T(t)\,e^{-itu}\,dt.\label{eq:ift}\end{align}
 The Fourier transform is important in deconvolution methods because when
-you apply it to the convolution of two density functions the link
+it is applied to the convolution of two density functions the link
 between their respective characteristic functions becomes purely
 multiplicative, i.e.
 $$f_Y=f_X*f_\varepsilon\implies\phi_Y=\phi_X\phi_\varepsilon.$$ An
@@ -153,7 +153,7 @@ ahead \cite{Meister2009}.
 \subsection{Generalizing}\label{general}
 
 The remainder of this paper is dedicated to a more generalized study of
-these type of problems. With the understanding that even experts can be
+these types of problems. With the understanding that even experts can be
 fairly loose and inconsistent with their vocabulary, this paper will do
 its best to provide clear definitions. To begin, while most literature
 on deconvolution methods do use the word "convolution", this operation
@@ -295,7 +295,7 @@ the expected counts $\nu_i$ by
 \begin{align}\nu_i&=\text{E}[\hat\nu_i]=\text{E}[n_i]\nonumber\\&=\text{Cov}[\hat\nu_i]=\text{Cov}[n_i].\nonumber\end{align}
 Understanding the probability distribution of $\bm{n}$ allows for
 unfolding methods that involve the use of maximum likelihood estimation.
-It will be convenient, and necessary for methods based on leaste-squares, to estimate the
+Additionally, it will be convenient, and necessary for methods based on least-squares, to estimate the
 covariance matrix $\bm{\hat\Sigma}_{\nu}$ (written $\hat\Sigma^{\nu}_{ij}$ when referring to components) of the observations, which for
 independent Poisson processes has components of the form
 \begin{align}
@@ -306,7 +306,7 @@ independent Poisson processes has components of the form
 where $\delta_{ij}$ is the Kronecker
 delta\footnote{The Kronecker delta $\delta_{ij}$ is a piecewise function of variables $i$ and $j$ defined by $\delta_{ij}=\begin{cases}0\;\;\;\text{if }i\neq j\\1\;\;\;\text{if }i=j\end{cases}.$}.
 The path to an estimated covariance matrix of the estimated true distribution
-$\bm{\hat\mu}$ is itself a function of $\bm{n}$ and $\bm{\nu}$ (or its estimate), can be considered briefly by considering the maximum
+$\bm{\hat\mu}$, itself a function of $\bm{n}$ and $\bm{\nu}$ (or $\bm{\hat\nu}$), can be considered briefly by considering the maximum
 log-likelihood, where it can be shown \begin{align}
   \log L(\bm\mu)
     &=\sum_{i=1}^N\log\left(\frac{\nu_i^{n_i}e^{-\nu_i}}{n_i!}\right)\nonumber\\
@@ -330,7 +330,7 @@ with an additional derivative shows
     &=\left(\bm{R}^T\bm{\Sigma}_\nu^{-1}\bm{R}\right)^{-1}\nonumber\\
     &=\bm{R}^{-1}\bm{\Sigma}_\nu(\bm{R}^{-1})^{T}.\label{CRlb}
 \end{align}
-Indeed, this matrix must then be lower bound for the covariance matrix of any unbiased estimator of $\bm{\mu}$. This is some good insight to have before getting into the weeds of working on actual data.
+Indeed, this matrix must then be the lower bound for the covariance matrix of any unbiased estimator of $\bm{\mu}$. This is some good insight to have before getting into the weeds of working on actual data.
 
 \subsection{A Simulated Example}\label{simulation}
 
@@ -342,7 +342,7 @@ The following example is not meant to reflect any actual physics. Consider the f
 \end{align} 
 Current models predict that some class of physics events observed in past detectors are solely coming from the first two processes (Model 1), such that for $n$ events the number coming from the first process is an i.i.d. random variable from the binomial distribution $B(n,p)$. Meanwhile, a new model (Model 2) has been developed that suggests that the third process has been occurring this whole time but has been incorrectly categorized as one or the other of the first two. Napkin math has estimated a contribution rate that is reflective of some probability $p_3$, such that the binomial distribution is actually a multinomial distribution with probabilities $\bm p=\{p_1,p_2,p_3\}$.
 
-A new experiment is being designed and funded to test this new model, on top of many others, and simulations are being performed to give analyzers plenty of opportunities to develop their collaboration's analysis framework, perform calibrations, and make ready a myriad of studies that hope to shed light on many an unanswered question. The corresponding MC simulations performed during this time include such simulations for the physics events of interest, but also for the detector. For the purposes of this paper I am performing a relatively simple set of simulations, resulting in 200,000 simulated events per model that are meant to represent the MC simulations, and a set of 20,000 simulated events for each model that are meant to represent either hypothetical detector data or MC test sets as need dictates. I will also be writing the code to carry out any of the discussed methods that are applied to this simulated data.
+A new experiment is being designed and funded to test this new model, on top of many others, and simulations are being performed to give analyzers plenty of opportunities to develop their collaboration's analysis framework, perform calibrations, and make ready a myriad of studies that hope to shed light on their unanswered questions. The corresponding MC simulations performed during this time include such simulations for the physics events of interest, but also for the detector. For the purposes of this paper I am performing a relatively simple set of simulations, resulting in 200,000 simulated events per model that are meant to represent the MC simulations, and a set of 20,000 simulated events for each model that are meant to represent either hypothetical detector data or MC test sets as need dictates. I will also be writing the code to carry out any of the discussed methods that are applied to this simulated data.
 
 ```{r, echo = F}
 set.seed(1234)
@@ -744,7 +744,7 @@ migration
   \label{plots2}
 \end{figure}
 
-Figure \ref{plots2} provides an alternative perspective to Figure \ref{plots1} by providing a visual representation of the two models' migration matrices. The red dashed lines indicate where events would live if there were no skewing or smearing processes. Note that the Reconstructed axis extends past points covered by the Truth axis, providing insight into the behavior with which events produced in the region of interest ($X\in(0,30)$ here) end up measured or reconstructed outside of it, but still in a detector's \textbf{fiducial volume}, which represents the reliable, central region of the detector or other relevant region of the events' \textbf{phase space}, which is the space of all possible states.
+Figure \ref{plots2} provides an alternative perspective to Figure \ref{plots1} by providing a visual representation of the two models' migration matrices. The red dashed lines indicate where events would live if there were no skewing or smearing processes. Note that the Reconstructed axis extends past points covered by the Truth axis, providing insight into the behavior with which events produced in the region of interest ($X\in(0,30)$ here) end up measured or reconstructed outside of it, but still in a detector's \textbf{fiducial volume}, which represents the reliable, central region of the detector or other relevant region of the events' \textbf{phase space}, which is the space of all possible event states.
 
 
 ```{r, echo=F}
@@ -855,7 +855,7 @@ mcTruth2 <- sims_mc %>%
 
 \section{Unfolding in particle physics}
 
-The international particle physics community is highly collaborative. Most of this is likely due to necessity, as advances in the field are requiring larger and more expensive experiments that rely on pooled resources of talent, labor, and capital. This extends to digital resources as well. ROOT \cite{Brun1997} is an open-source data analysis framework developed and used primarily by people doing particle physics. Analyses incorporating its resources are primarily written in some combination of Python and C++. While it does contain a strong base level of classes, objects, and methods within its default toolkit, including some for unfolding, extended frameworks are typically built on top of it to meet the needs of specific experiments or to facilitate expanded capabilities that would effectively be bloatware for most users. The RooUnfold framework \cite{Adye2011} is one such example. Two methods from the RooUnfold framework will be covered in this section. One is considered naive, as will be shown. The other finds ways past the issues brought up in the first.
+The international particle physics community is highly collaborative. Most of this is likely due to necessity, as advances in the field are requiring larger and more expensive experiments that rely on pooled resources of talent, labor, and capital. This extends to digital resources as well. ROOT \cite{Brun1997} is an open-source data analysis framework developed and used primarily by people doing particle physics. Analyses incorporating its resources are primarily written in some combination of Python and C++. While it does contain a strong base level of classes, objects, and methods within its default toolkit, including some for unfolding, extended frameworks are typically built on top of it to meet the needs of specific experiments or to facilitate expanded capabilities that would effectively serve as bloatware for most users. The RooUnfold framework \cite{Adye2011} is one such example. Two methods facilitated in whole or in part by the RooUnfold framework will be covered in this section. One is considered naive, as will be shown. The other finds ways past the issues brought up in the first.
 
 \subsection{Inverting the Response Matrix}
 
@@ -879,11 +879,11 @@ yields \begin{align}\min_{\bm\mu}\nabla_{\!\bm\mu}\bm\chi^2(\bm{\mu})
   \implies\bm{\hat\mu}&=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{n}\\
   &=\bm{R}^{+}\bm{n},\label{eq:naivemu}
 \end{align} where $\bm{R}^{+}=(\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R})^{-1}\bm{R}^T\bm{\Sigma}_{\nu}^{-1}$ is the Moore-Penrose generalized inverse
-(or pseudo-inverse) \cite{Blobel2013} of $\bm{R}$. Note that multiplying $\bm{R}$ to the left side of $\bm{R}^{+}$ as calculated here fits the form of the hat matrix $\bm{H}$ of ordinary regression, such that $\bm{\hat\nu}=\bm{H}\bm{\nu}$. This has all so far just been basic regression using generalized leaste-squares. As such the inverse of $\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}$, using the Moore-Penrose generalized inverse, corresponds to the estimated true counts' covariance matrix:
+(or pseudo-inverse) \cite{Blobel2013} of $\bm{R}$. Note that multiplying $\bm{R}$ to the left side of $\bm{R}^{+}$ as calculated here fits the form of the hat matrix $\bm{H}$ of ordinary regression, such that $\bm{\hat\nu}=\bm{H}\bm{\nu}$. This has all so far just been basic regression using generalized least-squares. As such the inverse of $\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R}$, using the Moore-Penrose generalized inverse, corresponds to the estimated true counts' covariance matrix:
 \begin{align}
   (\bm{R}^T\bm{\Sigma}_{\nu}^{-1}\bm{R})^{-1}=\bm{R}^{+}\bm{\Sigma}_\nu\bm{R}^{+^T}=\bm{R}^{+}\text{Cov}[\bm{n}]\bm{R}^{+^T}=\text{Cov}[\bm{R}^{+}\bm{n}]=\text{Cov}[\bm{\hat\mu}]=\bm{\hat\Sigma}_\mu\nonumber.
 \end{align} 
-This is the same lower bound covariance matrix calculated in Equation \eqref{CRlb}, which indicates that $\bm{R}^{+}$ is indeed an unbiased estimator with the lowest possible variances among unbiased estimators. For the simulations one such inverse matrix was calculated from the response matrix of each MC Model simulation, and were used to form estimates of their respective $\bm{\Sigma}_\mu$ for each MC-Data combination using each Data model's estimated covariance matrix.
+This is the same lower bound covariance matrix calculated in Equation \eqref{CRlb}, which indicates that $\bm{R}^{+}$ is indeed an unbiased estimator with the lowest possible variances among unbiased estimators. For the simulations one such inverse matrix was calculated from the response matrix of each MC Model simulation, and were used to form estimates of their respective $\bm{\Sigma}_\mu$s for each MC-Data combination using each Data Model's estimated covariance matrix.
 
 The resulting true counts estimates, with their $\pm1$ estimated standard deviations, are plotted below in  \ref{NaiveRes}. The rescaled true distribution for each MC simulation was provided for comparison. They are in separate plots as their structure is not visible at the scales necessary to show the unfolded Data. The color of the lines indicate the true model behind the simulation and the shaded regions, which represent the calculated uncertainty, are colored to indicate the MC model of the response matrix.
 
@@ -1085,15 +1085,15 @@ The massive, rapid oscillations and large uncertainties indicate that these are 
 
 This section reviews a method of unfolding that utilizes a form of \textbf{Tikhonov regularization}. Tikhonov regularization as discussed here can be described as a form of \textbf{regularized ridge regression} with weighted least-squares, and using a ridge penalty known by some as the \textbf{ridge fused penalty} \cite{vanwieringen2021}. This method is referred to in particle physics as \textbf{Singular Value Decomposition} (SVD) \cite{Adye2011}\cite{Blobel2013}\cite{Cowan1998}, which unfortunately hides much of the underlying concepts. In general, SVD is a matrix factorization method in linear algebra which, to be fair, is featured prominently in this unfolding method. Please refer to Appendix \ref{app:svd} for a brief description of SVD.
 
-As directed in H$\ddot{\text{o}}$cker and Kartvelishvili's seminal paper \cite{Hocker1995} one should shift the location of event count information on the right-hand side of equation \eqref{eq:mat} from the $\bm{\mu}$ to $\bm{R}$, such that its elements are the actual number of corresponding events, much like Figure \ref{plots2}. This new matrix will be referred to by $\bm{X}$. Next, redefine $\bm{\mu}$ by its ratio to the MC true counts $\bm{\mu}^{\text{MC}}$ to produce instead $\bm{\beta}$ such that
+As directed in H$\ddot{\text{o}}$cker and Kartvelishvili's seminal paper on this method \cite{Hocker1995} one should shift the location of event count information on the right-hand side of equation \eqref{eq:mat} from the $\bm{\mu}$ to $\bm{R}$, such that $\bm{R}$'s elements are the actual number of corresponding events, much like Figure \ref{plots2}. This new matrix will be referred to by $\bm{X}$. Next, redefine $\bm{\mu}$ by its ratio to the MC true counts $\bm{\mu}^{\text{MC}}$ to produce instead $\bm{\beta}$ such that
 \begin{align}
   \beta_i=\mu_i/\mu_i^{\text{MC}}.\nonumber
 \end{align}
-This naturally requires an inverse rescaling of any estimated $\bm{\hat\beta}$ to get $\bm{\hat\mu}$. The substitution $\bm{Y}=\bm{n}$ will also be used to facilitate broader notation conventions on discussion of this subject. The weighted sum of squares with these changes comes out to be
+This naturally requires an inverse rescaling of any estimated $\bm{\hat\beta}$ to get $\bm{\hat\mu}$. The substitution $\bm{Y}=\bm{n}$ will also be used to facilitate broader notation conventions used in discussions of this subject. The weighted sum of squares with these changes comes out to be
 \begin{align}
   \chi^2(\bm{\beta})=\left(\bm{Y}-\bm{X}\bm{\beta}\right)^T\bm{\hat\Sigma}_\nu^{-1}\left(\bm{Y}-\bm{X}\bm{\beta}\right)\label{regSq}
 \end{align}
-After rescaling singular value decomposition is then applied to the reconstructed covariance matrix $\bm{\hat\Sigma}_\nu$ which, being symmetric and containing only positive elements, will result in something of the form
+After rescaling, singular value decomposition is applied to the reconstructed covariance matrix $\bm{\hat\Sigma}_\nu$ which, being symmetric and containing only positive elements, will result in something of the form
 \begin{align}
   \bm{\hat\Sigma}_\nu=\bm{QTQ}^T,\;\;\;\;\;\text{ where }\;\;\;\;\;\bm{\hat\Sigma}_\nu^{-1}=\bm{Q}\bm{T}^{-1}\bm{Q}^T\text.
 \end{align}
@@ -1179,7 +1179,7 @@ and so forth for $\bm{\hat\mu}$. The description of this last equation as a low-
 The analysts work out the resulting covariance matrices for these estimates, which are dependent on the value of $\tau$ such that
 \begin{align}
   \hat\Sigma_{ij}^{b}&=\frac{s_i^2}{(s_i^2+\tau)^2}\delta_{ij},\nonumber\\
-  \bm{\hat\Sigma}_{\beta}&=\bm{C}^{-1}\bm{V}\bm{\hat\Sigma}_b\bm{V}^T(\bm{C}^{-1})^T,\;\;\text{ and}\nonumber\\
+  \bm{\hat\Sigma}_{\beta}&=\bm{\tilde{C}}^{-1}\bm{V}\bm{\hat\Sigma}_b\bm{V}^T(\bm{\tilde{C}}^{-1})^T,\;\;\text{ and}\nonumber\\
   \hat\Sigma_{ij}^{\mu}&=\mu_i^{\text{MC}}\hat\Sigma_{ij}^\beta\mu_j^{\text{MC}}.\nonumber
 \end{align}
 
@@ -1620,14 +1620,14 @@ egg::ggarrange(Chi_plot +
                  theme(legend.position = "none",
                        axis.title.y = element_blank()), 
                Chi_plot2 + theme(axis.title.y = element_blank()), 
-               left = textGrob(expression(Chi^2), rot = 90, vjust = 0.25),
+               left = textGrob(expression(chi^2), rot = 90, vjust = 0.25),
                nrow = 1)
 ```
 \caption{\emph{\small Above are plots of the individual $\chi^2$s and their summation $\sum\chi^2$ with respect to selected values of $\tau$. On the left the unfolded counts were compared to their actual true counts. On the right the unfolded counts were compared to the true counts of the MC model used to unfold them. The dotted vertical pink line indicates the value of $\tau$ that minimizes $\sum\chi^2$ for the plot on the left.}}
   \label{chicomp}
 \end{figure}
 
-As far as selecting a value of $\tau$, H$\ddot{\text{o}}$cker and Kartvelishvili recommend first plotting $\vert y_i\vert$ with respect to $i$. They point at that $\bm{y}$ makes up the coefficients of the decomposition of the reconstructed counts $\bm{n}$ ($\bm{Y}$ above), with an orthogonal basis given by the columns of $\bm{U}$. It is expected that $\vert y_i\vert$ will decay exponentially with $i$ until some critical value $i=k$ in which all following coefficients will be indistinguishable from random samples from an $N(0,1)$ distribution. Once that value of $k$ has been identified the idea is to set $\tau=s_k^2$. For this paper's simulations these identifications are graphically identified in Figure \ref{TauSelect}, which shows the plot of $\vert y_i^{(0)}\vert$ and the resulting $\vert y_i^{(\tau)}\vert$. The same value of $k$ was chosen for all four combinations for consistency.
+As far as selecting a value of $\tau$, H$\ddot{\text{o}}$cker and Kartvelishvili recommend first plotting $\vert y_i\vert$ with respect to $i$. They point out that $\bm{y}$ makes up the coefficients of the decomposition of the reconstructed counts $\bm{n}$ ($\bm{Y}$ above), with an orthogonal basis given by the columns of $\bm{U}$. It is expected that $\vert y_i\vert$ will decay exponentially with $i$ until some critical value $i=k$ in which all following coefficients will be indistinguishable from random samples from an $N(0,1)$ distribution. Once that value of $k$ has been identified the idea is to set $\tau=s_k^2$. For this paper's simulations these identifications are graphically identified in Figure \ref{TauSelect}, which shows the plot of $\vert y_i^{(0)}\vert$ and the resulting $\vert y_i^{(\tau)}\vert$. The same value of $k$ was chosen for all four combinations for consistency.
 
 This manner of choosing the regularization parameter is just one suggestion, and while its reasoning is fairly clear there is another way that considers values of $\tau$ not restricted to squares of the singular values. Figure \ref{chicomp} features two plots concerning the sums of squares for different values of $\tau$, which were calculated by comparing the unfolded distributions to their true distributions (LEFT) and to the true distributions for the MC model used in the unfolding process (RIGHT). The Data, being also simulated, are playing the role of training sets in this capacity. The plot on the left reveals the existance of a critical value of $\tau$ above which an unfolded distribution is overfitted to the associated MC distribution, which will hide features of the original distribution that are a departure from the model being tested. The plot on the right contains no such indicators.
 
@@ -1653,7 +1653,7 @@ As the purpose of unfolding is to undo effects related to the measurement proces
 
 \begin{figure}[!ht]
     \centering
-```{r, echo = FALSE, fig.align='center', fig.height=4.1}
+```{r, echo = FALSE, fig.align='center', fig.height=3.9}
 k <- 5
 tau <- taus[1,1,minChi2_index]
 
@@ -1729,11 +1729,11 @@ unfplot_t
   \label{unfolded}
 \end{figure}
 
-In particular, when both sets of Data are paired with the wrong MC model during unfolding, they both consistently behave similarly across the observed regions of $\tau$ values, and reach a minimum at a value of $\tau$ that aligns well with confirmatory $\chi^2$ values for the same Data when paired with the correct MC models. As a contrast to finding $k$ as depicted in Figure \ref{TauSelect}, these observations inform a method for choosing the value of $\tau$ which minimizes the sum of squares of differences between the unfolded counts of test Data and their true counts.
+In particular, when both sets of Data are paired with the wrong MC model during unfolding, they both consistently behave similarly across the observed regions of $\tau$ values, and reach a minimum at a value of $\tau$ that aligns well with confirmatory $\chi^2$ values for the same Data when paired with the correct MC models. As a contrast to finding $k$ as depicted in Figure \ref{TauSelect}, these observations inform a method for choosing the value of $\tau$ which minimizes the combined sum of squares of the residuals between the unfolded counts of test Data sets and their true counts.
 
-A numerical comparison of both methods' sums of squares is given in Table \ref{tab:chi2} for unfolded Data against its true counts and for unfolded data against the MC true counts from the Model under which the Data was unfolded. From the individual $\chi^2$s it is evident that the method of minimizing the total sums of squares $\sum\chi^2$ does better at minimizing Model bias while unfolding Data to estimate their true counts, and the $k=5$ method does a better job fitting unfolded Data to the MC true counts regardless of whether or not the correct Model was used, indicating a higher degree of bias. However, by a noticeably wider margin the MC $\chi^2$ columns for both methods clearly and correctly show which Model is more likely to have produced the Data being unfolded. 
+A numerical comparison of both methods' sums of squares is given in Table \ref{tab:chi2} for unfolded Data against its true counts and for unfolded data against the MC true counts from the Model under which the Data was unfolded. From the individual $\chi^2$s it is evident that the method of minimizing the total sums of squares $\sum\chi^2$ does better at minimizing Model bias while unfolding Data to estimate their true counts, and the $k=5$ method does a better job fitting unfolded Data to the MC true counts regardless of whether or not the correct Model was used, indicating a higher degree of bias. However, by a quite noticeable margin the MC $\chi^2$ columns for both methods clearly and correctly indicate which Model is more likely to have produced the Data being unfolded. 
 
-Complementing this observation is Figure \ref{unfolded}, which depicts each of the unfolded results plotted against both MC simulations' true counts. From this it is visually clear that Data unfolded under the correct Model better reproduces the true counts of the MC. Which Model the unfolded Data belongs to in the mismatched unfolding cases is visually more ambiguous. Numerically, for Data from Model 1 unfolded using Model 2 MC, the $\chi^2$ when comparing to Model 1 MC true counts is `r round(chis21m1[minChi2_index],2)` (vs. `r Chi2table$minChi2m[2]` for Model 2), and for Data from Model 2 unfolded using Model 1 MC, the $\chi^2$ when comparing to Model 2 MC true counts is `r round(chis12m2[minChi2_index],2)` (vs. `r Chi2table$minChi2m[3]` for Model 1). Unfolding continues to clearly support the correct Model.
+Complementing this observation is Figure \ref{unfolded}, which depicts each of the unfolded results plotted against both MC simulations' true counts. It is clear from the plots that Data unfolded under the correct Model better approximates true counts of the MC. Which Model the unfolded Data belongs to in the mismatched unfolding cases is visually more ambiguous. Numerically, for Data from Model 1 unfolded using Model 2 MC, the $\chi^2$ when comparing to Model 1 MC true counts is `r round(chis21m1[minChi2_index],2)` (vs. `r Chi2table$minChi2m[2]` for Model 2), and for Data from Model 2 unfolded using Model 1 MC, the $\chi^2$ when comparing to Model 2 MC true counts is `r round(chis12m2[minChi2_index],2)` (vs. `r Chi2table$minChi2m[3]` for Model 1). As such, SVD unfolding continues to clearly support the correct Model.
 
 \section{Conclusion}
 
@@ -1885,8 +1885,8 @@ they are commonly implemented in the performance of Fourier analysis.
 Mathematically they represent an extension beyond the real and complex
 geometric-like vector spaces developed by earlier generalizations of
 Euclidean spaces in the 19th century. Developments in real analysis at
-the beginning of the 20th century lead the spaces of functions and
-sequences to being conceptualized as linear spaces in their own right.
+the beginning of the 20th century lead to spaces of functions and
+sequences being conceptualized as linear spaces in their own right.
 
 As extensions of previously understood spaces they necessarily exist at
 the intersection of several other important spaces that aught to be
@@ -1983,7 +1983,7 @@ intersection of Banach spaces and inner product spaces are the Hilbert
 spaces. I.e. a \textbf{Hilbert space} is a complete vector space with an
 inner product defined by its norm.
 
-A commonly presented example is the $L^2$ function space, which consists
+A commonly presented example of a Hilbert space is the $L^2$ function space, which consists
 of functions that are square integrable, i.e. if
 $f(x)\in L^2\implies \vert\vert f(x)\vert\vert^2=\int_\chi\vert f(x)\vert^2dx<\infty$,
 where $\chi$ is the domain of $x$. The subset $L^2[-\pi,\pi]$, where
@@ -1997,7 +1997,7 @@ $$\begin{matrix}
   a_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\cos(nx)dx \\ \text{and} \\ b_n=\frac{1}{\pi}\int_{-\pi}^\pi f(x)\sin(nx)dx.
 \end{matrix}$$
 Verification that this basis meets all the requirements
-laid out so far is beyond the scope of this paper.
+laid out here for the basis of a Hilbert Space is beyond the scope of this paper.
 
 \begin{figure}
   \centering
