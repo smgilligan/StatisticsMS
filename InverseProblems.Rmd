@@ -1240,7 +1240,7 @@ y22 <- t(Um2d2) %*% tY2
 
 \begin{figure}[!ht]
     \centering
-```{r, echo = FALSE, fig.height=3.25, fig.align='center'}
+```{r, echo = FALSE, fig.height=3.5, fig.align='center'}
 findTau <- tibble(x = rep(c(0,rep(1:29,each=2),30),4),
                   mag_y = abs(rep(c(y11,y12,y21,y22),each=2)),
                   label = c(rep("Data 1 unfolded with MC 1",60),
@@ -1304,10 +1304,6 @@ ggplot() + theme_bw() +
   \label{TauSelect}
 \end{figure}
 
-As far as selecting a value of $\tau$, H$\ddot{\text{o}}$cker and Kartvelishvili recommend first plotting $\vert y_i\vert$ with respect to $i$. They point at that $\bm{y}$ makes up the coefficients of the decomposition of the reconstructed counts $\bm{n}$ ($\bm{Y}$ above), with an orthogonal basis given by the columns of $\bm{U}$. It is expected that $\vert y_i\vert$ will decay exponentially with $i$ until some critical value $i=k$ in which all following coefficients will be indistinguishable from random samples from an $N(0,1)$ distribution. Once that value of $k$ has been identified the idea is to set $\tau=s_k^2$. For this paper's simulations these identifications are graphically identified in Figure \ref{TauSelect}, which shows the plot of $\vert y_i^{(0)}\vert$ and the resulting $\vert y_i^{(\tau)}\vert$. The same value of $k$ was chosen for all four combinations for consistency.
-
-This manner of choosing the regularization parameter is just one suggestion, and while its reasoning is fairly clear there is another way that considers values of $\tau$ not restricted to squares of the singular values. Figure \ref{chicomp} features two plots concerning the sums of squares for different values of $\tau$, which were calculated by comparing the unfolded distributions to their true distributions (LEFT) and to the true distributions for the MC model used in the unfolding process (RIGHT). The Data, being also simulated, are playing the role of training sets in this capacity. The plot on the left reveals the existance of a critical value of $\tau$ above which an unfolded distribution is overfitted to the associated MC distribution, which will hide features of the original distribution that are a departure from the model being tested. The plot on the right contains no such indicators.
-
 ```{r, echo = FALSE}
 
 nMC <- 2
@@ -1326,7 +1322,8 @@ taus <- array(0, dim=c(nMC,nData,nt1+nt2+ntS))
 for(i in 1:nMC) for(j in 1:nData) taus[i,j,] <- c(tvec1,tvec2,tvecS)
 
 chis11d <- chis12d <- chis21d <- chis22d <- 
-  chis11m <- chis12m <- chis21m <- chis22m <- rep(0,nt1+nt2+ntS)
+  chis11m <- chis12m <- chis21m <- chis22m <- 
+  chis12m2 <- chis21m1 <- rep(0,nt1+nt2+ntS)
 
 mu1 <- mcTruth1$Counts
 mu2 <- mcTruth2$Counts
@@ -1450,6 +1447,10 @@ for(t in 1:(nt1+nt2+ntS)){
     inv_sigMuHat21 %*% (muTauHat21 - mcTruth2$Counts/dmrat)
   chis22m[t] <- t(muTauHat22 - mcTruth2$Counts/dmrat) %*% 
     inv_sigMuHat22 %*% (muTauHat22 - mcTruth2$Counts/dmrat)
+  chis12m2[t] <- t(muTauHat12 - mcTruth2$Counts/dmrat) %*% 
+    inv_sigMuHat12 %*% (muTauHat12 - mcTruth2$Counts/dmrat)
+  chis21m1[t] <- t(muTauHat21 - mcTruth1$Counts/dmrat) %*% 
+    inv_sigMuHat21 %*% (muTauHat21 - mcTruth1$Counts/dmrat)
   
 }
 
@@ -1486,6 +1487,7 @@ compareChis2 <-
                    length(taus[2,2,1:nt1]))))
 
 sumChi2 <- chis11d+chis12d+chis21d+chis22d
+sumChi2m <- chis11m+chis12m+chis21m+chis22m
 minChi2_index <- nt1+which.min(sumChi2[(nt1+1):(nt1+nt2)])
 
 Chi_plot <- ggplot() + theme_bw() +
@@ -1589,6 +1591,11 @@ Chi2table <- tibble(MC = c(1,1,2,2,NA),
                                chis21d[nt1+nt2+5],
                                chis22d[nt1+nt2+5],
                                sumChi2[nt1+nt2+5]),
+                    s5Chi2m = c(chis11m[nt1+nt2+5],
+                                 chis12m[nt1+nt2+5],
+                                 chis21m[nt1+nt2+5],
+                                 chis22m[nt1+nt2+5],
+                                 sumChi2m[nt1+nt2+5]),
                     minTau = c(taus[1,1,minChi2_index],
                                taus[1,2,minChi2_index],
                                taus[2,1,minChi2_index],
@@ -1598,12 +1605,17 @@ Chi2table <- tibble(MC = c(1,1,2,2,NA),
                                 chis12d[minChi2_index],
                                 chis21d[minChi2_index],
                                 chis22d[minChi2_index],
-                                sumChi2[minChi2_index]))
+                                sumChi2[minChi2_index]),
+                    minChi2m = c(chis11m[minChi2_index],
+                                 chis12m[minChi2_index],
+                                 chis21m[minChi2_index],
+                                 chis22m[minChi2_index],
+                                 sumChi2m[minChi2_index]))
 Chi2table <- round(Chi2table,2)
 ```
 \begin{figure}[!ht]
     \centering
-```{r,echo = F, fig.align='center', fig.height=3}
+```{r,echo = F, fig.align='center', fig.height=3.3}
 egg::ggarrange(Chi_plot + 
                  theme(legend.position = "none",
                        axis.title.y = element_blank()), 
@@ -1615,29 +1627,33 @@ egg::ggarrange(Chi_plot +
   \label{chicomp}
 \end{figure}
 
+As far as selecting a value of $\tau$, H$\ddot{\text{o}}$cker and Kartvelishvili recommend first plotting $\vert y_i\vert$ with respect to $i$. They point at that $\bm{y}$ makes up the coefficients of the decomposition of the reconstructed counts $\bm{n}$ ($\bm{Y}$ above), with an orthogonal basis given by the columns of $\bm{U}$. It is expected that $\vert y_i\vert$ will decay exponentially with $i$ until some critical value $i=k$ in which all following coefficients will be indistinguishable from random samples from an $N(0,1)$ distribution. Once that value of $k$ has been identified the idea is to set $\tau=s_k^2$. For this paper's simulations these identifications are graphically identified in Figure \ref{TauSelect}, which shows the plot of $\vert y_i^{(0)}\vert$ and the resulting $\vert y_i^{(\tau)}\vert$. The same value of $k$ was chosen for all four combinations for consistency.
+
+This manner of choosing the regularization parameter is just one suggestion, and while its reasoning is fairly clear there is another way that considers values of $\tau$ not restricted to squares of the singular values. Figure \ref{chicomp} features two plots concerning the sums of squares for different values of $\tau$, which were calculated by comparing the unfolded distributions to their true distributions (LEFT) and to the true distributions for the MC model used in the unfolding process (RIGHT). The Data, being also simulated, are playing the role of training sets in this capacity. The plot on the left reveals the existance of a critical value of $\tau$ above which an unfolded distribution is overfitted to the associated MC distribution, which will hide features of the original distribution that are a departure from the model being tested. The plot on the right contains no such indicators.
+
 As the purpose of unfolding is to undo effects related to the measurement process, it would be ideal for a method to be model agnostic. As a MC simulation is used to generate the response matrix this is unfortunately impossible. However, if an unknown true model is expected to produce similar looking distributions to an assumed model, we can rely on them behaving similarly under an unfolding procedure using the same regularization parameter, as the behaviors shown in Figure \ref{chicomp} depict.
 
-\begin{table}
+\begin{table}[!hb]
 \centering
-\begin{tabular}{| c | c || c | c || c | c |} 
+\begin{tabular}{| c | c || c | c | c || c | c | c |} 
  \hline
- MC & Data & $\tau=s_5^2$ & $\chi^2$ & $\min\limits_{\tau}\sum\chi^2$ & $\chi^2$ \\
- \hline
- 1 & 1 & $`r Chi2table$s5Tau[1]`$ & $`r Chi2table$s5Chi2[1]`$ & $`r Chi2table$minTau[1]`$ & $`r Chi2table$minChi2[1]`$ \\ 
- 1 & 2 & $`r Chi2table$s5Tau[2]`$ & $`r Chi2table$s5Chi2[2]`$ & $`r Chi2table$minTau[2]`$ & $`r Chi2table$minChi2[2]`$ \\
- 2 & 1 & $`r Chi2table$s5Tau[3]`$ & $`r Chi2table$s5Chi2[3]`$ & $`r Chi2table$minTau[3]`$ & $`r Chi2table$minChi2[3]`$ \\
- 2 & 2 & $`r Chi2table$s5Tau[4]`$ & $`r Chi2table$s5Chi2[4]`$ & $`r Chi2table$minTau[4]`$ & $`r Chi2table$minChi2[4]`$ \\
- \hline
- \multicolumn{2}{|c||}{All} & \multicolumn{2}{|r||}{$\sum\chi^2=`r Chi2table$s5Chi2[5]`$} & \multicolumn{2}{|r|}{$\sum\chi^2=`r Chi2table$minChi2[5]`$}\\
+ MC & Data & $\tau=s_5^2$ & Data $\chi^2$ & MC $\chi^2$ & $\min\limits_{\tau}\sum\chi^2$ & Data $\chi^2$ & MC $\chi^2$ \\
+ \hline\hline
+ 1 & 1 & $`r Chi2table$s5Tau[1]`$ & $`r Chi2table$s5Chi2[1]`$ & $`r Chi2table$s5Chi2m[1]`$ & $`r Chi2table$minTau[1]`$ & $`r Chi2table$minChi2[1]`$ & $`r Chi2table$minChi2m[1]`$ \\ 
+ 1 & 2 & $`r Chi2table$s5Tau[2]`$ & $`r Chi2table$s5Chi2[2]`$ & $`r Chi2table$s5Chi2m[2]`$ &  $`r Chi2table$minTau[2]`$ & $`r Chi2table$minChi2[2]`$ & $`r Chi2table$minChi2m[2]`$ \\
+ 2 & 1 & $`r Chi2table$s5Tau[3]`$ & $`r Chi2table$s5Chi2[3]`$ & $`r Chi2table$s5Chi2m[3]`$ & $`r Chi2table$minTau[3]`$ & $`r Chi2table$minChi2[3]`$ & $`r Chi2table$minChi2m[3]`$ \\
+ 2 & 2 & $`r Chi2table$s5Tau[4]`$ & $`r Chi2table$s5Chi2[4]`$ & $`r Chi2table$s5Chi2m[4]`$ & $`r Chi2table$minTau[4]`$ & $`r Chi2table$minChi2[4]`$ & $`r Chi2table$minChi2m[4]`$ \\
+ \hline\hline
+ \multicolumn{2}{|c||}{All} & $\sum\chi^2$ & $`r Chi2table$s5Chi2[5]`$ & $`r Chi2table$s5Chi2m[5]`$ & $\sum\chi^2$ & $`r Chi2table$minChi2[5]`$ & $`r Chi2table$minChi2m[5]`$\\
  \hline
 \end{tabular}
-\caption{\emph{The $\chi^2$s and their summations $\sum\chi^2$ for the listed values of $\tau$ as chosen by their respective selection methods.}}
+\caption{\emph{The $\chi^2$s and their summations $\sum\chi^2$ for the listed values of $\tau$ as chosen by their respective selection methods. Data $\chi^2$ columns are a result of comparing unfolded Data to the Data's true counts. Unfolded Data from Model 1 \textbf{is never compared} to Model 2's Data true counts, and vice versa. For the MC $\chi^2$ columns the unfolded Data is compared to the true counts of the MC Model under which it was unfolded. Unfolded Data from Model 1 and Model 2 \textbf{are compared} to Model 1's MC true counts when they are unfolded using Model 1 MC and they \textbf{are compared} to Model 2's MC true counts when they are unfolded using Model 2 MC.}}
 \label{tab:chi2}
 \end{table}
 
 \begin{figure}[!ht]
     \centering
-```{r, echo = FALSE, fig.align='center', fig.height=4.5}
+```{r, echo = FALSE, fig.align='center', fig.height=4.1}
 k <- 5
 tau <- taus[1,1,minChi2_index]
 
@@ -1656,7 +1672,7 @@ unfplot_t <- ggplot() + theme_bw() + geom_hline(yintercept = 0, lty = 2) +
                           (MC == "MC 1" & Data == "Data 2" & Taus == tau) |
                           (MC == "MC 2" & Data == "Data 1" & Taus == tau) |
                           (MC == "MC 2" & Data == "Data 2" & Taus == tau)),
-             mapping = aes(x=X, y=CVCounts, fill = Data), shape = 21, size = 1.5) +
+             mapping = aes(x=X, y=CVCounts, fill = Data), shape = 21, size = 1.25) +
   scale_fill_manual(name = "Unfolded Data",
                     labels = c("Data 1" = "Model 1",
                                "Data 2" = "Model 2"),
@@ -1713,16 +1729,18 @@ unfplot_t
   \label{unfolded}
 \end{figure}
 
-In particular, when both sets of Data are paired with the wrong MC model during unfolding, they both consistently behave similarly across the observed regions of $\tau$ values, and reach a minimum at a value of $\tau$ that aligns well with confirmatory $\chi^2$ values for the same Data when paired with the correct MC models. As a contrast to finding $k$ as depicted in Figure \ref{TauSelect}, these observations inform a method for choosing the value of $\tau$ which minimizes the sum of squares of differences between the unfolded counts of test Data and their true counts. A side-by-side numerical comparison of both methods' sums of squares is given in Table \ref{tab:chi2}.
+In particular, when both sets of Data are paired with the wrong MC model during unfolding, they both consistently behave similarly across the observed regions of $\tau$ values, and reach a minimum at a value of $\tau$ that aligns well with confirmatory $\chi^2$ values for the same Data when paired with the correct MC models. As a contrast to finding $k$ as depicted in Figure \ref{TauSelect}, these observations inform a method for choosing the value of $\tau$ which minimizes the sum of squares of differences between the unfolded counts of test Data and their true counts.
 
-In Figure \ref{unfolded} each of the unfolded results are plotted against both MC simulations Truth counts. In all cases it is apparent that the Data sets unfolded more into agreement with the MC histograms that were simulated with the same model, regardless of which MC set was used in the unfolding process.
+A numerical comparison of both methods' sums of squares is given in Table \ref{tab:chi2} for unfolded Data against its true counts and for unfolded data against the MC true counts from the Model under which the Data was unfolded. From the individual $\chi^2$s it is evident that the method of minimizing the total sums of squares $\sum\chi^2$ does better at minimizing Model bias while unfolding Data to estimate their true counts, and the $k=5$ method does a better job fitting unfolded Data to the MC true counts regardless of whether or not the correct Model was used, indicating a higher degree of bias. However, by a noticeably wider margin the MC $\chi^2$ columns for both methods clearly and correctly show which Model is more likely to have produced the Data being unfolded. 
+
+Complementing this observation is Figure \ref{unfolded}, which depicts each of the unfolded results plotted against both MC simulations' true counts. From this it is visually clear that Data unfolded under the correct Model better reproduces the true counts of the MC. Which Model the unfolded Data belongs to in the mismatched unfolding cases is visually more ambiguous. Numerically, for Data from Model 1 unfolded using Model 2 MC the $\chi^2$ when comparing to Model 1 MC true counts is `r round(chis21m1[minChi2_index],2)` (vs. `r Chi2table$minChi2m[2]` for Model 2) and for Data from Model 2 unfolded using Model 1 MC the $\chi^2$ when comparing to Model 2 MC true counts is `r round(chis21m1[minChi2_index],2)` (vs. `r Chi2table$minChi2m[3]` for Model 1). Unfolding continues to clearly support the correct Model.
 
 \section{Conclusion}
 
-The SVD Unfolding method described here provides a robust approach to solving ill-posed inverse problems, and it has had a storied career in particle physics experiments since its introduction \cite{ALEPH:1998}\cite{CLEO:1999dln}\cite{OPAL:2002plk}\cite{KLOE:2004lnj}\cite{ALEPH:2005}\cite{MiniBooNE:2009dxl}\cite{IceCube:2010whx}\cite{ATLAS:2011juz}\cite{ATLAS:2012tjt}\cite{Belle:2012}\cite{CDF:2012ctl}\cite{ALICE:2013dpt}\cite{PierreAuger:2014}\cite{CMS:2015}\cite{DayaBay:2015}. There are however many other unfolding methods that are currently heavily implemented. One is an iterative unfolding method based on Bayes' theorem \cite{DAgostini1994}\cite{DAgostini2010}. Popular among experiments at the Large Hadron Collider is the unfolding method SPlot \cite{Pivk:2004}, which focuses on unfolding the individual contributions to a signal of interest, such as the two processes of Model 1 or the three of Model 2. Also of note is another unfolding method based on least-squares and Tikhonov regularization called TUnfold \cite{Schmitt2012}, as well as a self-described iterative, dynamically stabilized (IDS) method of unfolding \cite{Malaescu:2009}\cite{Malaescu:2011}. In contrast to these methods there is an ongoing discussion about whether unfolded histograms need to be, or should be, used to test hypotheses. Some work has been done towards exploring this question and developing a "bottom-line-test" that directly compares theoretical predictions that have been smeared and distorted by a simulated detector response to detector data that has not been unfolded \cite{Cousins:2016}. With that said, unfolding continues to be an extremely important, and at times contentious, part of particle physics analyses. Consulting multiple methods of unfolding is common for an analysis, and any such method of hypothesis testing that does not involve unfolding would at this time likely exist as another supplementary method in this way.
+The SVD Unfolding method described here has had a storied career in particle physics experiments since its introduction \cite{ALEPH:1998}\cite{CLEO:1999dln}\cite{OPAL:2002plk}\cite{KLOE:2004lnj}\cite{ALEPH:2005}\cite{MiniBooNE:2009dxl}\cite{IceCube:2010whx}\cite{ATLAS:2011juz}\cite{ATLAS:2012tjt}\cite{Belle:2012}\cite{CDF:2012ctl}\cite{ALICE:2013dpt}\cite{PierreAuger:2014}\cite{CMS:2015}\cite{DayaBay:2015}. There are however many other unfolding methods that are currently heavily implemented. One is an iterative unfolding method based on Bayes' theorem \cite{DAgostini1994}\cite{DAgostini2010}. Popular among experiments at the Large Hadron Collider is the unfolding method SPlot \cite{Pivk:2004}, which focuses on unfolding the individual contributions to a signal of interest, such as those making up Model 1 and Model 2 here. Also of note is another unfolding method based on least-squares and Tikhonov regularization called TUnfold \cite{Schmitt2012}, as well as a self-described iterative, dynamically stabilized (IDS) method of unfolding \cite{Malaescu:2009}\cite{Malaescu:2011}. In contrast to these methods is an ongoing discussion about whether unfolded histograms need to be, or should be, used to test hypotheses. Some work has been done towards exploring this question and developing a "bottom-line-test" that directly compares theoretical predictions that have been smeared and distorted by a simulated detector response to detector data that has not been unfolded \cite{Cousins:2016}. With that said, unfolding continues to be an extremely important part of particle physics analyses. It is not uncommon to consult multiple methods of unfolding for an analysis. Any such method of hypothesis testing that does not involve unfolding would at this time likely exist as another supplementary method in this way.
 
 \section{Acknowledgements}
-I am grateful to my physics advisor, Heidi Schellman, for making it possible for me to study statistics these last few years concurrent with my physics PhD research. Through her I have been funded in part by the National Science Foundation. It is my hope that the material I've learned in pursuing a statistics degree will makeup for any misgivings she may have had along the way. I would also like to thank my statistics advisor James Molyneux for taking me in when my previous advisor left Oregon State University for a position elsewhere. His active engagement and endless optimism have been crucial towards my completion of this less traditional statistics MS project. Finally, I would like to thank Sarah Emerson and Sharmodeep Bhattacharyya for being my committee members as well as excellent disseminators of statistics knowledge and wisdom. I still frequent my notes from the courses I took under them.
+I am grateful to my physics advisor, Heidi Schellman, for making it possible for me to study statistics these last few years in concurrence with my physics PhD research. Through her I have been funded in part by the National Science Foundation. It is my hope that the material I've learned in pursuing a statistics degree will makeup for any misgivings she may have had along the way. I would also like to thank my statistics advisor, James Molyneux, for taking me in when my previous advisor left Oregon State University for a position elsewhere. His active engagement and endless optimism have been a guiding light towards my completion of this less traditional statistics MS project. He really unfolded away some of the negative biases and uncertainties in my own perception of my work. I would also like to thank Sarah Emerson and Sharmodeep Bhattacharyya for being my committee members as well as being excellent disseminators of statistics knowledge and wisdom. I could not have asked for better instructors for the foundational courses I took under them. Finally, I need to thank my partner, Katarina. She constantly inspires me to be a better person in ways that positively impact my relationship with others, with my work, and with myself. I love you, Kat.
 
 \newpage
 
@@ -1807,7 +1825,7 @@ ggplot() + theme_bw() +
   labs(title = "Residual of Unfolded Data to MC used in SVD Unfolding")
 ```
 \caption{\emph{\small The above is a plot of the residuals of the SVD unfolded Data with respect to the MC model used in the unfolding. The shaded regions represent 1 and 2 SD based on a per-bin Poisson model assumption for the MC's Truth counts.}}
-  \label{unfolded}
+  \label{D2Mres}
 \end{figure}
 
 \begin{figure}[!ht]
@@ -1846,7 +1864,7 @@ ggplot() + theme_bw() +
   labs(title = "Residual of Unfolded Data to Data Truth")
 ```
 \caption{\emph{\small The above is a plot of the residuals of the SVD unfolded Data with respect to the same Data's Truth counts. SVD unnfolded Data from Model 1 is only compared to Model 1 Data's Truth counts, and similarly for Model 2. The shaded regions represent 1 and 2 SD based on a per-bin Poisson model assumption for the Data's Truth counts.}}
-  \label{unfolded}
+  \label{D2Dres}
 \end{figure}
 
 \begin{figure}[!ht]
@@ -1854,8 +1872,8 @@ ggplot() + theme_bw() +
 ```{r, echo = FALSE, fig.align='center', fig.height=3}
 dChi_plot2
 ```
-\caption{\emph{\small For adjacent tested values of $\tau$, the above plot shows the absolute value of the change in the weighted sums of squares of the residuals of the unfolded Data with respect to its True counts. The minimum value for the sum of the pairings' $\chi^2$'s indicates where the $\sum\chi^2$ shifts from decreasing with $\tau$ to increasing with $\tau$.}}
-  \label{unfolded}
+\caption{\emph{\small For adjacent tested values of $\tau$, the above plot shows the absolute value of the change in the weighted sums of squares of the residuals of the unfolded Data with respect to its true counts. The minimum value for the sum of the pairings' $\chi^2$'s indicates where the $\sum\chi^2$ shifts from decreasing with $\tau$ to increasing with $\tau$.}}
+  \label{dchi2}
 \end{figure}
 
 \section{Hilbert Spaces}\label{appHilbert}
