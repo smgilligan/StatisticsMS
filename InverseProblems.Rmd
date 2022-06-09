@@ -109,7 +109,12 @@ analysis. Stated in more general terms, the empirical density function
 $f_Y$ is formed from the \textbf{convolution} of the true density
 function $f_X$ and the error density function $f_\varepsilon$, and is
 defined by \cite{Panaretos2011}
-\begin{align}f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\&=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}\end{align}
+\begin{align}
+  f_Y&\equiv f_X*f_\varepsilon\label{eq:conv1}\\
+  f_Y(y)&\equiv\int_\mathcal{X}f_X(x)f_\varepsilon(\varepsilon)\,dx\nonumber\\
+    &=\int_\mathcal{X}f_X(x)f_\varepsilon\big(g_x^{-1}(y)\big)\left\vert J_{g_x^{-1}}(y)\right\vert dx\nonumber\\
+    &=\int_\mathcal{X}f_X(x)f_\varepsilon(y-x)\,dx,\label{eq:conv2}
+\end{align}
 where $J$ represents the Jacobian of the transformation involved in
 performing the change of basis on $f_\varepsilon$ from $\varepsilon$ to
 $x$, which is necessary for the evaluation of the integral for a given
@@ -174,7 +179,12 @@ function of $y$, $f(y\,\vert x)$ \cite{Casella2001}. The relationship
 between these PDFs is sufficient to define any one of them in terms of
 operations involving one or more of the others. As such, for $f_Y(y)$ it
 can be shown
-\begin{align}f_Y(y)&=\int_\mathcal{X}f(x,y)\,dx\nonumber\\&=\int_\mathcal{X}f(y\,\vert x)f_X(x)\,dx\nonumber\\&=\int_\mathcal{X}K(x,y)f_X(x)\,dx.\label{eq:fred}\end{align}
+\begin{align}
+  f_Y(y)
+    &=\int_\mathcal{X}f(x,y)\,dx\nonumber\\
+    &=\int_\mathcal{X}f(y\,\vert x)f_X(x)\,dx\nonumber\\
+    &=\int_\mathcal{X}K(x,y)f_X(x)\,dx.\label{eq:fred}
+\end{align}
 While integrating over $x$, $f(y\,\vert x)$ is implicitly treated as a
 function of both $x$ and $y$. Acknowledging this allows for
 understanding Equation \eqref{eq:fred} as a Fredholm integral of the
@@ -214,7 +224,8 @@ continuous counterparts by \cite{Blobel2013}: \begin{align}
   \text{true distribution }f_X(x)&\longrightarrow\bm\mu\,\in\,\mathcal{U}\equiv\{\mathbb{R}^M_{+}\cup\bm{0}\}\text{ the unknown true bin counts,}\nonumber\\
   \text{measured distribution }f_Y(y)&\longrightarrow\bm\nu\,\in\,\mathcal{V}\equiv\{\mathbb{R}^N_{+}\cup\bm{0}\}\text{ the measured bin counts,}\nonumber\\
   \text{Kernel }K(x,y)&\longrightarrow\bm{R}\;\;\text{the rectangular }N\text{-by-}M\text{ \bf response matrix}\text{.}\nonumber
-\end{align} The components of vectors $\bm\nu$ and $\bm\mu$ represent
+\end{align}
+The components of vectors $\bm\nu$ and $\bm\mu$ represent
 the number of events that have occurred within the regions of $x$ and
 $y$ that define the components' corresponding bins. For $i=1,\dots,N$
 and $j=1,\dots,M$ the components of matrix $\bm R$ are defined by the
@@ -292,7 +303,11 @@ treated as i.i.d. random variables with the probability mass function
 \begin{align}P(n_i\vert\nu_i)=\frac{\nu_i^{n_i}e^{-\nu_i}}{n_i!}.\label{eq:pois}\end{align}
 As such counts $n_i$ form the estimate $\hat\nu_i$ of
 the expected counts $\nu_i$ by
-\begin{align}\nu_i&=\text{E}[\hat\nu_i]=\text{E}[n_i]\nonumber\\&=\text{Cov}[\hat\nu_i]=\text{Cov}[n_i].\nonumber\end{align}
+\begin{align}
+  \nu_i
+    &=\text{E}[\hat\nu_i]=\text{E}[n_i]\nonumber\\
+    &=\text{Cov}[\hat\nu_i]=\text{Cov}[n_i].\nonumber
+\end{align}
 Understanding the probability distribution of $\bm{n}$ allows for
 unfolding methods that involve the use of maximum likelihood estimation.
 Additionally, it will be convenient, and necessary for methods based on least-squares, to estimate the
@@ -2354,7 +2369,6 @@ ggplot() +
 ```
 
 ```{r, echo = F, fig.align='center',fig.height=3, eval=FALSE}
-
 biases <- 
   c((mcTruth1$Counts/mcReco1$Counts[1:30] - 
        (bins_expected1 %>% filter(Treatment == "Truth") %>% pull(Counts))/

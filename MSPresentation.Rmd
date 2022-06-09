@@ -1,37 +1,198 @@
 ---
-title: "The Structure of Ill-Posed Inverse Problems in Experimental Particle Physics"
+title: "The Structure of Measurement Related Ill-Posed Inverse Problems in Experimental Particle Physics"
 author: Sean Gilligan
 output:
-  ioslides_presentation:
-    toc: true
-    widescreen: true
-    smaller: true
+  beamer_presentation:
+    toc: FALSE
+    theme: "Szeged"
+    colortheme: "crane"
+    citation_package: biblatex
+    keep_tex: TRUE
+    slide_level: 3
+bibliography: citations.bib
+header-includes:
+  - \institute{Oregon State University}
+  - \usepackage{graphicx}
+  - \usepackage{caption}
+  - \usepackage{wasysym}
+  - \usepackage[normalem]{ulem}
+  - \usepackage[T1]{fontenc}
+  - \graphicspath{{images/}}
+  - \usepackage{hyperref}
+  - \hypersetup{colorlinks = true,
+                linkcolor = black,
+                urlcolor = hightide,
+                anchorcolor = hightide,
+                citecolor = hightide}
+  - \usepackage[utf8]{inputenc}
+  - \usepackage{amssymb,amsmath}
+  - \usepackage{bm}
+  - \usepackage[font=tiny]{caption}
+  - \definecolor{beaverorange}{RGB}{215,63,9}
+  - \definecolor{fadedbeaver}{RGB}{240,110,60}
+  - \definecolor{hightide}{RGB}{0,133,155}
+  - \definecolor{pinestand}{RGB}{74,119,60}
+  - \definecolor{reindeermoss}{RGB}{196,214,164}
+  - \definecolor{luminance}{RGB}{255,181,0}
+  - \definecolor{candela}{RGB}{253,210,110}
+  - \setbeamertemplate{blocks}[rounded]
+  - \setbeamercolor{alerted text}{fg=black!20!red}
+  - \setbeamercolor*{palette primary}{fg=black,bg=beaverorange}
+  - \setbeamercolor*{palette secondary}{bg=fadedbeaver,fg=black}
+  - \setbeamercolor*{palette tertiary}{fg=black,bg=beaverorange}
+  - \setbeamercolor*{palette quaternary}{fg=black,bg=beaverorange}
+  - \setbeamercolor*{sidebar}{fg=black,bg=beaverorange}
+  - \setbeamercolor*{palette sidebar primary}{fg=black}
+  - \setbeamercolor*{palette sidebar secondary}{fg=white}
+  - \setbeamercolor*{palette sidebar tertiary}{fg=black}
+  - \setbeamercolor*{palette sidebar quaternary}{fg=beaverorange}
+  - \setbeamercolor*{titlelike}{parent=palette primary}
+  - \setbeamerfont{frametitle}{series=\bfseries}
+  - \setbeamercolor{frametitle}{bg=white,fg=beaverorange}
+  - \setbeamercolor{frametitle right}{bg=beaverorange}
+  - \setbeamercolor*{block title}{fg=black,bg=luminance}
+  - \setbeamercolor*{block body}{fg=black,bg=candela}
+  - \setbeamercolor*{block title example}{fg=black,bg=pinestand}
+  - \setbeamercolor*{block body example}{fg=black,bg=reindeermoss}
+  - \setbeamertemplate{title page}{\begin{columns}[c]
+                                   \column{.35\textwidth}
+                                   \begin{center}
+                                   \vspace{0.6cm}
+                                   \includegraphics[width=0.9\textwidth]{images/BeaverOSU.png}\\\vspace{0.3cm}
+                                   \includegraphics[width=0.7\textwidth]{images/NSF_Large.png}
+                                   \end{center}
+                                   \column{.6\textwidth}
+                                   \noindent\setlength{\fboxrule}{3pt}{
+                                   \fcolorbox{beaverorange}{fadedbeaver}{\parbox{\textwidth}{{\Large\inserttitle}}}}\\\vspace{0.8cm}
+                                   \centering{\insertauthor\\\textit{gilligas@oregonstate.edu}}\\\vspace{0.6cm}
+                                   \centering{\begin{tabular}{rl}
+                                      Statistics Advisor:& James Molyneux\\
+                                      Physics Advisor:& Heidi Schellman
+                                   \end{tabular}}
+                                   \end{columns}}
+  - \AtBeginSubsection[]{}
+  - \AtBeginSection[]{\begin{frame}\setlength{\fboxrule}{3pt}\setlength{\fboxsep}{1em}{\fcolorbox{beaverorange}{fadedbeaver}{\makebox[0.9\linewidth][c]{{\Large\insertsection}}}}\end{frame}}
+  - \AtBeginDocument{\setbeamertemplate{navigation symbols}[horizontal]}
+  - \AtBeginDocument{\title[Ill-Posed Inverse Problems]{The Structure of Ill-Posed Inverse Problems in Experimental Particle Physics}}
+  - \expandafter\def\expandafter\insertshorttitle\expandafter{\insertshorttitle\hfill\insertframenumber\,/\,\inserttotalframenumber}
 ---
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
+library(ggforce)
+library(jpeg)
 ```
 
 
+### Overview
+\tableofcontents
+
+<!------------------------------------------------------------------------->
+
 # Introduction
+## Inverse Problems
+### Disclaimer
 
-## Making things clear
+\begin{columns}
 
-<div style="float: left; width: 50%;">
+\column{.4\textwidth}
+\begin{figure}[!h]
+\includegraphics[width=0.9\textwidth]{images/TheTreacheryOfImages_ReneMagritte_1929.png}
+\caption*{Magritte, Ren$\acute{\text{e}}$. \emph{The Treachery of Images}. 1929.}
+\end{figure}
 
-What is an inverse problem?
+\column{.6\textwidth}
+Mathematical models are the building blocks of the simulacra we construct in our attempts to quantitatively approximate the world we inherit and create.
 
-Where do they come from?
+\vspace{1em}A model is at best an imperfect representation. One should never be construed as an intrinsic truth about the subject of this representation, and definitely never as the subject itself.
 
-What makes them hard?
+\end{columns}
 
-</div>
-<div style="float: right; width: 50%;">
-```{r, echo = FALSE, fig.align='center', fig.height=4, fig.width=5}
-par(mfrow = c(2, 2),
-    mar = c(0,0.5,1,0.1),
-    oma = c(1.5,1.5,0.5,0))
+<!------------------------------------------------------------------------->
+### What is an inverse problem?
 
+\begin{columns}
+
+\column{.7\textwidth}
+\small{\textbf{Inverse problems} In this capacity these are problems that are predominately concerned with reversing obfuscating data manipulations that occur during measurement, which for counting experiments can result from such things as \cite{Blobel2013}:
+\begin{itemize}
+  \item finite measurement resolution and event migration;
+  \item statistical fluctuations;
+  \item nonlinear measurement responses undermining calibration efforts;
+  \item constraints on event acceptance or interferences with event detection.
+\end{itemize}}
+
+\column{.3\textwidth}
+\begin{figure}[!h]
+\includegraphics[width=0.9\textwidth]{images/TheCrystalBall_JohnWilliamWaterhouse_1902.jpeg}
+\caption*{Waterhouse, John William. \emph{The Crystal Ball}. 1902.}
+\end{figure}
+
+\end{columns}
+
+<!------------------------------------------------------------------------->
+
+### Clearing things up...
+
+\begin{columns}
+
+\column{.55\textwidth}
+\vspace{-3em}
+\begin{figure}[!ht]
+```{r, echo = FALSE, cache = TRUE, fig.align='left', fig.height=1.75}
+flower <- readJPEG("images/flower_smaller.jpg") 
+n <- dim(flower)[1]
+
+spread <- pnorm(seq(-10.05,10.15,0.1), sd = 1)-pnorm(seq(-10.15,10.05,0.1), sd = 1)
+spread <- c(rep(0,n-102),spread,rep(0,n-102))
+i0 <- length(spread)-n+1
+smat <- diag(0,n)
+for(i in 0:(n-1)){
+  smat[i+1,] <- spread[(i0-i):(i0+n-1-i)]
+}
+flower_smeared <- flower
+for(i in 1:3){
+  flower_smeared[,,i] <- t(smat) %*% flower[,,i] %*% smat
+}
+flowers <- array(1, dim = c(n,2*n+100,3))
+for(i in 1:3){
+  flowers[,,i] <- cbind(flower_smeared[,,i],array(1,dim = c(n,100,3))[,,i],flower[,,i])
+}
+dn <- 6
+par(mar=c(0,0,0,38), bg=NA)
+plot.new()
+plot.window(xlim=c(0,1),ylim=c(0,1),asp=(n/(2*n+100)))
+rasterImage(flowers[(dn+1):(n-dn),(dn+1):(2*n+100-dn),],0,0,1,1)
+```
+\vspace{-2em}
+\caption*{A rose in the Sunnyside neighborhood of Portland, OR. Original picture taken on July 3, 2022, a few days after the 2021 heat dome, during which the daily max temperatures at the Portland International Airport from June 26 - 28, 2021 were respectively 108$^{\circ}$F, 112$^{\circ}$F, and 116$^{\circ}$F. (source: \href{https://projects.oregonlive.com/weather/temps/}{oregonlive.com})\\Gaussian blurring performed in \texttt{R}.}
+\end{figure}
+
+\column{.45\textwidth}
+The goal of solving an inverse problem is to reconstruct a previous or unperturbed state that has some desired representation or contains the metrics necessary to perform a particular hypothesis test.
+
+\vspace{1em}Image deblurring, for example, is an ubiquitous application concerned with inverse problems.
+
+\end{columns}
+
+<!------------------------------------------------------------------------->
+
+### The mathematics of inconvenience
+
+\begin{columns}
+\column{.5\textwidth}
+\small{The mathematics of a smudge on a camera lens are equivalent to those used to describe smearing effects on any other data represented by a metric space. Assuming only linear processes, effects like these can be modeled by:
+\begin{itemize}
+  \item an operator $A$ mapping
+  \item an element $z$ of some metric space $Z$ (the original state) to
+  \item an element $u$ of some metric space $U$ (the measured state),
+\end{itemize}
+and written $A:Z\to U$ or $A(z)=u$.}
+
+\column{.5\textwidth}
+\vspace{-1.5em}
+\begin{figure}[!ht]
+```{r, echo = FALSE, cache = TRUE, fig.align='center', fig.height=1.8, fig.width=2.6}
 mean1 <- -1
 mean2 <- 1
 xmin <- -3
@@ -54,110 +215,474 @@ discrete_data <- tibble(x = c(xmin,rep(seq(xmin+dx,xmax-dx,dx),each=2),xmax),
                                    (2/3)*(pnorm(seq(xmin+dx,xmax,dx),mean2,sqrt(0.5))-
                                             pnorm(seq(xmin,xmax-dx,dx),mean2,sqrt(0.5)))),each=2)/dx)
 
+n <- 30
+spread <- pnorm(seq(-5.25,5.25,0.2), sd = 0.1)-pnorm(seq(-5.45,5.05,0.2), sd = 0.1)
+spread <- c(rep(0,n),spread,rep(0,n))
+i0 <- (length(spread)+1)/2
+smat <- diag(0,n)
+for(i in 0:(n-1)){
+  smat[,i+1] <- spread[(i0-i):(i0+n-1-i)]
+}
+
+#discrete_data$y2[seq(1,length(discrete_data$x),2)] <- 
+#  t(smat) %*% discrete_data$y2[seq(1,length(discrete_data$x),2)]
+#discrete_data$y2[seq(2,length(discrete_data$x),2)] <- 
+#  t(smat) %*% discrete_data$y2[seq(2,length(discrete_data$x),2)]
+
+par(mfrow = c(2, 2),
+    mar = c(0,0.5,1,0.1),
+    oma = c(1.5,0.5,0.5,2))
+
 plot(continuous_data$x,continuous_data$y1,type="l",col="blue",
      yaxt = "n", xaxt = "n", ylim=c(0,0.55))
-title("True Value", adj = 0)
-axis(2, at = c(0.0,0.1,0.2,0.3,0.4,0.5), tck = -0.03, las = 1, hadj = 0.5)
+title("True Value", adj = 0, cex.main = 0.9)
+axis(2, at = c(0.0,0.1,0.2,0.3,0.4,0.5), tck = -0.03, las = 1, hadj = 0, cex.axis = 0.65)
 plot(continuous_data$x,continuous_data$y2,type="l",col="red",
      tck = -0.03, yaxt = "n", xaxt = "n", ylim=c(0,0.55))
-title("Measured Value", adj = 0)
+title("Measured Value", adj = 0, cex.main = 0.9)
 plot(discrete_data$x,discrete_data$y1,type="l",col="blue",ann = FALSE,
      yaxt = "n", xaxt = "n", ylim=c(0,0.55))
-axis(2, at = c(0.0,0.1,0.2,0.3,0.4,0.5), tck = -0.03, las = 1, hadj = 0.5)
-axis(1, at = -3:3, tck = -0.03, padj = -1)
+axis(2, at = c(0.0,0.1,0.2,0.3,0.4,0.5), tck = -0.03, las = 1, hadj = 0, cex.axis = 0.65)
+axis(1, at = -3:3, tck = -0.03, padj = -3.75, cex.axis = 0.55)
 plot(discrete_data$x,discrete_data$y2,type="l",col="red",ann = FALSE,
      yaxt = "n", xaxt = "n", ylim=c(0,0.55))
-axis(1, at = -3:3, tck = -0.03, padj = -1)
+axis(1, at = -3:3, tck = -0.03, padj = -3.75, cex.axis = 0.55)
 ```
-</div>
+\vspace{-1em}
+\caption*{Continuous and discrete representations of the same data with some hypothetical measurement error represented by a Gaussian blur. Calculated and rendered in \texttt{R}.}
+\end{figure}
 
-## Deconvolution
+\end{columns}
 
-Simple model
+## Locating the difficulty
+### Well-Posedness
 
-Math
+Finding $z$ given $A$ and $u$ is trivial when it is a \textbf{well-posed} problem, that is \cite{Tikh1977}:
+\begin{enumerate}
+  \item $\forall u\in U$ there exists a solution $z\in Z$,
+  \item the solution is unique,
+  \item and the problem is stable on $U$ and $Z$.
+  \begin{itemize}
+    \item The inverse $A^{-1}$ is continuous.
+    \item Small changes in $u$ $\implies$ small changes in $z$.
+  \end{itemize}
+\end{enumerate}
 
-## Generalizing the Deconvolution
+### Ill-Posedness
 
-It's unfolding now
+\begin{columns}
+\column{.4\textwidth}
+Any departure of these three criteria results in an \textbf{ill-posed} problem. What these might look like in practice can vary, but some striking examples will be brought up as they appear, as will the harm they would cause if treated as well-posed.
 
-Use a kernel
+\column{.6\textwidth}
+\vspace{-18em}
+\begin{figure}[!ht]
+```{r, echo = FALSE, fig.align='center', fig.width=2.6}
+ggplot() +
+  geom_ellipse(aes(x0 = -1, y0 = 0.2, a = 0.8, b = 0.8, angle = 0)) +
+  geom_ellipse(aes(x0 = 1, y0 = 0.2, a = 0.8, b = 0.8, angle = 0)) +
+  geom_point(data = tibble(x = c(0.95,1.05,-0.98,-0.94,-0.98),
+                           y = c(0.2,0.05,-0.25,-0.35,0.7)),
+             mapping = aes(x=x, y=y), shape = 20) +
+  geom_text(aes(x=-1.08, y=-0.38, label="italic(z)"), parse = TRUE, size = 3) +
+  geom_text(aes(x=-1.31, y=-0.21, label=paste0("italic(z)+delta*italic(z)")), 
+            parse = TRUE, size = 3) +
+  geom_text(aes(x=-1.3, y=0.72, label=paste0("italic(z)+Delta*italic(z)")), 
+            parse = TRUE, size = 3) +
+  geom_text(aes(x=1.18, y=0.06, label="italic(u)"), 
+            parse = TRUE, size = 3) +
+  geom_text(aes(x=1.27, y=0.24, label="italic(u)+delta*italic(u)"), 
+            parse = TRUE, size = 3) +
+  geom_text(aes(x=c(-1,1),y=c(1.15,1.15),label=c("italic(Z)","italic(U)")), parse = TRUE) +
+  geom_curve(aes(x=0.9, y=0.2, xend=-0.92, yend=-0.22), curvature=0.2,
+             arrow = arrow(length = unit(0.04, "npc")), color = "#5e81b5") +
+  geom_curve(aes(x=0.91, y=0.24, xend=-0.92, yend=0.7), curvature=0.2,
+             arrow = arrow(length = unit(0.04, "npc")), color = "#eb6235") +
+  geom_curve(aes(x=-0.88, y=-0.36, xend=0.99, yend=0.01), curvature=0.2,
+             arrow = arrow(length = unit(0.04, "npc"))) +
+  geom_text(aes(x=-0.02, y=0.02, label="italic(A^-1)"), 
+            parse = TRUE, size = 3, color="#5e81b5") +
+  geom_text(aes(x=0, y=0.5, label="italic(A^-1)"), 
+            parse = TRUE, size = 3, color="#eb6235") +
+  geom_text(aes(x=0.04, y=-0.47, label="italic(A)"), 
+            parse = TRUE, size = 3) +
+  coord_fixed() + theme_void()
+```
+\vspace{-19em}
+\caption*{For a small change $u\to u + \delta u$, Condition 3 requires for the solution to a \textcolor[HTML]{5e81b5}{well-posed} problem a correspondingly small change $z\to z+\delta z$. A large change $z\to z+\Delta z$ indicates the problem is \textcolor[HTML]{eb6235}{ill-posed}. Figure made in \texttt{R}.}
+\end{figure}
 
-## Discrete Discretions
+\end{columns}
 
-A new equation to solve
+### Unfolding
 
-The response matrix
+In particle physics ill-posed inverse problems are solved to deal with measurement related errors and uncertainties by way of a process called \textbf{unfolding}, where folding refers to the forward process that produces said errors and uncertainties. This will be the term of choice for the remainder of the presentation.
 
-Efficiency
+\vspace{1em}Other labels, both more specific and more general, include \textbf{deconvolution}. \textbf{unsmearing}, and other names based on specific applications in seismology, tomography, and signal processing.
 
-Poisson processes
+# The Math
+## Continuous representation
+### The Fredholm integral equation
 
-Estimates
+Given a true distribution $f_X(x)$, a measured/reconstructed distribution $f_Y(y)$, and a kernel $K(x,y)$ that describes the physical measuring process are related to each other by way of the Fredholm integral equation of the first kind \cite{Blobel2011}:
+\begin{align}
+  f_Y(y)=\int_\mathcal{X}K(x,y)f_X(x)\,dx\label{fred}
+\end{align}
 
-Unbiased Estimator
+## Discrete representation
 
-## Some Simulated Toy Models
+\footnotesize
+The mathematical methods implemented here rely on linear matrix equations. Reformulating one dimensional data adjust Equation \eqref{fred} to:
+\begin{align}
+  \bm\nu = \bm{R}\bm\mu.\label{eq:mat}
+\end{align}
+The vectors $\bm\nu$, $\bm\mu$ and matrix $\bm{R}$ relate to their
+continuous counterparts by \cite{Blobel2013}: 
+\begin{align}
+  \text{true distribution }f_X(x)&\longrightarrow\bm\mu\,\in\,\mathcal{U}\equiv\{\mathbb{R}^M_{+}\cup\bm{0}\}\text{ the unknown true bin counts,}\nonumber\\
+  \text{measured distribution }f_Y(y)&\longrightarrow\bm\nu\,\in\,\mathcal{V}\equiv\{\mathbb{R}^N_{+}\cup\bm{0}\}\text{ the measured bin counts,}\nonumber\\
+  \text{Kernel }K(x,y)&\longrightarrow\bm{R}\;\;\text{the rectangular }N\text{-by-}M\text{ \bf response matrix}\text{.}\nonumber
+\end{align}
 
-The processes
+### Conditional Probability
 
-The models and their distributions
+The components of the $\bm{R}$ correspond to conditional probabilities such that \cite{Cowan1998}:
+\begin{align}
+  R_{ij}&=P(\text{measured value in bin }i\vert\text{true value in bin }j)\nonumber\\
+        &=\frac{P(\text{measured value in bin }i\text{ and true value in bin }j)}{P(\text{true value in bin }j)}\nonumber\\
+        &=\frac{\int_{\text{bin }i}\int_{\text{bin }j}K(x,y)f_X(x)dx\,dy}{\int_{\text{bin }j}dx\,f_X(x)}\nonumber\\
+        &\equiv P(\nu_i\vert\mu_j).\label{eq:Rij}
+\end{align}
 
-Migration
+### The Response Matrix
+
+The overall form is then:
+\begin{align}
+  \bm{R}=\begin{pmatrix}
+    P(\nu_1\vert\mu_1)     & P(\nu_1\vert\mu_2)     & \dots  & P(\nu_1\vert\mu_{N})   \\
+    P(\nu_2\vert\mu_1)     & P(\nu_2\vert\mu_2)     & \cdots & P(\nu_2\vert\mu_{N})   \\
+    \vdots                 & \vdots                 & \ddots & \vdots                 \\
+    P(\nu_{M}\vert\mu_1)   & P(\nu_{M}\vert\mu_2)   & \dots  & P(\nu_{M}\vert\mu_{N})
+  \end{pmatrix}\label{eq:Rmat}
+\end{align}
+
+\begin{align}
+  \text{where }\;\;\;\;\nu_i = \sum_{j=1}^MR_{ij}\mu_j\;\;\;\;\text{ and  }\;\;\;\;\frac{\partial\nu_i}{\partial\mu_j}&=R_{ij}\label{dnudmu}.
+\end{align}
+
+### Efficiency
+
+As mentioned in the intro, constraints on event selection and detector geometry result in some events going uncounted. Per bin, the ratio of the number of observed events to the number of true events is the \textbf{efficiency}, and is represent by vector $\bm\epsilon$. The components of which can be calculated by \cite{Cowan1998}:
+\begin{align}\sum_{i=1}^{N}P(\nu_i\vert\mu_j)=\sum_{i=1}^{N}R_{ij}=\epsilon_j\leq 1.\label{eq:eff}\end{align}
+
+### The Expected, The Estimated, and The Observed
+
+\begin{columns}
+\column{.6\textwidth}
+All variables so far have involved the exact values as derived from exact distributions $f_Y(y)$ and $f_X(x)$. To clarify some notation the vector $\bm{n}$ is introduced. Altogether we have:
+\begin{itemize}
+  \item $\bm\nu$: the expected number of observed events;
+  \item $\bm{\hat\nu}$: the estimated mean number of observed events;
+  \item $\bm{n}$: the number of observed events;
+  \item $\bm\mu$: the expected true number of events;
+  \item $\bm{\hat\mu}$: the estimated true number of events.
+\end{itemize}
+\column{.4\textwidth}
+\begin{figure}
+\includegraphics[width=0.9\textwidth]{gbu.jpg}
+\end{figure}
+\end{columns}
+
+## Poisson processes
+### The right statistical model
+
+As particle physics experiments are counting experiments the Poisson distribution is a common choice to model the number of counts in a particular bin. As such, for bin $i$ with an expected $\nu_i$  counts and random variable $n_i$ we have:
+\begin{align}P(n_i\vert\nu_i)=\frac{\nu_i^{n_i}e^{-\nu_i}}{n_i!},\label{eq:pois}\end{align}
+with standard estimates:
+\begin{align}
+  \nu_i
+    &=\text{E}[\hat\nu_i]=\text{E}[n_i];\nonumber\\
+    &=\text{Var}[\hat\nu_i]=\text{Var}[n_i].\nonumber
+\end{align}
+
+### Observed Events Covariance Matrix
+
+Dealing with more than one Poisson distribution results in the need for multivariate estimates. Being treated as independent distributions the estimated covariance matrix of the observed number of counts $\bm{\hat\Sigma}_{\nu}$ has components:
+\begin{align}
+  \hat\Sigma^{\nu}_{ij}
+      &=\text{Cov}[\hat\nu_i,\hat\nu_j]\nonumber\\
+      &=\text{Cov}[n_i,n_j]\nonumber\\
+      &=\delta_{ij}n_i,\label{eq:cov}
+\end{align}
+where the Kronecker delta, $\delta_{ij}=\begin{cases}0\;\;\;\text{if }i\neq j\\1\;\;\;\text{if }i=j\end{cases}$.
+
+### Adventures in log-likelihood
+
+Maximum likelihood estimation can be explored as well, with some useful results. Jumping to the end for time (see paper) we have:
+\begin{align}
+  \log L(\bm\mu)&=\sum_{i=1}^N\left(n_i\log\nu_i-\nu_i-\log n_i!\right)\label{eq:logL}\\
+  \frac{\partial\log L}{\partial\mu_k}&=\sum_{i=1}^N\left(\frac{n_i}{\nu_i}-1\right)R_{ik}=0\label{eq:dlogL}\\
+  \frac{\partial^2\log L}{\partial\mu_k\partial\mu_l}&=-\sum_{i=1}^N\frac{n_i R_{il}R_{ik}}{\nu_i^2}\label{eq:d2logL}
+\end{align}
+
+### New and old estimates
+
+Some basic algebra on Equation \eqref{eq:dlogL} show that the MLR estimate $\bm{\hat\nu}_{\text{MLE}}$ reproduces $\bm{\hat\nu}=\bm{n}$, which is nice. However Equation \eqref{eq:d2logL} hints at something more, as the Fisher information is:
+\begin{align}\bm{\mathcal{I}}(\bm\mu)
+  &=-\text{E}\left[\frac{\partial^2\log L}{\partial\mu_k\partial\mu_l}\right].\nonumber\\
+  &=\text{E}\left[\sum_{i=1}^N\frac{n_i R_{il}R_{ik}}{\nu_i^2}\right]\label{fishinfo}
+\end{align}
+The Cram$\acute{\text{e}}$r-Rao lower bound defines its inverse as the lower bound on the covariance matrix of an \emph{unbiased} estimator of $\bm{\mu}$ \cite{Cowan1998}.
+
+### Lower bound for an unbiased estimator
+
+Assuming there is an inverse for $\bm{R}$, for unbiased estimator $\bm{T}(\bm{n})$:
+\begin{align}
+  \text{Cov}_{\!\bm{\mu}}\!\left[\bm{T}(\bm{n})\right]\geq \bm{\mathcal{I}}(\bm{\mu})^{-1}
+    &=\left(\sum_{i=1}^N\frac{E[n_i] R_{il}R_{ik}}{\nu_i^2}\right)^{-1}\nonumber\\
+    &=\left(\sum_{i=1}^N\frac{R_{il}R_{ik}}{\nu_i}\right)^{-1}\nonumber\\
+    &=\left(\bm{R}^T\bm{\hat\Sigma}_\nu^{-1}\bm{R}\right)^{-1}\nonumber\\
+    &=\bm{R}^{-1}\bm{\hat\Sigma}_\nu(\bm{R}^{-1})^{T}.\label{lowerB}
+\end{align}
+We should then be interested in finding something like this if we want an unbiased estimator.
+
+# A Simulated Toy Model
+
+### Disclaimer
+This simulation is not meant to reflect any actual physics, but particle physics can contain signals like these.
+
+## The Physics Models
+### A trio of physics processes
+
+Consider three hypothetical Cauchy physics Processes with three sets of independent and identically distributed random variables such that for some $i$th sample from each:
+\begin{align}
+  X_{1,i}&\sim \text{Cauchy}(11,4)\nonumber\\
+  X_{2,i}&\sim \text{Cauchy}(18,4)\nonumber\\
+  X_{3,i}&\sim \text{Cauchy}(14,5)\nonumber
+\end{align} 
+
+### A duo of models
+
+Consider two hypothetical physics Models that predict observations in a hypothetical experiment. Model 1 predicts that they will only see events from Process 1 and Process 2, while Model 2 predicts that they will also see events from Process 3. As informed by a binomial or trinomial process a particular event in Model 1 and Model 2 will have the forms:
+\begin{align}
+  X^{(1)}_i&=0.3X_{1,i}+0.7X_{2,i}\nonumber\\
+  X^{(2)}_i&=0.225X_{1,i}+0.525X_{2,i}+0.25X_{3,i}\nonumber
+\end{align}
+
+### Simulations
+
+In particle physics experiments, analysts make use of Monte-Carlo (MC) simulations to generate physics events under a physics model of interest, as well as to simulate detector response to such events. These are then compared to real data. For the purpose of this project the following samples were taken:
+\begin{itemize}
+  \item 200,000 events from Model 1 as MC/Training;
+  \item 200,000 events from Model 2 as MC/Training;
+  \item 20,000 events from Model 1 as Data/Testing;
+  \item 20,000 events from Model 2 as Data/Testing
+\end{itemize}
+
+### Process component distributions
+
+\begin{figure}
+\centering
+\includegraphics[width=1.0\textwidth]{processes.png}
+\end{figure}
+
+## Simulating the detector response
+### The detector responds
+
+The effects of detector smearing is represented by i.i.d random variables generated by the conditional Gaussian process:
+$$\varepsilon_i\sim N\left(\mu(X_i),\sigma(X_i)^2\right),$$
+the mean and variance of which are functions of $X_i$ defined by:
+\begin{align}
+  \mu(X_i=x)&=-x^{1/4}\;\;\text{and}\nonumber\\
+  \sigma(X_i=x)&=\log\left(\frac{x+10}{4}\right).\nonumber
+\end{align}
+
+### Form of the observed
+
+With the added error the form of the observed data becomes the deceptively simple:
+$$Y_i = X_i^{(?)}+\varepsilon_i$$
+Even so, the probability of then being detected at all, as determined by the efficiency, is:
+$$p(X_i=x)=1-e^{-\sqrt{x}/4}$$
+
+## The Plots
+### A direct comparison
+
+\begin{figure}
+\centering
+\includegraphics[width=1.0\textwidth]{simulation.png}
+\caption*{Distinguishing between Model 1 and Model 2 is clearly easier before detector effects are applied. Can you tell which Model the Data belongs too in the measured/reconstructed case?}
+\end{figure}
+
+### Migrations
+
+\begin{figure}
+\centering
+\includegraphics[width=1.0\textwidth]{migration.png}
+\caption*{These heatmaps are a visual representation of the information contained in the migration matrices.}
+\end{figure}
 
 # Unfolding
-
-## Resources in particle physics
-
-ROOT and RooUnfold
-
 ## Response Matrix Inversion
+### Naive approaches
 
-Basic premise
+As Equation eqref{mat} looks like any other matrix operating on a vector, the inverse of this seems like an obvious route, such that:
+\begin{align}
+  \bm{\hat\mu}=\bm{R}^{-1}\bm{n}.\label{eq:naiveInv}
+\end{align} 
+This would be true of this was a well-posed problem. For pedagogy, let's see why this is a bad approach.
 
-Weighted least squares solution
+### Weighted least squares
 
-The pseudoinverse
+Least squares should take us to an inverse of some sort:
+\begin{align}\min_{\bm\mu}\nabla_{\!\bm\mu}\bm\chi^2(\bm{\mu})
+  &=\nabla_{\bm\mu}(\bm{R}\bm{\mu}-\bm{n})^T\bm{\hat\Sigma}_{\nu}^{-1}(\bm{R}\bm{\mu}-\bm{n})\label{eq:leastsq}\\
+  &=\;\;\vdots\nonumber\\
+  &=2\bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}-2\bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}\bm{n}\nonumber
+\end{align}
+Setting this to zero allows us to solve for:
+\begin{align}
+  \bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}\bm{R}\bm{\mu}&=\bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}\bm{n}\nonumber\\
+  \implies\bm{\hat\mu}&=(\bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}\bm{R})^{-1}\bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}\bm{n}\\
+  &=\bm{R}^{+}\bm{n}.\label{eq:naivemu}
+\end{align}
 
-An unbiased estimator
+### The Pseudo-inverse
 
-Ugly results
+What was found, $\bm{R}^{+}=(\bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}\bm{R})^{-1}\bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}$, is the Moore-Penrose generalized inverse(or pseudo-inverse) \cite{Blobel2013}
 
-Why?
+\vspace{1em}Note that $\bm{R}\bm{R}^{+}=\bm{R}(\bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}\bm{R})^{-1}\bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}=\bm{H}$ is just the hat matrix from ordinary linear regression.
+
+\vspace{1em}Also note that $\bm{R}^{-1}\bm{\hat\Sigma}_\nu(\bm{R}^{-1})^{T}$ in $\bm{R}^{+}$ is the inverse of the lower bound for the covariance matrix of an unbiased estimator of $\bm{\mu}$. I.e.
+\begin{align}
+  (\bm{R}^T\bm{\hat\Sigma}_{\nu}^{-1}\bm{R})^{-1}&=\bm{R}^{+}\bm{\hat\Sigma}_\nu\bm{R}^{+^T}=\bm{R}^{+}\text{Cov}[\bm{n}]\bm{R}^{+^T}\nonumber\\
+  &=\text{Cov}[\bm{R}^{+}\bm{n}]=\text{Cov}[\bm{\hat\mu}]=\bm{\hat\Sigma}_\mu\nonumber.
+\end{align}
+And yet dispite all this, the estimated true counts are...
+
+### Ugly results
+
+\begin{figure}
+\centering
+\includegraphics[width=1.0\textwidth]{badresults.png}
+\caption*{The solutions are unstable, even when paired with the correct Models. Additionally, the solutions have negative counts, meaning they do not exist in the space of allowable solutions.}
+\end{figure}
+
+### Why?
+
+Overfitting. The unfolding process used here cannot account for even small random variations in the space of reconstructed counts. In pursuing an unbiased estimator we have found a completely unacceptable variance. Bias must be introduced that uses additional information contained in the data. This is done with \textbf{regularization}.
 
 ## Regularization
+### Tikhonov regularization
 
-Tikhonov regularization and ridge regression
+The method of regularization called Tikhonov regularization is commonly known as ridge regression \cite{vanwieringen2021}, which is only a specific case discussed in Masters-level statistics courses. It generalizes this by the inclusion of an additional variable:
+$$\tau\vert\vert \Gamma x\vert\vert\;\;\;\;\;\;\text{vs}\;\;\;\;\;\;\tau\vert\vert x\vert\vert$$
+Technically the latter is equivalent but with $\Gamma=\bm{I}$, the identity matrix.
 
-SVD
+### Singular Value Decomposition
 
-Data and notation transformations
+Singular value decomposition \cite{wiki:svd} (SVD) involves the factorization of an $N\times M$ matrix $\bm{A}$ into
+\begin{align}
+  \bm{A}=\bm{USV}^T,\label{eq:svd}
+\end{align}
+where $\bm{U}$ and $\bm{V}$ are respectively $N\times N$ and $M\times M$ unitary matrices and $\bm{S}$ is an $N\times M$ rectangular diagonal matrix consisting of non-negative real numbers. 
 
-SVD to distribute weights
+### Data and notation transformations
 
-Regularizing terms
+SVD is also how the particular form of unfolding we will use is described \cite{Hocker1995}. The first couple steps of which involve:
+\begin{enumerate}
+  \item redistributing information in Equation \eqref{eq:mat} to make $\bm{R}$ contain the actual counts, call it $\bm{X}$,
+  \item rescaling the true counts to produce $\bm\beta$ with components $\beta_i=\mu_i/\mu_i^{\text{MC}}$,
+  \item and changing notation for counts to $\bm{n}=\bm{Y}$.
+\end{enumerate}
 
-Damped least squares
+### SVD to distribute weights
+The no form the squares to be minimized is:
+\begin{align}
+  \chi^2(\bm{\beta})=\left(\bm{Y}-\bm{X}\bm{\beta}\right)^T\bm{\hat\Sigma}_\nu^{-1}\left(\bm{Y}-\bm{X}\bm{\beta}\right)\label{regSq}
+\end{align}
+Using SVD to redistribute the squares gives 
+\begin{align}
+  \bm{\hat\Sigma}_\nu=\bm{QTQ}^T,\;\;\;\;\;\text{ where }\;\;\;\;\;\bm{\hat\Sigma}_\nu^{-1}=\bm{Q}\bm{T}^{-1}\bm{Q}^T\text.
+\end{align}
 
-SVD to diagonalize response matrix and normalize response
+### Distributing weights
+The result of doing so is:
+\begin{align}
+  \chi^2(\bm{\beta})&=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right),
+\end{align}
+where
+\begin{align}
+  \bm{\tilde{X}}=\bm{T}^{-1/2}\bm{Q}^T\bm{X}\;\;\;\;\;\;\;\text{and}\;\;\;\;\;\;\bm{\tilde{Y}}=\bm{T}^{-1/2}\bm{Q}^T\bm{Y}.
+\end{align}
 
-Solution
+### Add regularization term
+The chosen regularization term is one that minimizes the second derivative $\bm\mu$, and is accomplished by
+\begin{align}
+  \chi^2(\bm{\beta})&=\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)^T\left(\bm{\tilde{Y}}-\bm{\tilde{X}}\bm{\beta}\right)+\tau\bm{\beta}^T\bm{C}^T\bm{C}\bm{\beta},\label{eq:regular}
+\end{align}
+where
+\begin{align}
+    \bm{C}=\begin{pmatrix}
+      -1&1&0&0&\dots&\\
+      1&-2&1&0&\dots&&\\
+      0&1&-2&1&\ddots&\\
+      \vdots&\vdots&\vdots&\vdots&\ddots&\vdots&\vdots\\
+      &&&&\dots&-2&1\\
+      &&&&\dots&1&-1
+    \end{pmatrix}
+\end{align}
 
-Selecting tau one way
+### Reformulation
+Equation eqref{mat} is reformulated again to produce
+\begin{align}
+  \begin{bmatrix}
+    \bm{\tilde{X}}\\\sqrt{\tau}\,\bm{C}
+  \end{bmatrix}\bm{\beta} = 
+  \begin{bmatrix}
+    \bm{\tilde{Y}}\\
+    \bm{0}_N
+  \end{bmatrix},\nonumber
+\end{align}
+but a damped least-squares approach is chosen.
 
-The purpose of unfolding
+### Cut for time
+The remainder of the material has been cut and can be referenced in the paper.
 
-Selecting another way
+### Choosing regularization term
 
-Results and discussion
+\begin{figure}
+\centering
+\includegraphics[width=1.0\textwidth]{yk.png}
+\end{figure}
 
-## Conclusion
+### Minimize sum of $\chi$s across all combinations
 
-Some other methods
+\begin{figure}
+\centering
+\includegraphics[width=1.0\textwidth]{minTau.png}
+\end{figure}
 
-## Acknowledgements
+### Comparing
 
-James, Heidi, NSF, committee, linear algebra, Soviet era physicists and mathematicians
+\begin{figure}
+\centering
+\includegraphics[width=1.0\textwidth]{table.png}
+\end{figure}
 
+### Results
+
+\begin{figure}
+\centering
+\includegraphics[width=1.0\textwidth]{results.png}
+\end{figure}
+
+### Acknowledgements
+
+James, Heidi, NSF, Sharmodeep, Sarah, linear algebra, Soviet era physicists and mathematicians
+
+### References
+
+\AtNextBibliography{\tiny}
+\printbibliography
 
 
